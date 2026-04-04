@@ -9,6 +9,7 @@ const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
 const FALLBACK_TIMEOUT_MS = Number(process.env.FALLBACK_TIMEOUT_MS || 90000);
 const TRACK_CONCURRENCY = Math.max(1, Number(process.env.TRACK_CONCURRENCY || 6));
+const ENABLE_PLAYWRIGHT_FALLBACK = process.env.ENABLE_PLAYWRIGHT_FALLBACK === '1';
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -199,9 +200,13 @@ async function fetchBusesForBlock(block) {
     throw Object.assign(new Error(`Block not found: ${block}`), { code: 404 });
   }
 
+  if (trips.length === 0) {
+    return [];
+  }
+
   const mostRecentBus = pickMostRecentBusId(trips);
   if (!mostRecentBus) {
-    throw Object.assign(new Error(`No bus numbers found for block: ${block}`), { code: 404 });
+    return [];
   }
 
   return [mostRecentBus];
@@ -270,6 +275,9 @@ async function fetchLiveResult(block) {
 
   const job = enqueue(async () => {
     const buses = await fetchBusesForBlock(block);
+    if (buses.length === 0) {
+      return { block, buses: [] };
+    }
     const locations = await Promise.all(buses.map((bus) => fetchLocationForBus(bus)));
     return { block, buses: locations };
   }).finally(() => {
@@ -284,6 +292,7 @@ async function fetchLiveResultWithFallback(block) {
   try {
     return await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
   } catch (directErr) {
+    if (!ENABLE_PLAYWRIGHT_FALLBACK) throw directErr;
     if (Number(directErr.code) === 400) throw directErr;
     const fallback = await withTimeout(trackBlock(block, { headless: true }), FALLBACK_TIMEOUT_MS);
     return fallback;
@@ -339,7 +348,7 @@ function validateBlockOrSend(block, res) {
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no buses found right now.`.trim();
+    return `Block ${payload?.block || ''}: no active buses found right now.`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
