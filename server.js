@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const crypto = require('crypto');
@@ -15,6 +16,7 @@ const ENABLE_PLAYWRIGHT_FALLBACK = process.env.ENABLE_PLAYWRIGHT_FALLBACK === '1
 const pendingByBlock = new Map();
 const queue = [];
 let activeWorkers = 0;
+let paddleIndexCache = null;
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -43,21 +45,28 @@ function sha1(value) {
   return crypto.createHash('sha1').update(value).digest('hex');
 }
 
-function httpGetText(url, timeoutMs = RUN_TIMEOUT_MS) {
+function httpGet(url, timeoutMs = RUN_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, (res) => {
-      let data = '';
+      const chunks = [];
       res.on('data', (chunk) => {
-        data += chunk;
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       });
       res.on('end', () => {
+        const body = Buffer.concat(chunks);
         if (res.statusCode >= 400) {
           const err = new Error(`HTTP ${res.statusCode} for ${url}`);
           err.code = res.statusCode;
+          err.body = body.toString('utf8');
           reject(err);
           return;
         }
-        resolve(data);
+        resolve({
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body,
+          text: body.toString('utf8'),
+        });
       });
     });
 
@@ -67,6 +76,11 @@ function httpGetText(url, timeoutMs = RUN_TIMEOUT_MS) {
 
     req.on('error', reject);
   });
+}
+
+async function httpGetText(url, timeoutMs = RUN_TIMEOUT_MS) {
+  const response = await httpGet(url, timeoutMs);
+  return response.text;
 }
 
 async function fetchTransSeeText(url, timeoutMs = RUN_TIMEOUT_MS) {
@@ -123,6 +137,17 @@ function getOttawaServiceDateIso() {
 
 function getOttawaServiceDateString() {
   return getOttawaServiceDateIso().slice(0, 10);
+}
+
+function getOttawaServiceDayKey() {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Toronto',
+    weekday: 'long',
+  }).format(new Date()).toLowerCase();
+
+  if (weekday === 'saturday') return 'saturday';
+  if (weekday === 'sunday') return 'sunday';
+  return 'weekday';
 }
 
 function timeToSeconds(value) {
@@ -279,6 +304,91 @@ async function fetchTripsForBlock(block) {
   return trips;
 }
 
+function loadPaddleIndex() {
+  if (!paddleIndexCache) {
+    const filePath = path.join(__dirname, 'data', 'paddles.index.json');
+    paddleIndexCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  }
+  return paddleIndexCache;
+}
+
+function blockToPaddleId(block) {
+  const match = String(block || '').trim().toUpperCase().match(/^([A-Z0-9]+)-(\d{1,3})$/);
+  if (!match) return null;
+  return `${match[1].padStart(3, '0')}${match[2].padStart(3, '0')}`;
+}
+
+async function fetchPaddleTripsForBlock(block) {
+  const paddleId = blockToPaddleId(block);
+  if (!paddleId) return [];
+
+  const serviceDay = getOttawaServiceDayKey();
+  const index = loadPaddleIndex();
+  const run = index?.service_days?.[serviceDay]?.[paddleId];
+  if (!run || !Array.isArray(run.trips)) {
+    return [];
+  }
+
+  return run.trips.map((trip) => ({
+    tripId: null,
+    sourceType: 'paddle',
+    routeId: String(trip.route || ''),
+    headSign: String(trip.headsign || ''),
+    routeDirection: 0,
+    scheduledStartTime: String(trip.start_time || ''),
+    scheduledEndTime: String(trip.end_time || ''),
+    actualStartTime: null,
+    actualEndTime: null,
+    delay: null,
+    canceled: null,
+    busId: null,
+    startStop: String(trip.start_stop || ''),
+    endStop: String(trip.end_stop || ''),
+    paddleId,
+    sourceId: run.source_id,
+  })).filter((trip) => trip.routeId && trip.scheduledStartTime);
+}
+
+function getBestPaddleTripCandidates(trips) {
+  const nowSeconds = timeToSeconds(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Toronto',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  ) ?? 0;
+
+  const scheduled = [...trips]
+    .filter((trip) => trip && trip.sourceType === 'paddle')
+    .map((trip) => ({
+      trip,
+      start: timeToSeconds(trip.scheduledStartTime),
+      end: timeToSeconds(trip.scheduledEndTime),
+    }))
+    .filter((entry) => entry.start !== null)
+    .sort((a, b) => a.start - b.start);
+
+  if (!scheduled.length) return [];
+
+  const current = scheduled.find((entry) =>
+    entry.end !== null
+      ? entry.start <= nowSeconds && nowSeconds <= entry.end + 20 * 60
+      : Math.abs(nowSeconds - entry.start) <= 20 * 60
+  );
+  if (current) {
+    return [current.trip];
+  }
+
+  const next = scheduled.find((entry) => entry.start > nowSeconds);
+  if (next) {
+    return [next.trip];
+  }
+
+  return [scheduled[scheduled.length - 1].trip];
+}
+
 async function fetchAvailableBlocks() {
   const dateIso = getOttawaServiceDateIso();
   const blocksUrl = `https://bus.ajay.app/api/blocks?date=${encodeURIComponent(dateIso)}`;
@@ -335,16 +445,120 @@ async function fetchLocationForBus(busNumber) {
   };
 }
 
+function normalizeHeadsign(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/&[^;\s]+;/g, ' ')
+    .replace(/station/g, 'stn')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function normalizeStopLabel(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/&[^;\s]+;/g, ' ')
+    .replace(/\bst[.-]?\b/g, 'st ')
+    .replace(/\bstation\b/g, ' ')
+    .replace(/\bstn\b/g, ' ')
+    .replace(/\bbus stop\b/g, ' ')
+    .replace(/\baeroport\b/g, 'airport')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function transSeeTimeTo24Hour(value) {
+  const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2}):(\d{2})(AM|PM)$/i);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = match[2];
+  if (match[4].toUpperCase() === 'PM' && hour !== 12) hour += 12;
+  if (match[4].toUpperCase() === 'AM' && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, '0')}:${minute}`;
+}
+
+function stripTags(value) {
+  return decodeEntities(String(value || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+async function fetchTripIdFromTransSeeRouteSchedule(trip) {
+  const route = String(trip.routeId || '').trim();
+  if (!route) return null;
+
+  const url = `https://www.transsee.ca/routesched?a=octranspo&r=${encodeURIComponent(route)}&date=${encodeURIComponent(getOttawaServiceDateString())}`;
+  const html = await fetchTransSeeText(url, FALLBACK_TIMEOUT_MS);
+
+  const targetStart = String(trip.scheduledStartTime || '').slice(0, 5);
+  const targetEnd = String(trip.scheduledEndTime || '').slice(0, 5);
+  const targetHeadsign = normalizeHeadsign(trip.headSign);
+  const targetStartStop = normalizeStopLabel(trip.startStop);
+  const targetEndStop = normalizeStopLabel(trip.endStop);
+  const targetStartSeconds = timeToSeconds(targetStart);
+  const targetEndSeconds = timeToSeconds(targetEnd);
+
+  const rowRegex = /<tr[^>]*><td><a href="tripsched\?a=octranspo&t=([^"&]+)&date=[^"]+">([\s\S]*?)<\/a><\/td><td>([\s\S]*?)<\/td><td>([\d:APM]+)<\/td><td>([\s\S]*?)<\/td><td>([\d:APM]+)<\/td><td>([\d:]+)<\/td><\/tr>/gi;
+  let best = null;
+  let match;
+
+  while ((match = rowRegex.exec(html))) {
+    const tripId = match[1];
+    const headsign = stripTags(match[2]);
+    const startStop = stripTags(match[3]);
+    const startTime = transSeeTimeTo24Hour(match[4]);
+    const endStop = stripTags(match[5]);
+    const endTime = transSeeTimeTo24Hour(match[6]);
+    const startSeconds = timeToSeconds(startTime);
+    const endSeconds = timeToSeconds(endTime);
+    let score = 0;
+
+    if (startTime && startTime === targetStart) score += 5;
+    if (endTime && endTime === targetEnd) score += 4;
+    if (targetStartStop && normalizeStopLabel(startStop) === targetStartStop) score += 4;
+    if (targetEndStop && normalizeStopLabel(endStop) === targetEndStop) score += 4;
+    if (normalizeHeadsign(headsign) === targetHeadsign) score += 3;
+    if (normalizeHeadsign(headsign).includes(targetHeadsign) || targetHeadsign.includes(normalizeHeadsign(headsign))) score += 1;
+    if (targetStartSeconds !== null && startSeconds !== null) {
+      const diff = Math.abs(startSeconds - targetStartSeconds);
+      if (diff <= 5 * 60) score += 4;
+      else if (diff <= 10 * 60) score += 2;
+    }
+    if (targetEndSeconds !== null && endSeconds !== null) {
+      const diff = Math.abs(endSeconds - targetEndSeconds);
+      if (diff <= 5 * 60) score += 3;
+      else if (diff <= 10 * 60) score += 1;
+    }
+
+    if (score > 0 && (!best || score > best.score)) {
+      best = { tripId, score };
+    }
+  }
+
+  return best ? best.tripId : null;
+}
+
 function getTripCandidatePriority(trip) {
+  const nowSeconds = timeToSeconds(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Toronto',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  ) ?? 0;
   const actualStart = timeToSeconds(trip.actualStartTime);
   const actualEnd = timeToSeconds(trip.actualEndTime);
   const scheduledStart = timeToSeconds(trip.scheduledStartTime);
+  const scheduledEnd = timeToSeconds(trip.scheduledEndTime);
 
   if (actualStart !== null && actualEnd === null) {
     return 300000 + actualStart;
   }
   if (actualStart !== null) {
     return 200000 + actualStart;
+  }
+  if (scheduledStart !== null && scheduledEnd !== null && scheduledStart <= nowSeconds && nowSeconds <= scheduledEnd + 20 * 60) {
+    return 150000 + scheduledStart;
   }
   if (scheduledStart !== null) {
     return 100000 + scheduledStart;
@@ -353,8 +567,13 @@ function getTripCandidatePriority(trip) {
 }
 
 function getTripCandidatesForTransSee(trips) {
+  const paddleCandidates = getBestPaddleTripCandidates(trips);
+  if (paddleCandidates.length > 0) {
+    return paddleCandidates;
+  }
+
   return [...trips]
-    .filter((trip) => trip && trip.tripId)
+    .filter((trip) => trip && trip.routeId && (trip.tripId || trip.scheduledStartTime))
     .sort((a, b) => getTripCandidatePriority(b) - getTripCandidatePriority(a))
     .slice(0, 5);
 }
@@ -364,7 +583,7 @@ function extractBusNumberFromTripSched(html) {
   if (!blockSectionMatch) return null;
 
   const section = blockSectionMatch[1];
-  const currentRowMatch = section.match(/<tr><td>[\s\S]*?<td style="font-weight:\s*bold;">[\s\S]*?<td>([\s\S]*?)<\/td><\/tr>/i);
+  const currentRowMatch = section.match(/<tr><td>[\s\S]*?<td style="font-weight:\s*bold;">[\s\S]*?<\/td><td[\s\S]*?<\/td><td[\s\S]*?<\/td><td[\s\S]*?<\/td><td>([\s\S]*?)<\/td><\/tr>/i);
   if (!currentRowMatch) return null;
 
   const tripPathCell = currentRowMatch[1];
@@ -374,7 +593,10 @@ function extractBusNumberFromTripSched(html) {
 
 async function fetchBusFromTransSeeTrip(trip) {
   const date = getOttawaServiceDateString();
-  const url = `https://www.transsee.ca/tripsched?a=octranspo&t=${encodeURIComponent(trip.tripId)}&date=${encodeURIComponent(date)}`;
+  const tripId = trip.tripId || await fetchTripIdFromTransSeeRouteSchedule(trip);
+  if (!tripId) return null;
+
+  const url = `https://www.transsee.ca/tripsched?a=octranspo&t=${encodeURIComponent(tripId)}&date=${encodeURIComponent(date)}`;
   const html = await fetchTransSeeText(url, FALLBACK_TIMEOUT_MS);
   const busNumber = extractBusNumberFromTripSched(html);
   if (!busNumber) return null;
@@ -402,8 +624,27 @@ async function fetchLiveResult(block) {
   }
 
   const job = enqueue(async () => {
-    const trips = await fetchTripsForBlock(block);
-    const buses = await fetchBusesForBlock(block);
+    let trips = [];
+    let directLookupError = null;
+
+    try {
+      trips = await fetchTripsForBlock(block);
+    } catch (err) {
+      directLookupError = err;
+    }
+
+    if (!trips.length) {
+      trips = await fetchPaddleTripsForBlock(block);
+    }
+
+    let buses = [];
+    if (!directLookupError) {
+      try {
+        buses = await fetchBusesForBlock(block);
+      } catch (err) {
+        directLookupError = err;
+      }
+    }
     if (buses.length > 0) {
       const results = await Promise.allSettled(buses.map((bus) => fetchLocationForBus(bus)));
       const locations = results
@@ -414,9 +655,13 @@ async function fetchLiveResult(block) {
       }
     }
 
-    const transSeeFallback = await fetchTransSeeTripFallback(block, trips);
-    if (transSeeFallback) {
-      return transSeeFallback;
+    if (trips.length > 0) {
+      const transSeeFallback = await fetchTransSeeTripFallback(block, trips);
+      if (transSeeFallback) {
+        return transSeeFallback;
+      }
+    } else if (directLookupError) {
+      throw directLookupError;
     }
 
     return { block, buses: [] };
@@ -488,7 +733,7 @@ function validateBlockOrSend(block, res) {
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either 😉`.trim();
+    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
@@ -503,8 +748,8 @@ async function handleLookup(req, res) {
   if (!validateBlockOrSend(rawBlock, res)) return;
 
   try {
-    const block = await resolveCanonicalBlock(rawBlock);
-    if (!block) {
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock);
+    if (!canonicalBlock && !blockToPaddleId(rawBlock)) {
       res.status(404).json({
         ok: false,
         error: `Block not found: ${rawBlock}`,
@@ -512,6 +757,7 @@ async function handleLookup(req, res) {
       return;
     }
 
+    const block = canonicalBlock || rawBlock;
     const payload = await fetchLiveResultWithFallback(block);
     res.json({
       ok: true,
