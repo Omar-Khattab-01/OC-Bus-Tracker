@@ -323,8 +323,7 @@ async function fetchPaddleTripsForBlock(block) {
   if (!paddleId) return [];
 
   const serviceDay = getOttawaServiceDayKey();
-  const index = loadPaddleIndex();
-  const run = index?.service_days?.[serviceDay]?.[paddleId];
+  const run = getPaddleRunForDay(serviceDay, paddleId);
   if (!run || !Array.isArray(run.trips)) {
     return [];
   }
@@ -349,6 +348,34 @@ async function fetchPaddleTripsForBlock(block) {
   })).filter((trip) => trip.routeId && trip.scheduledStartTime);
 }
 
+function getPaddleRunForDay(serviceDay, paddleId) {
+  const index = loadPaddleIndex();
+  return index?.service_days?.[serviceDay]?.[paddleId] || null;
+}
+
+function buildPaddleResponse(block) {
+  const paddleId = blockToPaddleId(block);
+  if (!paddleId) return null;
+
+  const serviceDay = getOttawaServiceDayKey();
+  const run = getPaddleRunForDay(serviceDay, paddleId);
+  if (!run) return null;
+
+  return {
+    block: String(block),
+    paddleId,
+    serviceDay,
+    sourceId: run.source_id || null,
+    sourceLabel: run.source_label || null,
+    effective: run.effective || null,
+    garage: run.garage || null,
+    signOn: run.sign_on || null,
+    routes: Array.isArray(run.routes) ? run.routes : [],
+    busType: run.bus_type || null,
+    trips: Array.isArray(run.trips) ? run.trips : [],
+  };
+}
+
 function getBestPaddleTripCandidates(trips) {
   const nowSeconds = timeToSeconds(
     new Intl.DateTimeFormat('en-GB', {
@@ -368,25 +395,58 @@ function getBestPaddleTripCandidates(trips) {
       end: timeToSeconds(trip.scheduledEndTime),
     }))
     .filter((entry) => entry.start !== null)
-    .sort((a, b) => a.start - b.start);
+    .sort((a, b) => a.start - b.start)
+    .map((entry, index, arr) => ({ ...entry, index, total: arr.length }));
 
   if (!scheduled.length) return [];
 
-  const current = scheduled.find((entry) =>
+  const currentIndex = scheduled.findIndex((entry) =>
     entry.end !== null
       ? entry.start <= nowSeconds && nowSeconds <= entry.end + 20 * 60
       : Math.abs(nowSeconds - entry.start) <= 20 * 60
   );
-  if (current) {
-    return [current.trip];
+  const seen = new Set();
+  const candidates = [];
+
+  function push(entry) {
+    if (!entry || seen.has(entry.index)) return;
+    seen.add(entry.index);
+    candidates.push(entry.trip);
   }
 
-  const next = scheduled.find((entry) => entry.start > nowSeconds);
-  if (next) {
-    return [next.trip];
+  if (currentIndex >= 0) {
+    push(scheduled[currentIndex]);
+
+    const previous = scheduled[currentIndex - 1];
+    if (previous) {
+      const previousEnd = previous.end ?? previous.start;
+      if (previousEnd !== null && nowSeconds - previousEnd <= 45 * 60) {
+        push(previous);
+      }
+    }
+
+    const next = scheduled[currentIndex + 1];
+    if (next && next.start - nowSeconds <= 20 * 60) {
+      push(next);
+    }
+
+    push(scheduled[currentIndex - 2]);
+    push(scheduled[currentIndex + 2]);
+    return candidates;
   }
 
-  return [scheduled[scheduled.length - 1].trip];
+  const nextIndex = scheduled.findIndex((entry) => entry.start > nowSeconds);
+  if (nextIndex >= 0) {
+    push(scheduled[nextIndex]);
+    push(scheduled[nextIndex - 1]);
+    push(scheduled[nextIndex + 1]);
+    push(scheduled[nextIndex - 2]);
+    return candidates;
+  }
+
+  push(scheduled[scheduled.length - 1]);
+  push(scheduled[scheduled.length - 2]);
+  return candidates;
 }
 
 async function fetchAvailableBlocks() {
@@ -759,10 +819,12 @@ async function handleLookup(req, res) {
 
     const block = canonicalBlock || rawBlock;
     const payload = await fetchLiveResultWithFallback(block);
+    const paddle = buildPaddleResponse(block);
     res.json({
       ok: true,
       block: payload.block,
       buses: payload.buses,
+      paddleAvailable: Boolean(paddle),
       cached: false,
       reply: formatChatReply(payload),
       generatedAt: new Date().toISOString(),
@@ -777,8 +839,39 @@ async function handleLookup(req, res) {
   }
 }
 
+async function handlePaddle(req, res) {
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+
+  try {
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock);
+    const block = canonicalBlock || rawBlock;
+    const paddle = buildPaddleResponse(block);
+    if (!paddle) {
+      res.status(404).json({
+        ok: false,
+        error: `Paddle not found for ${block}`,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      ...paddle,
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleLookup);
+app.get('/api/paddle', handlePaddle);
 
 app.get('/healthz', (_req, res) => {
   res.json({

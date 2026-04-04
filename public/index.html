@@ -230,6 +230,33 @@
       margin-top: -2px;
     }
 
+    .bot-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: -2px;
+      flex-wrap: wrap;
+    }
+
+    .link-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(15, 18, 24, 0.72);
+      color: #9ec2ff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 140ms ease, transform 120ms ease, background 140ms ease;
+    }
+
+    .link-btn:hover {
+      border-color: rgba(158, 194, 255, 0.55);
+      background: rgba(26, 34, 44, 0.84);
+    }
+
+    .link-btn:active { transform: translateY(1px); }
+
     .card {
       border: 1px solid var(--border);
       background: rgba(15, 18, 24, 0.7);
@@ -331,6 +358,182 @@
     .ok { color: var(--ok); }
     .warn { color: var(--warn); }
 
+    .overlay[hidden] { display: none; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 12, 0.72);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      z-index: 20;
+    }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: min(86vh, 900px);
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(24, 31, 39, 0.98), rgba(15, 19, 24, 0.98));
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(110deg, rgba(218, 41, 28, 0.14), rgba(15, 17, 21, 0.2));
+    }
+
+    .modal-head h2 {
+      margin: 0 0 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .modal-meta {
+      margin: 0;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .close-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(10, 14, 18, 0.82);
+      color: var(--oc-white);
+      border-radius: 999px;
+      min-width: 38px;
+      min-height: 38px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      overflow: auto;
+      padding: 16px 18px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .meta-card {
+      border: 1px solid var(--border);
+      background: rgba(12, 16, 21, 0.74);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .meta-card strong {
+      display: block;
+      font-size: 11px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .meta-card span {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .trip-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .trip-item {
+      border: 1px solid var(--border);
+      background: rgba(14, 18, 24, 0.8);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .trip-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .trip-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0.4px;
+    }
+
+    .trip-route {
+      color: var(--warn);
+      font-size: 12px;
+      border: 1px solid rgba(255, 179, 72, 0.28);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .trip-row {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .direction-block {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .direction-label {
+      font-size: 12px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .direction-text {
+      color: var(--oc-white);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .direction-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border: 1px solid rgba(158, 194, 255, 0.28);
+      color: #9ec2ff;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      background: rgba(17, 24, 32, 0.72);
+    }
+
     @media (max-width: 700px) {
       body { padding: 8px; }
       .app { height: calc(100vh - 16px); border-radius: 16px; }
@@ -372,10 +575,24 @@
       </form>
       <div class="hint">
         <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
+        <span>Do not use your phone while operating the bus, and always follow the deadheads shown on the paddle.</span>
         <span id="latencyHint">Always live lookup (no cache)</span>
       </div>
     </section>
   </main>
+
+  <div id="paddleOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="paddleTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="paddleTitle">Paddle</h2>
+          <p id="paddleMeta" class="modal-meta"></p>
+        </div>
+        <button id="closePaddleBtn" class="close-btn" type="button" aria-label="Close paddle viewer">×</button>
+      </header>
+      <div id="paddleBody" class="modal-body"></div>
+    </section>
+  </div>
 
   <script>
     const form = document.getElementById('chatForm');
@@ -384,6 +601,11 @@
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const latencyHint = document.getElementById('latencyHint');
+    const paddleOverlay = document.getElementById('paddleOverlay');
+    const paddleTitle = document.getElementById('paddleTitle');
+    const paddleMeta = document.getElementById('paddleMeta');
+    const paddleBody = document.getElementById('paddleBody');
+    const closePaddleBtn = document.getElementById('closePaddleBtn');
 
     function addMessage(text, role) {
       const bubble = document.createElement('div');
@@ -433,6 +655,148 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getKnownLocationQuery(label) {
+      const value = String(label || '').toLowerCase();
+      if (!value) return '';
+      if (value.includes('industrial')) return 'OC Transpo Industrial Garage, Ottawa, Ontario';
+      if (value.includes('merivale')) return 'OC Transpo Merivale Garage, Ottawa, Ontario';
+      if (value.includes('pinecrest')) return 'OC Transpo Pinecrest Garage, Ottawa, Ontario';
+      if (value.includes('st l north garage') || value.includes('st l south garage') || value.includes('st laurent garage') || value.includes('st-laurent garage') || value.includes('st.laurent garage')) {
+        return 'OC Transpo St. Laurent Garage, Ottawa, Ontario';
+      }
+      if (value.includes('st laurent terminal') || value.includes('st-laurent terminal') || value.includes('st.laurent terminal') || value.includes('st laurent station') || value.includes('st-laurent station') || value.includes('st.laurent station')) {
+        return 'St-Laurent Station, Ottawa, Ontario';
+      }
+      if (value.includes('hurdman')) return 'Hurdman Station, Ottawa, Ontario';
+      if (value.includes("tunney's") || value.includes('tunneys')) return "Tunney's Pasture Station, Ottawa, Ontario";
+      if (value.includes('terry fox')) return 'Terry Fox Station, Ottawa, Ontario';
+      if (value.includes('billings bridge')) return 'Billings Bridge Station, Ottawa, Ontario';
+      if (value.includes('blair')) return 'Blair Station, Ottawa, Ontario';
+      if (value.includes("place d'orleans") || value.includes('place d orleans')) return "Place d'Orleans Station, Ottawa, Ontario";
+      return '';
+    }
+
+    function buildGoogleMapsUrl(origin, destination) {
+      if (!origin || !destination) return '';
+      const originQuery = getKnownLocationQuery(origin) || `${origin}, Ottawa, Ontario`;
+      const destinationQuery = getKnownLocationQuery(destination) || `${destination}, Ottawa, Ontario`;
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originQuery)}&destination=${encodeURIComponent(destinationQuery)}&travelmode=driving`;
+    }
+
+    function renderDirectionBlock(label, text, origin, destination) {
+      if (!text) return '';
+      const mapUrl = buildGoogleMapsUrl(origin, destination);
+      return `
+        <section class="direction-block">
+          <div class="direction-label">${escapeHtml(label)}</div>
+          <div class="direction-text">${escapeHtml(text)}</div>
+          <div class="direction-actions">
+            ${mapUrl ? `<a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>` : ''}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderPaddleTrips(trips, garage) {
+      return trips.map((trip, index) => {
+        const nextTrip = trips[index + 1] || null;
+        const startDirections = renderDirectionBlock(
+          'Garage to trip start',
+          trip.start_directions,
+          garage,
+          trip.start_stop
+        );
+        const nextDirections = renderDirectionBlock(
+          nextTrip ? `Trip ${trip.trip_number} to Trip ${nextTrip.trip_number}` : `Trip ${trip.trip_number} to garage`,
+          trip.next_directions,
+          trip.end_stop,
+          nextTrip ? nextTrip.start_stop : garage
+        );
+        return `
+        <article class="trip-item">
+          <div class="trip-top">
+            <div class="trip-title">Trip ${escapeHtml(trip.trip_number)}: ${escapeHtml(trip.headsign || 'No headsign')}</div>
+            <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
+          </div>
+          <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
+          <div class="trip-row">Start: ${escapeHtml(trip.start_stop || 'N/A')}</div>
+          <div class="trip-row">End: ${escapeHtml(trip.end_stop || 'N/A')}</div>
+          ${trip.relief_stop ? `<div class="trip-row">Relief: ${escapeHtml(trip.relief_stop)}</div>` : ''}
+          ${startDirections}
+          ${nextDirections}
+        </article>
+      `;
+      }).join('');
+    }
+
+    function openPaddleModal(data) {
+      paddleTitle.textContent = `Paddle ${data.block}`;
+      paddleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Paddle index'}${data.effective ? ` | effective ${data.effective}` : ''}`;
+
+      paddleBody.innerHTML = `
+        <section class="meta-grid">
+          <article class="meta-card"><strong>Paddle ID</strong><span>${data.paddleId || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Routes</strong><span>${Array.isArray(data.routes) && data.routes.length ? data.routes.join(', ') : 'N/A'}</span></article>
+          <article class="meta-card"><strong>Garage</strong><span>${data.garage || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Sign-on</strong><span>${data.signOn || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Bus Type</strong><span>${data.busType || 'N/A'}</span></article>
+        </section>
+        <section class="trip-list">
+          ${renderPaddleTrips(Array.isArray(data.trips) ? data.trips : [], data.garage || '')}
+        </section>
+      `;
+
+      paddleOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePaddleModal() {
+      paddleOverlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    async function showPaddle(block) {
+      const previousStatus = statusEl.textContent;
+      statusEl.textContent = 'Loading paddle...';
+      statusEl.classList.remove('ok', 'warn');
+
+      try {
+        const response = await fetch(`/api/paddle?block=${encodeURIComponent(block)}`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Paddle lookup failed');
+        }
+        openPaddleModal(data);
+        statusEl.textContent = previousStatus || 'Ready';
+      } catch (err) {
+        addMessage(err.message || 'Paddle lookup failed.', 'bot');
+        statusEl.textContent = 'Error';
+        statusEl.classList.add('warn');
+      }
+    }
+
+    function addPaddleAction(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bot-actions';
+      const button = document.createElement('button');
+      button.className = 'link-btn';
+      button.type = 'button';
+      button.textContent = 'View Paddle';
+      button.addEventListener('click', () => showPaddle(block));
+      wrap.appendChild(button);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
     async function sendMessage(message) {
       const started = performance.now();
       statusEl.textContent = 'Fetching live data...';
@@ -461,6 +825,9 @@
         loadingBubble.remove();
         addMessage(data.reply, 'bot');
         addCards(data);
+        if (data.paddleAvailable) {
+          addPaddleAction(data.block);
+        }
 
         const elapsedMs = Math.round(performance.now() - started);
         statusEl.textContent = 'Live result';
@@ -482,6 +849,16 @@
       if (!message) return;
       input.value = '';
       sendMessage(message);
+    });
+
+    closePaddleBtn.addEventListener('click', closePaddleModal);
+    paddleOverlay.addEventListener('click', (event) => {
+      if (event.target === paddleOverlay) closePaddleModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !paddleOverlay.hidden) {
+        closePaddleModal();
+      }
     });
   </script>
 </body>
