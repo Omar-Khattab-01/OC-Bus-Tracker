@@ -3,6 +3,7 @@
 const express = require('express');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
 const { trackBlock } = require('./track_block');
 
 const PORT = Number(process.env.PORT || 7860);
@@ -38,6 +39,10 @@ function withTimeout(promise, ms) {
   ]);
 }
 
+function sha1(value) {
+  return crypto.createHash('sha1').update(value).digest('hex');
+}
+
 function httpGetText(url, timeoutMs = RUN_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, (res) => {
@@ -64,6 +69,45 @@ function httpGetText(url, timeoutMs = RUN_TIMEOUT_MS) {
   });
 }
 
+async function fetchTransSeeText(url, timeoutMs = RUN_TIMEOUT_MS) {
+  const firstHtml = await httpGetText(url, timeoutMs);
+  if (!/Proof of work - TransSee/i.test(firstHtml)) {
+    return firstHtml;
+  }
+
+  const powMatch = firstHtml.match(/process\('([^']+)',\s*(\d+)\)/);
+  if (!powMatch) {
+    return firstHtml;
+  }
+
+  const [, seed, difficultyText] = powMatch;
+  const difficulty = Number(difficultyText);
+  const prefix = '0'.repeat(Number.isFinite(difficulty) ? difficulty : 0);
+  let nonce = 0;
+  let solved = null;
+
+  while (nonce < 2000000) {
+    const candidate = `${seed}${nonce}`;
+    if (sha1(candidate).startsWith(prefix)) {
+      solved = candidate;
+      break;
+    }
+    nonce += 1;
+  }
+
+  if (!solved) {
+    return firstHtml;
+  }
+
+  const retryUrl = new URL(url);
+  retryUrl.searchParams.set(
+    'ua',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0 Safari/537.36'
+  );
+  retryUrl.searchParams.set('pw', solved);
+  return httpGetText(retryUrl.toString(), timeoutMs);
+}
+
 function getOttawaServiceDateIso() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Toronto',
@@ -75,6 +119,10 @@ function getOttawaServiceDateIso() {
   const map = {};
   for (const p of parts) map[p.type] = p.value;
   return `${map.year}-${map.month}-${map.day}T10:00:00.000Z`;
+}
+
+function getOttawaServiceDateString() {
+  return getOttawaServiceDateIso().slice(0, 10);
 }
 
 function timeToSeconds(value) {
@@ -212,6 +260,25 @@ async function fetchBusesForBlock(block) {
   return [mostRecentBus];
 }
 
+async function fetchTripsForBlock(block) {
+  const dateIso = getOttawaServiceDateIso();
+  const detailsUrl = `https://bus.ajay.app/api/blockDetails?blockId=${encodeURIComponent(block)}&date=${encodeURIComponent(dateIso)}`;
+
+  let payload;
+  try {
+    payload = JSON.parse(await httpGetText(detailsUrl));
+  } catch (err) {
+    throw new Error(`Failed to read BetterTransit data: ${err.message}`);
+  }
+
+  const trips = payload && payload[block] ? payload[block] : null;
+  if (!Array.isArray(trips)) {
+    throw Object.assign(new Error(`Block not found: ${block}`), { code: 404 });
+  }
+
+  return trips;
+}
+
 async function fetchAvailableBlocks() {
   const dateIso = getOttawaServiceDateIso();
   const blocksUrl = `https://bus.ajay.app/api/blocks?date=${encodeURIComponent(dateIso)}`;
@@ -253,7 +320,7 @@ async function resolveCanonicalBlock(inputBlock) {
 
 async function fetchLocationForBus(busNumber) {
   const url = `https://transsee.ca/fleetfind?a=octranspo&q=${encodeURIComponent(busNumber)}&Go=Go`;
-  const html = await httpGetText(url);
+  const html = await fetchTransSeeText(url);
   const lines = htmlToLines(html);
   const locationText = pickBestLocationLine(lines, busNumber);
 
@@ -268,18 +335,91 @@ async function fetchLocationForBus(busNumber) {
   };
 }
 
+function getTripCandidatePriority(trip) {
+  const actualStart = timeToSeconds(trip.actualStartTime);
+  const actualEnd = timeToSeconds(trip.actualEndTime);
+  const scheduledStart = timeToSeconds(trip.scheduledStartTime);
+
+  if (actualStart !== null && actualEnd === null) {
+    return 300000 + actualStart;
+  }
+  if (actualStart !== null) {
+    return 200000 + actualStart;
+  }
+  if (scheduledStart !== null) {
+    return 100000 + scheduledStart;
+  }
+  return 0;
+}
+
+function getTripCandidatesForTransSee(trips) {
+  return [...trips]
+    .filter((trip) => trip && trip.tripId)
+    .sort((a, b) => getTripCandidatePriority(b) - getTripCandidatePriority(a))
+    .slice(0, 5);
+}
+
+function extractBusNumberFromTripSched(html) {
+  const blockSectionMatch = html.match(/<div id=block><h4>Trips in this block<\/h4>([\s\S]*?)<\/table><\/div>/i);
+  if (!blockSectionMatch) return null;
+
+  const section = blockSectionMatch[1];
+  const currentRowMatch = section.match(/<tr><td>[\s\S]*?<td style="font-weight:\s*bold;">[\s\S]*?<td>([\s\S]*?)<\/td><\/tr>/i);
+  if (!currentRowMatch) return null;
+
+  const tripPathCell = currentRowMatch[1];
+  const busMatch = tripPathCell.match(/>(\d{3,5})<\/a>/);
+  return busMatch ? busMatch[1] : null;
+}
+
+async function fetchBusFromTransSeeTrip(trip) {
+  const date = getOttawaServiceDateString();
+  const url = `https://www.transsee.ca/tripsched?a=octranspo&t=${encodeURIComponent(trip.tripId)}&date=${encodeURIComponent(date)}`;
+  const html = await fetchTransSeeText(url, FALLBACK_TIMEOUT_MS);
+  const busNumber = extractBusNumberFromTripSched(html);
+  if (!busNumber) return null;
+  return fetchLocationForBus(busNumber);
+}
+
+async function fetchTransSeeTripFallback(block, trips) {
+  const candidates = getTripCandidatesForTransSee(trips);
+  for (const trip of candidates) {
+    try {
+      const bus = await fetchBusFromTransSeeTrip(trip);
+      if (bus) {
+        return { block, buses: [bus] };
+      }
+    } catch (_) {
+      // Try the next candidate trip.
+    }
+  }
+  return null;
+}
+
 async function fetchLiveResult(block) {
   if (pendingByBlock.has(block)) {
     return pendingByBlock.get(block);
   }
 
   const job = enqueue(async () => {
+    const trips = await fetchTripsForBlock(block);
     const buses = await fetchBusesForBlock(block);
-    if (buses.length === 0) {
-      return { block, buses: [] };
+    if (buses.length > 0) {
+      const results = await Promise.allSettled(buses.map((bus) => fetchLocationForBus(bus)));
+      const locations = results
+        .filter((result) => result.status === 'fulfilled')
+        .map((result) => result.value);
+      if (locations.length > 0) {
+        return { block, buses: locations };
+      }
     }
-    const locations = await Promise.all(buses.map((bus) => fetchLocationForBus(bus)));
-    return { block, buses: locations };
+
+    const transSeeFallback = await fetchTransSeeTripFallback(block, trips);
+    if (transSeeFallback) {
+      return transSeeFallback;
+    }
+
+    return { block, buses: [] };
   }).finally(() => {
     pendingByBlock.delete(block);
   });
@@ -348,7 +488,7 @@ function validateBlockOrSend(block, res) {
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no active buses found right now.`.trim();
+    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either 😉`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
