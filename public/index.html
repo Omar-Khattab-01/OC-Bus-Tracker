@@ -679,7 +679,7 @@
       if (value.includes('hurdman')) return 'Hurdman Station, Ottawa, Ontario';
       if (value.includes("tunney's") || value.includes('tunneys')) return "Tunney's Pasture Station, Ottawa, Ontario";
       if (value.includes('terry fox')) return 'Terry Fox Station, Ottawa, Ontario';
-      if (value.includes('billings bridge')) return 'Billings Bridge Station, Ottawa, Ontario';
+      if (value.includes('billings bridge')) return '45.3865484,-75.6750988';
       if (value.includes('blair')) return 'Blair Station, Ottawa, Ontario';
       if (value.includes("place d'orleans") || value.includes('place d orleans')) return "Place d'Orleans Station, Ottawa, Ontario";
       return '';
@@ -687,8 +687,13 @@
 
     function buildGoogleMapsUrl(origin, destination) {
       if (!origin || !destination) return '';
-      const originQuery = getKnownLocationQuery(origin) || `${origin}, Ottawa, Ontario`;
-      const destinationQuery = getKnownLocationQuery(destination) || `${destination}, Ottawa, Ontario`;
+      const originKnown = getKnownLocationQuery(origin);
+      const destinationKnown = getKnownLocationQuery(destination);
+      if (/^https?:\/\//i.test(originKnown || '') || /^https?:\/\//i.test(destinationKnown || '')) {
+        return /^https?:\/\//i.test(destinationKnown || '') ? destinationKnown : originKnown;
+      }
+      const originQuery = originKnown || `${origin}, Ottawa, Ontario`;
+      const destinationQuery = destinationKnown || `${destination}, Ottawa, Ontario`;
       return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originQuery)}&destination=${encodeURIComponent(destinationQuery)}&travelmode=driving`;
     }
 
