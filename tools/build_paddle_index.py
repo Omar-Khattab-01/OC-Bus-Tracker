@@ -41,6 +41,27 @@ PDF_SOURCES = {
         "service_day": "sunday",
         "category": "regular",
     },
+    "Easter_Monday/Reduced week(5-01 to 60-05).pdf": {
+        "source_id": "easter_monday_low",
+        "label": "Easter Monday reduced 5-01 to 60-05",
+        "service_day": "easter_monday",
+        "category": "reduced_week",
+        "service_header": "Reduced Week",
+    },
+    "Easter_Monday/Reduced weeks(61-01 to 899-04).pdf": {
+        "source_id": "easter_monday_high",
+        "label": "Easter Monday reduced 61-01 to 899-04",
+        "service_day": "easter_monday",
+        "category": "reduced_week",
+        "service_header": "Reduced Week",
+    },
+    "Easter_Monday/Reduced weeks (AM & PM).pdf": {
+        "source_id": "easter_monday_express",
+        "label": "Easter Monday reduced AM and PM",
+        "service_day": "easter_monday",
+        "category": "reduced_week",
+        "service_header": "Reduced Week",
+    },
 }
 
 INSTRUCTION_PREFIXES = (
@@ -300,7 +321,7 @@ def parse_page(text: str, source_meta, page_number: int):
 
         if active_trip:
             section_lines.append(line)
-        elif not is_preamble_metadata_line(line, paddle_id, effective, routes, source_meta["service_day"].capitalize(), bus_type, garage, sign_on):
+        elif not is_preamble_metadata_line(line, paddle_id, effective, routes, source_meta.get("service_header", source_meta["service_day"].capitalize()), bus_type, garage, sign_on):
             preamble_lines.append(line)
 
     flush_trip()
@@ -349,6 +370,7 @@ def build_index():
         "weekday": {},
         "saturday": {},
         "sunday": {},
+        "easter_monday": {},
     }
     source_summaries = {}
 
@@ -405,10 +427,12 @@ def main():
     weekday_runs = len(data["service_days"]["weekday"])
     saturday_runs = len(data["service_days"]["saturday"])
     sunday_runs = len(data["service_days"]["sunday"])
+    easter_monday_runs = len(data["service_days"]["easter_monday"])
     print(f"Wrote {OUTPUT_PATH}")
     print(f"weekday runs: {weekday_runs}")
     print(f"saturday runs: {saturday_runs}")
     print(f"sunday runs: {sunday_runs}")
+    print(f"easter monday runs: {easter_monday_runs}")
 
 
 if __name__ == "__main__":

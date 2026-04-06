@@ -140,6 +140,17 @@ function getOttawaServiceDateString() {
 }
 
 function getOttawaServiceDayKey() {
+  const now = new Date();
+  const ottawaIso = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  if (ottawaIso === '2026-04-06') {
+    return 'easter_monday';
+  }
+
   const weekday = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Toronto',
     weekday: 'long',
