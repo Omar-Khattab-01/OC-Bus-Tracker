@@ -118,6 +118,20 @@ def parse_trip_header(line: str, routes):
     return None
 
 
+def parse_trip_header_at(lines, index, routes):
+    if index >= len(lines):
+        return None, 0
+
+    max_parts = min(3, len(lines) - index)
+    for parts in range(1, max_parts + 1):
+        candidate = clean_line(" ".join(lines[index:index + parts]))
+        header = parse_trip_header(candidate, routes)
+        if header:
+            return header, parts
+
+    return None, 0
+
+
 def looks_like_instruction(line: str) -> bool:
     upper = line.upper()
     if any(upper.startswith(prefix) for prefix in INSTRUCTION_PREFIXES):
@@ -308,8 +322,10 @@ def parse_page(text: str, source_meta, page_number: int):
         active_trip = None
         section_lines = []
 
-    for line in lines:
-        header = parse_trip_header(line, routes)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        header, consumed = parse_trip_header_at(lines, i, routes)
         if header:
             if not trips and not active_trip:
                 start_directions = format_direction_text(preamble_lines)
@@ -317,12 +333,14 @@ def parse_page(text: str, source_meta, page_number: int):
             flush_trip()
             active_trip = header
             section_lines = []
+            i += consumed
             continue
 
         if active_trip:
             section_lines.append(line)
         elif not is_preamble_metadata_line(line, paddle_id, effective, routes, source_meta.get("service_header", source_meta["service_day"].capitalize()), bus_type, garage, sign_on):
             preamble_lines.append(line)
+        i += 1
 
     flush_trip()
 
