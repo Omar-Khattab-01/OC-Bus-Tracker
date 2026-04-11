@@ -1869,8 +1869,9 @@
         return;
       }
 
-      setAccountNotice('Saved your quick lookup settings.', 'ok');
+      setAccountNotice('', '');
       await loadProfile();
+      closeAccountModal();
     }
 
     async function saveSettings() {
@@ -1893,16 +1894,17 @@
         return;
       }
 
-      await supabaseClient.auth.updateUser({
-        data: {
-          display_name: displayName,
-          username: displayName,
-        },
-      });
+        await supabaseClient.auth.updateUser({
+          data: {
+            display_name: displayName,
+            username: displayName,
+          },
+        });
 
-      setAccountNotice('Settings saved.', 'ok');
-      await loadProfile();
-    }
+        setAccountNotice('', '');
+        await loadProfile();
+        closeAccountModal();
+      }
 
     async function signOutUser() {
       if (!supabaseClient) return;
@@ -1911,7 +1913,11 @@
     }
 
     async function handleSession(session) {
+      const wasSignedIn = Boolean(currentUser);
       currentUser = session?.user || null;
+      if (!wasSignedIn && currentUser) {
+        clearChatHistory();
+      }
       updateAccountButton();
       await loadProfile();
     }
