@@ -657,6 +657,25 @@ function getAvailableShuttlesForDay(serviceDay = getOttawaServiceDayKey()) {
     .filter(Boolean);
 }
 
+function findEquivalentShuttleForDay(id, serviceDay) {
+  const source = SHUTTLE_DEFINITIONS[id];
+  if (!source) return null;
+  const candidates = getAvailableShuttlesForDay(serviceDay);
+  return candidates.find((candidate) =>
+    candidate.id !== id &&
+    candidate.route === source.route &&
+    candidate.name === source.name
+  ) || null;
+}
+
+function getShuttleServiceLabel(shuttleId) {
+  if (/_weekday$/i.test(shuttleId)) return 'Weekday';
+  if (/_weekend$/i.test(shuttleId)) return 'Saturday/Sunday';
+  if (/_sunday$/i.test(shuttleId)) return 'Sunday';
+  if (/_saturday$/i.test(shuttleId)) return 'Saturday';
+  return '';
+}
+
 function paddleIdToBlockLabel(paddleId) {
   const text = String(paddleId || '').trim();
   const match = text.match(/^([A-Z0-9]{3})(\d{3})$/);
@@ -689,7 +708,7 @@ function getAccountShuttleOptions() {
       id: shuttle.id,
       route: shuttle.route,
       name: shuttle.name,
-      label: `${shuttle.route} ${shuttle.name}`,
+      label: `${shuttle.route} ${shuttle.name}${getShuttleServiceLabel(shuttle.id) ? ` (${getShuttleServiceLabel(shuttle.id)})` : ''}`,
     }))
     .sort((a, b) =>
       a.route.localeCompare(b.route, undefined, { numeric: true }) ||
@@ -858,7 +877,12 @@ function buildShuttleResponse(id, requestedDay) {
 
   const shuttle = getShuttleForToday(id);
   if (!shuttle) return null;
-  const nextStop = describeNextShuttleStop(shuttle);
+  const currentServiceDay = getOttawaServiceDayKey();
+  const isLiveDay = serviceDay === currentServiceDay;
+  const nextStop = isLiveDay ? describeNextShuttleStop(shuttle) : null;
+  const suggestedLiveShuttle = !isLiveDay
+    ? findEquivalentShuttleForDay(id, currentServiceDay)
+    : null;
 
   return {
     ok: true,
@@ -866,11 +890,20 @@ function buildShuttleResponse(id, requestedDay) {
     route: shuttle.route,
     name: shuttle.name,
     serviceDay,
+    isLiveDay,
+    currentServiceDay,
     sourceLabel: shuttle.sourceLabel,
     sourceFile: shuttle.sourceFile,
     stops: shuttle.stops,
     trips: shuttle.trips,
     nextStop,
+    suggestedLiveShuttle: suggestedLiveShuttle ? {
+      id: suggestedLiveShuttle.id,
+      route: suggestedLiveShuttle.route,
+      name: suggestedLiveShuttle.name,
+      serviceDay: currentServiceDay,
+      label: `${suggestedLiveShuttle.route} ${suggestedLiveShuttle.name}`,
+    } : null,
   };
 }
 

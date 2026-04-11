@@ -1141,6 +1141,17 @@
       return (accountOptions.shuttles || []).find((item) => item.id === id) || null;
     }
 
+    function getDefaultShuttleDayForId(id) {
+      const shuttleId = String(id || '').trim().toLowerCase();
+      if (shuttleId.endsWith('_weekday')) return 'weekday';
+      if (shuttleId.endsWith('_sunday')) return 'sunday';
+      if (shuttleId.endsWith('_saturday')) return 'saturday';
+      if (shuttleId.endsWith('_weekend')) {
+        return activeShuttleDay === 'sunday' ? 'sunday' : 'saturday';
+      }
+      return activeShuttleDay || '';
+    }
+
     function escapeAttribute(value) {
       return escapeHtml(value).replace(/"/g, '&quot;');
     }
@@ -1321,16 +1332,21 @@
       renderAccountModal();
     }
 
-    async function loadAccountOptions() {
-      try {
-        const response = await fetch('/api/account-options');
-        const data = await response.json();
-        if (!response.ok || !data.ok) return;
-        accountOptions = data.blocks || accountOptions;
-      } catch (_) {
-        // Keep defaults.
+      async function loadAccountOptions() {
+        try {
+          const response = await fetch('/api/account-options');
+          const data = await response.json();
+          if (!response.ok || !data.ok) return;
+          accountOptions = {
+            weekday: Array.isArray(data?.blocks?.weekday) ? data.blocks.weekday : (accountOptions.weekday || []),
+            saturday: Array.isArray(data?.blocks?.saturday) ? data.blocks.saturday : (accountOptions.saturday || []),
+            sunday: Array.isArray(data?.blocks?.sunday) ? data.blocks.sunday : (accountOptions.sunday || []),
+            shuttles: Array.isArray(data?.shuttles) ? data.shuttles : (accountOptions.shuttles || []),
+          };
+        } catch (_) {
+          // Keep defaults.
+        }
       }
-    }
 
     function updateAccountButton() {
       if (!supabaseEnabled) {
@@ -2124,8 +2140,9 @@
     function renderShuttleSchedule(data) {
       const headers = Array.isArray(data.stops) ? data.stops : [];
       const trips = Array.isArray(data.trips) ? data.trips : [];
-      const nextStopName = data.nextStop?.nextStopName || '';
-      const nextStopTime = data.nextStop?.nextStopTime || '';
+      const shouldHighlight = Boolean(data.isLiveDay);
+      const nextStopName = shouldHighlight ? (data.nextStop?.nextStopName || '') : '';
+      const nextStopTime = shouldHighlight ? (data.nextStop?.nextStopTime || '') : '';
 
       const rows = trips.map((trip) => {
         const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
@@ -2160,12 +2177,21 @@
     function openShuttleModal(data) {
       shuttleTitle.textContent = `${data.route} ${data.name}`;
       shuttleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Shuttle schedule'}`;
-      shuttleBody.innerHTML = `
+      const referenceCard = !data.isLiveDay ? `
+        <section class="summary-card">
+          <div class="summary-title">Reference Schedule</div>
+          <div class="summary-main">This shuttle is not live for ${escapeHtml(data.currentServiceDay || data.serviceDay)}. Showing the saved schedule only.</div>
+          ${data.suggestedLiveShuttle ? `<div class="summary-sub"><button id="suggestedLiveShuttleBtn" class="link-btn" type="button">Open ${escapeHtml(data.suggestedLiveShuttle.serviceDay)} shuttle instead</button></div>` : ''}
+        </section>
+      ` : `
         <section class="summary-card">
           <div class="summary-title">Next Stop</div>
           <div class="summary-main">${escapeHtml(data.nextStop?.summary || 'No next stop available.')}</div>
           ${data.nextStop?.currentSegment ? `<div class="summary-sub">${escapeHtml(data.nextStop.currentSegment)}</div>` : ''}
         </section>
+      `;
+      shuttleBody.innerHTML = `
+        ${referenceCard}
         <section class="meta-grid">
           <article class="meta-card"><strong>Route</strong><span>${escapeHtml(data.route || 'N/A')}</span></article>
           <article class="meta-card"><strong>Shuttle</strong><span>${escapeHtml(data.name || 'N/A')}</span></article>
@@ -2174,6 +2200,10 @@
         </section>
         ${renderShuttleSchedule(data)}
       `;
+      const suggestedLiveShuttleBtn = document.getElementById('suggestedLiveShuttleBtn');
+      if (suggestedLiveShuttleBtn && data.suggestedLiveShuttle) {
+        suggestedLiveShuttleBtn.addEventListener('click', () => showShuttle(data.suggestedLiveShuttle.id, data.suggestedLiveShuttle.serviceDay));
+      }
       shuttleOverlay.hidden = false;
       document.body.style.overflow = 'hidden';
     }
@@ -2302,10 +2332,10 @@
         sendMessage(`shuttle ${target.dataset.quickShuttle}`);
         return;
       }
-      if (target.dataset.quickSavedShuttle) {
-        showShuttle(target.dataset.quickSavedShuttle, activeShuttleDay || '');
-      }
-    });
+        if (target.dataset.quickSavedShuttle) {
+          showShuttle(target.dataset.quickSavedShuttle, getDefaultShuttleDayForId(target.dataset.quickSavedShuttle));
+        }
+      });
 
     myWorkBtn.addEventListener('click', openMyWorkModal);
     accountBtn.addEventListener('click', openAccountModal);
