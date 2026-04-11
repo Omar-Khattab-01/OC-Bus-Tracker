@@ -458,6 +458,34 @@
       gap: 10px;
     }
 
+    .summary-card {
+      border: 1px solid rgba(255, 179, 72, 0.24);
+      background: rgba(42, 30, 12, 0.45);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .summary-title {
+      font-size: 11px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-main {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .summary-sub {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
     .trip-item {
       border: 1px solid var(--border);
       background: rgba(14, 18, 24, 0.8);
@@ -534,6 +562,39 @@
       background: rgba(17, 24, 32, 0.72);
     }
 
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(12, 16, 21, 0.74);
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .schedule-table th {
+      background: rgba(28, 34, 42, 0.92);
+      color: var(--oc-mist);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .schedule-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .schedule-table tr.highlight td {
+      background: rgba(218, 41, 28, 0.14);
+    }
+
     @media (max-width: 700px) {
       body { padding: 8px; }
       .app { height: calc(100vh - 16px); border-radius: 16px; }
@@ -559,7 +620,7 @@
     </header>
 
     <section id="chat" class="chat" aria-live="polite">
-      <div class="message bot">Send a block like <strong>44-07</strong> to get active bus locations.</div>
+      <div class="message bot">Send a block like <strong>44-07</strong> to get active bus locations, or type <strong>shuttle</strong> to see worker shuttles for today.</div>
     </section>
 
     <section class="composer">
@@ -594,6 +655,19 @@
     </section>
   </div>
 
+  <div id="shuttleOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="shuttleTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="shuttleTitle">Shuttle</h2>
+          <p id="shuttleMeta" class="modal-meta"></p>
+        </div>
+        <button id="closeShuttleBtn" class="close-btn" type="button" aria-label="Close shuttle viewer">×</button>
+      </header>
+      <div id="shuttleBody" class="modal-body"></div>
+    </section>
+  </div>
+
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
@@ -611,6 +685,11 @@
     const paddleMeta = document.getElementById('paddleMeta');
     const paddleBody = document.getElementById('paddleBody');
     const closePaddleBtn = document.getElementById('closePaddleBtn');
+    const shuttleOverlay = document.getElementById('shuttleOverlay');
+    const shuttleTitle = document.getElementById('shuttleTitle');
+    const shuttleMeta = document.getElementById('shuttleMeta');
+    const shuttleBody = document.getElementById('shuttleBody');
+    const closeShuttleBtn = document.getElementById('closeShuttleBtn');
 
     function addMessage(text, role) {
       const bubble = document.createElement('div');
@@ -627,7 +706,7 @@
       bubble.innerHTML = `
         <div class="loading-icon" aria-hidden="true"></div>
         <div class="loading-text">
-          Tracking live buses
+          Looking that up
           <span class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
         </div>
       `;
@@ -807,9 +886,109 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function renderShuttleSchedule(data) {
+      const headers = Array.isArray(data.stops) ? data.stops : [];
+      const trips = Array.isArray(data.trips) ? data.trips : [];
+      const nextStopName = data.nextStop?.nextStopName || '';
+      const nextStopTime = data.nextStop?.nextStopTime || '';
+
+      const rows = trips.map((trip) => {
+        const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
+          stop.name === nextStopName && stop.time === nextStopTime
+        );
+        const cells = headers.map((stopName, index) => {
+          const stop = Array.isArray(trip.stops) ? trip.stops[index] : null;
+          return `<td>${escapeHtml(stop?.time || '--:--')}</td>`;
+        }).join('');
+
+        return `
+          <tr class="${isHighlighted ? 'highlight' : ''}">
+            <td>Trip ${escapeHtml(trip.tripNumber)}</td>
+            ${cells}
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Trip</th>
+              ${headers.map((stop) => `<th>${escapeHtml(stop)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function openShuttleModal(data) {
+      shuttleTitle.textContent = `${data.route} ${data.name}`;
+      shuttleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Shuttle schedule'}`;
+      shuttleBody.innerHTML = `
+        <section class="summary-card">
+          <div class="summary-title">Next Stop</div>
+          <div class="summary-main">${escapeHtml(data.nextStop?.summary || 'No next stop available.')}</div>
+          ${data.nextStop?.currentSegment ? `<div class="summary-sub">${escapeHtml(data.nextStop.currentSegment)}</div>` : ''}
+        </section>
+        <section class="meta-grid">
+          <article class="meta-card"><strong>Route</strong><span>${escapeHtml(data.route || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Shuttle</strong><span>${escapeHtml(data.name || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Source</strong><span>${escapeHtml(data.sourceLabel || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Trips</strong><span>${escapeHtml((data.trips || []).length)}</span></article>
+        </section>
+        ${renderShuttleSchedule(data)}
+      `;
+      shuttleOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeShuttleModal() {
+      shuttleOverlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    async function showShuttle(id) {
+      const previousStatus = statusEl.textContent;
+      statusEl.textContent = 'Loading shuttle...';
+      statusEl.classList.remove('ok', 'warn');
+
+      try {
+        const response = await fetch(`/api/shuttle?id=${encodeURIComponent(id)}`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Shuttle lookup failed');
+        }
+        openShuttleModal(data);
+        statusEl.textContent = previousStatus || 'Ready';
+      } catch (err) {
+        addMessage(err.message || 'Shuttle lookup failed.', 'bot');
+        statusEl.textContent = 'Error';
+        statusEl.classList.add('warn');
+      }
+    }
+
+    function addShuttleActions(shuttles) {
+      if (!Array.isArray(shuttles) || !shuttles.length) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'bot-actions';
+
+      for (const shuttle of shuttles) {
+        const button = document.createElement('button');
+        button.className = 'link-btn';
+        button.type = 'button';
+        button.textContent = `${shuttle.route} ${shuttle.name}`;
+        button.addEventListener('click', () => showShuttle(shuttle.id));
+        wrap.appendChild(button);
+      }
+
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
     async function sendMessage(message) {
       const started = performance.now();
-      statusEl.textContent = 'Fetching live data...';
+      statusEl.textContent = /\bshuttles?\b/i.test(message) ? 'Loading shuttles...' : 'Fetching live data...';
       statusEl.classList.remove('ok', 'warn');
       sendBtn.disabled = true;
 
@@ -838,11 +1017,16 @@
         if (data.paddleAvailable) {
           addPaddleAction(data.block);
         }
+        if (data.shuttleOptions) {
+          addShuttleActions(data.shuttleOptions);
+        }
 
         const elapsedMs = Math.round(performance.now() - started);
-        statusEl.textContent = 'Live result';
+        statusEl.textContent = data.mode === 'shuttle-list' ? 'Shuttles ready' : 'Live result';
         statusEl.classList.add('ok');
-        latencyHint.textContent = `Response time: ${elapsedMs}ms (live)`;
+        latencyHint.textContent = data.mode === 'shuttle-list'
+          ? `Response time: ${elapsedMs}ms`
+          : `Response time: ${elapsedMs}ms (live)`;
       } catch (err) {
         loadingBubble.remove();
         addMessage(err.message || 'Unexpected error.', 'bot');
@@ -862,12 +1046,19 @@
     });
 
     closePaddleBtn.addEventListener('click', closePaddleModal);
+    closeShuttleBtn.addEventListener('click', closeShuttleModal);
     paddleOverlay.addEventListener('click', (event) => {
       if (event.target === paddleOverlay) closePaddleModal();
+    });
+    shuttleOverlay.addEventListener('click', (event) => {
+      if (event.target === shuttleOverlay) closeShuttleModal();
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !paddleOverlay.hidden) {
         closePaddleModal();
+      }
+      if (event.key === 'Escape' && !shuttleOverlay.hidden) {
+        closeShuttleModal();
       }
     });
   </script>
