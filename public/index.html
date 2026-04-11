@@ -70,7 +70,7 @@
       background: var(--card);
       backdrop-filter: blur(12px);
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto auto 1fr auto;
       overflow: hidden;
       animation: enter 420ms ease;
     }
@@ -81,6 +81,7 @@
     }
 
     .header {
+      grid-row: 1;
       border-bottom: 1px solid var(--border);
       padding: 16px 18px;
       display: flex;
@@ -133,7 +134,14 @@
       white-space: nowrap;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .chat {
+      grid-row: 3;
       padding: 18px;
       overflow-y: auto;
       display: flex;
@@ -257,6 +265,57 @@
 
     .link-btn:active { transform: translateY(1px); }
 
+    .header-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(10, 14, 18, 0.82);
+      color: var(--oc-white);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 140ms ease, transform 120ms ease, background 140ms ease;
+      white-space: nowrap;
+    }
+
+    .header-btn:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(20, 25, 31, 0.92);
+    }
+
+    .header-btn:active { transform: translateY(1px); }
+
+    .quick-panel[hidden] { display: none; }
+
+    .quick-panel {
+      grid-row: 2;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      background: linear-gradient(180deg, rgba(26, 31, 39, 0.72), rgba(18, 23, 29, 0.62));
+      display: grid;
+      gap: 10px;
+    }
+
+    .quick-panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .quick-title {
+      font-size: 12px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .quick-subtitle {
+      color: var(--oc-white);
+      font-size: 14px;
+    }
+
     .card {
       border: 1px solid var(--border);
       background: rgba(15, 18, 24, 0.7);
@@ -301,6 +360,7 @@
     }
 
     .composer {
+      grid-row: 4;
       border-top: 1px solid var(--border);
       padding: 12px;
       background: rgba(17, 22, 28, 0.8);
@@ -562,6 +622,137 @@
       background: rgba(17, 24, 32, 0.72);
     }
 
+    .section-card {
+      border: 1px solid var(--border);
+      background: rgba(12, 16, 21, 0.74);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .field-stack {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .text-input,
+    .select-input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(10, 14, 18, 0.9);
+      color: var(--oc-white);
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .text-input:focus,
+    .select-input:focus {
+      border-color: rgba(218, 41, 28, 0.95);
+      box-shadow: 0 0 0 3px rgba(218, 41, 28, 0.16);
+    }
+
+    .text-input.input-error,
+    .select-input.input-error {
+      border-color: rgba(229, 50, 36, 0.95);
+      box-shadow: 0 0 0 3px rgba(229, 50, 36, 0.16);
+    }
+
+    .stack-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .saved-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .saved-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(17, 24, 32, 0.72);
+      color: var(--oc-white);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+
+    .chip-remove {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--oc-mist);
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+    }
+
+    .checkbox-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 4px 0;
+    }
+
+    .subtle-text {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .notice {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      background: rgba(17, 24, 32, 0.72);
+      color: var(--oc-white);
+    }
+
+    .notice.warn {
+      border-color: rgba(255, 179, 72, 0.28);
+      color: #ffd59a;
+    }
+
+    .notice.ok {
+      border-color: rgba(57, 182, 108, 0.28);
+      color: #b8f0cb;
+    }
+
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
@@ -603,6 +794,7 @@
       .composer form { grid-template-columns: 1fr; }
       .btn { min-height: 44px; }
       .hint { flex-direction: column; }
+      .quick-panel-top { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -612,15 +804,30 @@
       <div class="brand">
         <div class="badge">OC</div>
         <div class="title">
-          <h1>Bus Tracker Chat</h1>
-          <p>Live OC Transpo block lookup with street-level hints</p>
+          <h1>OC Operator Tools</h1>
+          <p>Blocks, paddles, shuttles, and live bus lookup</p>
         </div>
       </div>
-      <div id="status" class="status">Ready</div>
+      <div class="header-actions">
+        <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
+        <button id="accountBtn" class="header-btn" type="button">Account</button>
+        <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
+        <div id="status" class="status">Ready</div>
+      </div>
     </header>
 
+    <section id="quickLookupPanel" class="quick-panel" hidden>
+      <div class="quick-panel-top">
+        <div>
+          <div class="quick-title">Quick Lookup</div>
+          <div id="quickLookupMeta" class="quick-subtitle"></div>
+        </div>
+      </div>
+      <div id="quickLookupActions" class="bot-actions"></div>
+    </section>
+
     <section id="chat" class="chat" aria-live="polite">
-      <div class="message bot">Send a block like <strong>44-07</strong> to get active bus locations, or type <strong>shuttle</strong> to see worker shuttles for today.</div>
+      <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
     </section>
 
     <section class="composer">
@@ -629,10 +836,10 @@
           id="messageInput"
           class="input"
           autocomplete="off"
-          placeholder="Type a block number, e.g. 44-7"
-          aria-label="Block number"
+          placeholder="Type a block, bus number, or shuttle"
+          aria-label="Block number, bus number, or shuttle"
         />
-        <button id="sendBtn" class="btn" type="submit">Track Block</button>
+        <button id="sendBtn" class="btn" type="submit">Search</button>
       </form>
       <div class="hint">
         <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
@@ -668,10 +875,24 @@
     </section>
   </div>
 
+  <div id="accountOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="accountTitle">Account</h2>
+          <p id="accountMeta" class="modal-meta"></p>
+        </div>
+        <button id="closeAccountBtn" class="close-btn" type="button" aria-label="Close account">×</button>
+      </header>
+      <div id="accountBody" class="modal-body"></div>
+    </section>
+  </div>
+
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
+  <script src="/vendor/supabase.js"></script>
 
   <script>
     const form = document.getElementById('chatForm');
@@ -680,6 +901,12 @@
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const latencyHint = document.getElementById('latencyHint');
+    const myWorkBtn = document.getElementById('myWorkBtn');
+    const accountBtn = document.getElementById('accountBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const quickLookupPanel = document.getElementById('quickLookupPanel');
+    const quickLookupMeta = document.getElementById('quickLookupMeta');
+    const quickLookupActions = document.getElementById('quickLookupActions');
     const paddleOverlay = document.getElementById('paddleOverlay');
     const paddleTitle = document.getElementById('paddleTitle');
     const paddleMeta = document.getElementById('paddleMeta');
@@ -690,6 +917,37 @@
     const shuttleMeta = document.getElementById('shuttleMeta');
     const shuttleBody = document.getElementById('shuttleBody');
     const closeShuttleBtn = document.getElementById('closeShuttleBtn');
+    const accountOverlay = document.getElementById('accountOverlay');
+    const accountMeta = document.getElementById('accountMeta');
+    const accountBody = document.getElementById('accountBody');
+    const closeAccountBtn = document.getElementById('closeAccountBtn');
+    let supabaseClient = null;
+    let supabaseEnabled = false;
+    let currentUser = null;
+    let currentProfile = null;
+    let accountNotice = {
+      text: '',
+      tone: '',
+    };
+    let accountAuthMode = 'signin';
+    let accountResetMode = false;
+    let accountRecoveryMode = false;
+    let accountViewMode = 'settings';
+    let accountOptions = {
+      weekday: [],
+      saturday: [],
+      sunday: [],
+      shuttles: [],
+    };
+    let activeShuttleDay = '';
+    let lastLookup = {
+      block: '',
+      bus: '',
+      shuttleDay: '',
+    };
+    const defaultChatMarkup = `
+      <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
+    `;
 
     function addMessage(text, role) {
       const bubble = document.createElement('div');
@@ -713,6 +971,814 @@
       chat.appendChild(bubble);
       chat.scrollTop = chat.scrollHeight;
       return bubble;
+    }
+
+    function clearChatHistory() {
+      chat.innerHTML = defaultChatMarkup;
+      statusEl.textContent = 'Ready';
+      statusEl.classList.remove('ok', 'warn');
+      latencyHint.textContent = 'Always live lookup (no cache)';
+      activeShuttleDay = '';
+      closePaddleModal();
+      closeShuttleModal();
+    }
+
+    function normalizeBlockValue(value) {
+      return String(value || '').trim().toUpperCase();
+    }
+
+    function getSavedBlocksForDay(day) {
+      const key = `${day}_blocks`;
+      return Array.isArray(currentProfile?.[key]) ? currentProfile[key] : [];
+    }
+
+    function getSavedShuttles() {
+      return Array.isArray(currentProfile?.saved_shuttles) ? currentProfile.saved_shuttles : [];
+    }
+
+    function getShuttleOptionById(id) {
+      return (accountOptions.shuttles || []).find((item) => item.id === id) || null;
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/"/g, '&quot;');
+    }
+
+    function closeAccountModal() {
+      accountOverlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function openAccountModal() {
+      accountViewMode = 'settings';
+      renderAccountModal();
+      accountOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openMyWorkModal() {
+      accountViewMode = 'work';
+      renderAccountModal();
+      accountOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function setLastLookupFromResponse(data) {
+      if (!data || !data.ok) return;
+      if (data.mode === 'shuttle-list') {
+        lastLookup.shuttleDay = data.shuttleDay || '';
+        return;
+      }
+      if (data.mode === 'bus') {
+        lastLookup.bus = data.busNumber || '';
+        if (data.block) lastLookup.block = data.block;
+        return;
+      }
+      if (data.block) {
+        lastLookup.block = data.block;
+      }
+    }
+
+    function setAccountNotice(text, tone = '') {
+      accountNotice = {
+        text: String(text || ''),
+        tone: String(tone || ''),
+      };
+      updateAccountNoticeElement();
+    }
+
+    function renderAccountNotice() {
+      const toneClass = accountNotice.tone ? ` ${accountNotice.tone}` : '';
+      const hiddenStyle = accountNotice.text ? '' : ' style="display:none"';
+      return `<div id="accountNoticeBox" class="notice${toneClass}"${hiddenStyle}>${escapeHtml(accountNotice.text)}</div>`;
+    }
+
+    function updateAccountNoticeElement() {
+      const node = document.getElementById('accountNoticeBox');
+      if (!node) return;
+      if (!accountNotice.text) {
+        node.style.display = 'none';
+        node.className = 'notice';
+        node.textContent = '';
+        return;
+      }
+      node.style.display = '';
+      node.className = `notice${accountNotice.tone ? ` ${accountNotice.tone}` : ''}`;
+      node.textContent = accountNotice.text;
+    }
+
+    function setAccountAuthMode(mode) {
+      accountAuthMode = mode === 'signup' ? 'signup' : 'signin';
+      accountResetMode = false;
+      setAccountNotice('', '');
+      renderAccountModal();
+    }
+
+    function setAccountResetMode(enabled) {
+      accountResetMode = Boolean(enabled);
+      accountRecoveryMode = false;
+      setAccountNotice('', '');
+      renderAccountModal();
+    }
+
+    function setAccountRecoveryMode(enabled) {
+      accountRecoveryMode = Boolean(enabled);
+      accountResetMode = false;
+      accountAuthMode = 'signin';
+      setAccountNotice('', '');
+      renderAccountModal();
+    }
+
+    function isRecoveryUrl() {
+      const hash = String(window.location.hash || '');
+      const search = String(window.location.search || '');
+      return /type=recovery/i.test(hash) || /type=recovery/i.test(search);
+    }
+
+    function clearAccountFieldErrors() {
+      accountBody.querySelectorAll('.input-error').forEach((node) => {
+        node.classList.remove('input-error');
+      });
+    }
+
+    function markAccountFieldError(id) {
+      const node = document.getElementById(id);
+      if (node) node.classList.add('input-error');
+    }
+
+    function renderQuickLookup() {
+      if (!currentUser) {
+        quickLookupPanel.hidden = true;
+        quickLookupMeta.textContent = '';
+        quickLookupActions.innerHTML = '';
+        return;
+      }
+
+      quickLookupPanel.hidden = false;
+      quickLookupMeta.textContent = currentProfile?.display_name
+        ? `${currentProfile.display_name}'s saved work`
+        : currentUser.email || 'Saved work';
+
+      const today = activeShuttleDay || 'weekday';
+      const orderedDays = [today, 'weekday', 'saturday', 'sunday'].filter((day, index, arr) => arr.indexOf(day) === index);
+      const actions = [];
+
+      for (const day of orderedDays) {
+        const blocks = getSavedBlocksForDay(day);
+        for (const block of blocks) {
+          actions.push(`<button class="link-btn" type="button" data-quick-block="${escapeAttribute(block)}">${escapeHtml(formatServiceDayLabel(day))}: ${escapeHtml(block)}</button>`);
+        }
+      }
+      for (const shuttleId of getSavedShuttles()) {
+        const shuttle = getShuttleOptionById(shuttleId);
+        if (!shuttle) continue;
+        actions.push(`<button class="link-btn" type="button" data-quick-saved-shuttle="${escapeAttribute(shuttle.id)}">Shuttle: ${escapeHtml(shuttle.label)}</button>`);
+      }
+
+      quickLookupActions.innerHTML = actions.length
+        ? actions.join('')
+        : '<span class="subtle-text">Open Account to save your work blocks and shuttle shortcuts.</span>';
+    }
+
+    async function fetchSupabaseConfig() {
+      try {
+        const response = await fetch('/api/supabase-config');
+        const data = await response.json();
+        if (!response.ok || !data.ok || !data.enabled) {
+          return null;
+        }
+        return data;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function loadProfile() {
+      if (!supabaseClient || !currentUser) {
+        currentProfile = null;
+        renderQuickLookup();
+        renderAccountModal();
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        currentProfile = null;
+      } else {
+        currentProfile = data || null;
+        if (currentProfile && !currentProfile.display_name) {
+          currentProfile.display_name = currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || '';
+        }
+      }
+
+      renderQuickLookup();
+      renderAccountModal();
+    }
+
+    async function loadAccountOptions() {
+      try {
+        const response = await fetch('/api/account-options');
+        const data = await response.json();
+        if (!response.ok || !data.ok) return;
+        accountOptions = data.blocks || accountOptions;
+      } catch (_) {
+        // Keep defaults.
+      }
+    }
+
+    function updateAccountButton() {
+      if (!supabaseEnabled) {
+        accountBtn.textContent = 'Accounts Off';
+        myWorkBtn.hidden = true;
+        return;
+      }
+      accountBtn.textContent = currentUser ? 'Settings' : 'Account';
+      myWorkBtn.hidden = !currentUser;
+    }
+
+    function renderAccountModal() {
+      if (!supabaseEnabled) {
+        accountMeta.textContent = 'Supabase is not configured yet.';
+        accountBody.innerHTML = `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="subtle-text">Accounts are not active yet. Add <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in Vercel, then run the SQL in <strong>supabase/schema.sql</strong>.</div>
+          </section>
+        `;
+        return;
+      }
+
+      const isSignup = !currentUser && accountAuthMode === 'signup';
+      const isReset = !currentUser && !isSignup && accountResetMode;
+      const isRecovery = accountRecoveryMode;
+
+      if (!currentUser || isRecovery) {
+        accountMeta.textContent = isSignup
+          ? 'Create an account to save quick lookups.'
+          : isRecovery
+            ? 'Set a new password for your account.'
+          : isReset
+            ? 'Reset your password by email.'
+            : 'Sign in to save quick lookups.';
+        accountBody.innerHTML = isSignup ? `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="stack-form">
+              <label class="field-stack">
+                <span class="field-label">Username</span>
+                <input id="authDisplayName" class="text-input" type="text" autocomplete="nickname" placeholder="Your name" />
+              </label>
+              <label class="field-stack">
+                <span class="field-label">Email</span>
+                <input id="authEmail" class="text-input" type="email" autocomplete="email" placeholder="you@example.com" />
+              </label>
+              <label class="field-stack">
+                <span class="field-label">Password</span>
+                <input id="authPassword" class="text-input" type="password" autocomplete="new-password" placeholder="Create a password" />
+              </label>
+              <label class="field-stack">
+                <span class="field-label">Confirm Password</span>
+                <input id="authPasswordConfirm" class="text-input" type="password" autocomplete="new-password" placeholder="Enter password again" />
+              </label>
+            </div>
+            <label class="checkbox-row">
+              <input id="showPasswordToggle" type="checkbox" />
+              <span>Show passwords</span>
+            </label>
+            <div class="section-actions">
+              <button id="signUpBtn" class="btn" type="button">Create Account</button>
+              <button id="switchToSignInBtn" class="link-btn" type="button">Back to Sign In</button>
+            </div>
+          </section>
+        ` : isRecovery ? `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="stack-form">
+              <label class="field-stack">
+                <span class="field-label">New Password</span>
+                <input id="recoveryPassword" class="text-input" type="password" autocomplete="new-password" placeholder="Enter a new password" />
+              </label>
+              <label class="field-stack">
+                <span class="field-label">Confirm New Password</span>
+                <input id="recoveryPasswordConfirm" class="text-input" type="password" autocomplete="new-password" placeholder="Enter password again" />
+              </label>
+            </div>
+            <label class="checkbox-row">
+              <input id="showRecoveryPasswordToggle" type="checkbox" />
+              <span>Show passwords</span>
+            </label>
+            <div class="section-actions">
+              <button id="setNewPasswordBtn" class="btn" type="button">Set New Password</button>
+            </div>
+          </section>
+        ` : isReset ? `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="stack-form">
+              <label class="field-stack">
+                <span class="field-label">Email</span>
+                <input id="resetEmail" class="text-input" type="email" autocomplete="email" placeholder="you@example.com" />
+              </label>
+            </div>
+            <div class="section-actions">
+              <button id="sendResetBtn" class="btn" type="button">Send Reset Email</button>
+              <button id="switchToSignInBtn" class="link-btn" type="button">Back to Sign In</button>
+            </div>
+          </section>
+        ` : `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="stack-form">
+              <label class="field-stack">
+                <span class="field-label">Email</span>
+                <input id="authEmail" class="text-input" type="email" autocomplete="email" placeholder="you@example.com" />
+              </label>
+              <label class="field-stack">
+                <span class="field-label">Password</span>
+                <input id="authPassword" class="text-input" type="password" autocomplete="current-password" placeholder="Password" />
+              </label>
+              <label class="checkbox-row">
+                <input id="showSignInPasswordToggle" type="checkbox" />
+                <span>Show password</span>
+              </label>
+              <div class="subtle-text">
+                <button id="forgotPasswordBtn" class="link-btn" type="button">Forgot Password?</button>
+              </div>
+            </div>
+            <div class="section-actions">
+              <button id="signInBtn" class="btn" type="button">Sign In</button>
+            </div>
+            <div class="divider"></div>
+            <div class="section-actions">
+              <button id="switchToSignUpBtn" class="link-btn" type="button">Create Account</button>
+            </div>
+          </section>
+        `;
+        wireAccountModalEvents();
+        return;
+      }
+
+      const weekdayBlocks = getSavedBlocksForDay('weekday');
+      const saturdayBlocks = getSavedBlocksForDay('saturday');
+      const sundayBlocks = getSavedBlocksForDay('sunday');
+      const savedShuttles = getSavedShuttles();
+      if (accountViewMode === 'settings') {
+        accountMeta.textContent = `Signed in as ${currentUser.email || 'account user'}`;
+        accountBody.innerHTML = `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Display Name</span>
+                <input id="profileDisplayName" class="text-input" type="text" value="${escapeHtml(currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || '')}" placeholder="Optional" />
+              </label>
+            </div>
+            <div class="section-actions">
+              <button id="saveSettingsBtn" class="btn" type="button">Save Settings</button>
+              <button id="requestPasswordResetBtn" class="link-btn" type="button">Change Password</button>
+              <button id="signOutBtn" class="link-btn" type="button">Sign Out</button>
+            </div>
+          </section>
+        `;
+        wireAccountModalEvents();
+        return;
+      }
+
+      accountMeta.textContent = `Signed in as ${currentUser.email || 'account user'}`;
+      accountBody.innerHTML = `
+        <section class="section-card">
+          ${renderAccountNotice()}
+          <section class="section-card">
+            <div class="field-label">Weekday Work</div>
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Add Weekday Block</span>
+                <input id="weekdayBlockInput" class="text-input" type="text" list="weekdayBlockOptions" value="${escapeHtml(lastLookup.block && activeShuttleDay === 'weekday' ? lastLookup.block : '')}" placeholder="Type or choose a weekday block" />
+                <datalist id="weekdayBlockOptions">${(accountOptions.weekday || []).map((block) => `<option value="${escapeAttribute(block)}"></option>`).join('')}</datalist>
+              </label>
+              <div class="section-actions">
+                <button id="addWeekdayBlockBtn" class="link-btn" type="button">Add</button>
+              </div>
+            </div>
+            <div id="weekdayBlocksList" class="saved-list">${weekdayBlocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-day="weekday" data-remove-block="${escapeAttribute(block)}">×</button></span>`).join('')}</div>
+          </section>
+          <section class="section-card">
+            <div class="field-label">Saturday Work</div>
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Add Saturday Block</span>
+                <input id="saturdayBlockInput" class="text-input" type="text" list="saturdayBlockOptions" value="${escapeHtml(lastLookup.block && activeShuttleDay === 'saturday' ? lastLookup.block : '')}" placeholder="Type or choose a Saturday block" />
+                <datalist id="saturdayBlockOptions">${(accountOptions.saturday || []).map((block) => `<option value="${escapeAttribute(block)}"></option>`).join('')}</datalist>
+              </label>
+              <div class="section-actions">
+                <button id="addSaturdayBlockBtn" class="link-btn" type="button">Add</button>
+              </div>
+            </div>
+            <div id="saturdayBlocksList" class="saved-list">${saturdayBlocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-day="saturday" data-remove-block="${escapeAttribute(block)}">×</button></span>`).join('')}</div>
+          </section>
+          <section class="section-card">
+            <div class="field-label">Sunday Work</div>
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Add Sunday Block</span>
+                <input id="sundayBlockInput" class="text-input" type="text" list="sundayBlockOptions" value="${escapeHtml(lastLookup.block && activeShuttleDay === 'sunday' ? lastLookup.block : '')}" placeholder="Type or choose a Sunday block" />
+                <datalist id="sundayBlockOptions">${(accountOptions.sunday || []).map((block) => `<option value="${escapeAttribute(block)}"></option>`).join('')}</datalist>
+              </label>
+              <div class="section-actions">
+                <button id="addSundayBlockBtn" class="link-btn" type="button">Add</button>
+              </div>
+            </div>
+            <div id="sundayBlocksList" class="saved-list">${sundayBlocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-day="sunday" data-remove-block="${escapeAttribute(block)}">×</button></span>`).join('')}</div>
+          </section>
+          <section class="section-card">
+            <div class="field-label">Saved Shuttles</div>
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Add Shuttle</span>
+                <select id="savedShuttleSelect" class="select-input">
+                  <option value="">Choose a shuttle</option>
+                  ${(accountOptions.shuttles || []).map((shuttle) => `<option value="${escapeAttribute(shuttle.id)}">${escapeHtml(shuttle.label)}</option>`).join('')}
+                </select>
+              </label>
+              <div class="section-actions">
+                <button id="addSavedShuttleBtn" class="link-btn" type="button">Add</button>
+              </div>
+            </div>
+            <div id="savedShuttlesList" class="saved-list">${savedShuttles.map((shuttleId) => {
+              const shuttle = getShuttleOptionById(shuttleId);
+              const label = shuttle ? shuttle.label : shuttleId;
+              return `<span class="saved-chip">${escapeHtml(label)} <button class="chip-remove" type="button" data-remove-shuttle="${escapeAttribute(shuttleId)}">×</button></span>`;
+            }).join('')}</div>
+          </section>
+          <div class="section-actions">
+            <button id="saveProfileBtn" class="btn" type="button">Save Work</button>
+          </div>
+        </section>
+      `;
+      wireAccountModalEvents();
+    }
+
+    function wireAccountModalEvents() {
+      const signInBtn = document.getElementById('signInBtn');
+      const signUpBtn = document.getElementById('signUpBtn');
+      const switchToSignUpBtn = document.getElementById('switchToSignUpBtn');
+      const switchToSignInBtn = document.getElementById('switchToSignInBtn');
+      const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+      const sendResetBtn = document.getElementById('sendResetBtn');
+      const setNewPasswordBtn = document.getElementById('setNewPasswordBtn');
+      const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+      const requestPasswordResetBtn = document.getElementById('requestPasswordResetBtn');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const signOutBtn = document.getElementById('signOutBtn');
+      const addWeekdayBlockBtn = document.getElementById('addWeekdayBlockBtn');
+      const addSaturdayBlockBtn = document.getElementById('addSaturdayBlockBtn');
+      const addSundayBlockBtn = document.getElementById('addSundayBlockBtn');
+      const addSavedShuttleBtn = document.getElementById('addSavedShuttleBtn');
+      const showSignInPasswordToggle = document.getElementById('showSignInPasswordToggle');
+      const showPasswordToggle = document.getElementById('showPasswordToggle');
+      const showRecoveryPasswordToggle = document.getElementById('showRecoveryPasswordToggle');
+
+      if (signInBtn) signInBtn.addEventListener('click', signInWithPassword);
+      if (signUpBtn) signUpBtn.addEventListener('click', signUpWithPassword);
+      if (switchToSignUpBtn) switchToSignUpBtn.addEventListener('click', () => setAccountAuthMode('signup'));
+      if (switchToSignInBtn) switchToSignInBtn.addEventListener('click', () => setAccountAuthMode('signin'));
+      if (forgotPasswordBtn) forgotPasswordBtn.addEventListener('click', () => setAccountResetMode(true));
+      if (sendResetBtn) sendResetBtn.addEventListener('click', sendPasswordResetEmail);
+      if (setNewPasswordBtn) setNewPasswordBtn.addEventListener('click', setNewPassword);
+      if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
+      if (requestPasswordResetBtn) requestPasswordResetBtn.addEventListener('click', sendSignedInPasswordResetEmail);
+      if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
+      if (signOutBtn) signOutBtn.addEventListener('click', signOutUser);
+      if (addWeekdayBlockBtn) addWeekdayBlockBtn.addEventListener('click', () => addBlockToProfile('weekday'));
+      if (addSaturdayBlockBtn) addSaturdayBlockBtn.addEventListener('click', () => addBlockToProfile('saturday'));
+      if (addSundayBlockBtn) addSundayBlockBtn.addEventListener('click', () => addBlockToProfile('sunday'));
+      if (addSavedShuttleBtn) addSavedShuttleBtn.addEventListener('click', addShuttleToProfile);
+      if (showSignInPasswordToggle) {
+        showSignInPasswordToggle.addEventListener('change', () => {
+          const password = document.getElementById('authPassword');
+          if (password) password.type = showSignInPasswordToggle.checked ? 'text' : 'password';
+        });
+      }
+      if (showPasswordToggle) {
+        showPasswordToggle.addEventListener('change', () => {
+          const password = document.getElementById('authPassword');
+          const confirm = document.getElementById('authPasswordConfirm');
+          const type = showPasswordToggle.checked ? 'text' : 'password';
+          if (password) password.type = type;
+          if (confirm) confirm.type = type;
+        });
+      }
+      if (showRecoveryPasswordToggle) {
+        showRecoveryPasswordToggle.addEventListener('change', () => {
+          const password = document.getElementById('recoveryPassword');
+          const confirm = document.getElementById('recoveryPasswordConfirm');
+          const type = showRecoveryPasswordToggle.checked ? 'text' : 'password';
+          if (password) password.type = type;
+          if (confirm) confirm.type = type;
+        });
+      }
+
+      accountBody.querySelectorAll('[data-remove-day][data-remove-block]').forEach((button) => {
+        button.addEventListener('click', () => removeBlockFromProfile(button.dataset.removeDay, button.dataset.removeBlock));
+      });
+      accountBody.querySelectorAll('[data-remove-shuttle]').forEach((button) => {
+        button.addEventListener('click', () => removeShuttleFromProfile(button.dataset.removeShuttle));
+      });
+    }
+
+    function addBlockToProfile(day) {
+      const input = document.getElementById(`${day}BlockInput`);
+      const value = normalizeBlockValue(input?.value);
+      if (!value) return;
+
+      const key = `${day}_blocks`;
+      const existing = getSavedBlocksForDay(day);
+      if (!currentProfile) currentProfile = {};
+      currentProfile[key] = [...new Set([...existing, value])];
+      if (input) input.value = '';
+      renderQuickLookup();
+      renderAccountModal();
+    }
+
+    function removeBlockFromProfile(day, block) {
+      const key = `${day}_blocks`;
+      const existing = getSavedBlocksForDay(day);
+      if (!currentProfile) currentProfile = {};
+      currentProfile[key] = existing.filter((item) => item !== block);
+      renderQuickLookup();
+      renderAccountModal();
+    }
+
+    function addShuttleToProfile() {
+      const select = document.getElementById('savedShuttleSelect');
+      const value = String(select?.value || '').trim();
+      if (!value) return;
+
+      const existing = getSavedShuttles();
+      if (!currentProfile) currentProfile = {};
+      currentProfile.saved_shuttles = [...new Set([...existing, value])];
+      if (select) select.value = '';
+      renderQuickLookup();
+      renderAccountModal();
+    }
+
+    function removeShuttleFromProfile(shuttleId) {
+      const existing = getSavedShuttles();
+      if (!currentProfile) currentProfile = {};
+      currentProfile.saved_shuttles = existing.filter((item) => item !== shuttleId);
+      renderQuickLookup();
+      renderAccountModal();
+    }
+
+    async function signInWithPassword() {
+      clearAccountFieldErrors();
+      const email = document.getElementById('authEmail')?.value?.trim() || '';
+      const password = document.getElementById('authPassword')?.value || '';
+      if (!email || !password) {
+        if (!email) markAccountFieldError('authEmail');
+        if (!password) markAccountFieldError('authPassword');
+        setAccountNotice('Enter your email and password first.', 'warn');
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        markAccountFieldError('authEmail');
+        markAccountFieldError('authPassword');
+        setAccountNotice(error.message || 'Sign in failed.', 'warn');
+        return;
+      }
+      setAccountNotice('Signed in successfully.', 'ok');
+      closeAccountModal();
+    }
+
+    async function signUpWithPassword() {
+      clearAccountFieldErrors();
+      const displayName = document.getElementById('authDisplayName')?.value?.trim() || '';
+      const email = document.getElementById('authEmail')?.value?.trim() || '';
+      const password = document.getElementById('authPassword')?.value || '';
+      const passwordConfirm = document.getElementById('authPasswordConfirm')?.value || '';
+      if (!displayName || !email || !password || !passwordConfirm) {
+        if (!displayName) markAccountFieldError('authDisplayName');
+        if (!email) markAccountFieldError('authEmail');
+        if (!password) markAccountFieldError('authPassword');
+        if (!passwordConfirm) markAccountFieldError('authPasswordConfirm');
+        setAccountNotice('Enter your username, email, and both password fields first.', 'warn');
+        return;
+      }
+      if (password !== passwordConfirm) {
+        markAccountFieldError('authPassword');
+        markAccountFieldError('authPasswordConfirm');
+        setAccountNotice('Passwords do not match.', 'warn');
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName,
+            username: displayName,
+          },
+        },
+      });
+      if (error) {
+        if (/email/i.test(error.message || '')) markAccountFieldError('authEmail');
+        setAccountNotice(error.message || 'Sign up failed.', 'warn');
+        return;
+      }
+
+      const identities = Array.isArray(data?.user?.identities) ? data.user.identities : null;
+      if (identities && identities.length === 0) {
+        markAccountFieldError('authEmail');
+        setAccountNotice('An account already exists for this email. Try signing in instead.', 'warn');
+        return;
+      }
+
+      if (data?.user?.id && data?.session) {
+        await supabaseClient
+          .from('user_profiles')
+          .upsert({
+            user_id: data.user.id,
+            display_name: displayName,
+          }, { onConflict: 'user_id' });
+      }
+
+      accountAuthMode = 'signin';
+      setAccountNotice('Account created. You can sign in now.', 'ok');
+      renderAccountModal();
+    }
+
+    async function sendPasswordResetEmail() {
+      clearAccountFieldErrors();
+      const email = document.getElementById('resetEmail')?.value?.trim() || '';
+      if (!email) {
+        markAccountFieldError('resetEmail');
+        setAccountNotice('Enter your email address first.', 'warn');
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+      if (error) {
+        markAccountFieldError('resetEmail');
+        setAccountNotice(error.message || 'Could not send reset email.', 'warn');
+        return;
+      }
+
+      setAccountNotice('A password reset email has been sent. Please check your inbox.', 'ok');
+      renderAccountModal();
+    }
+
+    async function sendSignedInPasswordResetEmail() {
+      clearAccountFieldErrors();
+      const email = currentUser?.email || '';
+      if (!email) {
+        setAccountNotice('No account email was found for this user.', 'warn');
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+      if (error) {
+        setAccountNotice(error.message || 'Could not send reset email.', 'warn');
+        return;
+      }
+
+      setAccountNotice('A password reset email has been sent. Please check your inbox.', 'ok');
+      renderAccountModal();
+    }
+
+    async function setNewPassword() {
+      clearAccountFieldErrors();
+      const password = document.getElementById('recoveryPassword')?.value || '';
+      const confirm = document.getElementById('recoveryPasswordConfirm')?.value || '';
+      if (!password || !confirm) {
+        if (!password) markAccountFieldError('recoveryPassword');
+        if (!confirm) markAccountFieldError('recoveryPasswordConfirm');
+        setAccountNotice('Enter your new password in both fields.', 'warn');
+        return;
+      }
+      if (password !== confirm) {
+        markAccountFieldError('recoveryPassword');
+        markAccountFieldError('recoveryPasswordConfirm');
+        setAccountNotice('Passwords do not match.', 'warn');
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) {
+        markAccountFieldError('recoveryPassword');
+        markAccountFieldError('recoveryPasswordConfirm');
+        setAccountNotice(error.message || 'Could not update your password.', 'warn');
+        return;
+      }
+
+      setAccountRecoveryMode(false);
+      closeAccountModal();
+      addMessage('Your password has been updated.', 'bot');
+    }
+
+    async function saveProfile() {
+      if (!supabaseClient || !currentUser) return;
+
+      const payload = {
+        user_id: currentUser.id,
+        display_name: document.getElementById('profileDisplayName')?.value?.trim() || null,
+        weekday_blocks: getSavedBlocksForDay('weekday'),
+        saturday_blocks: getSavedBlocksForDay('saturday'),
+        sunday_blocks: getSavedBlocksForDay('sunday'),
+        saved_shuttles: getSavedShuttles(),
+      };
+
+      const { error } = await supabaseClient
+        .from('user_profiles')
+        .upsert(payload, { onConflict: 'user_id' });
+
+      if (error) {
+        setAccountNotice(error.message || 'Could not save your work.', 'warn');
+        return;
+      }
+
+      setAccountNotice('Saved your quick lookup settings.', 'ok');
+      await loadProfile();
+    }
+
+    async function saveSettings() {
+      if (!supabaseClient || !currentUser) return;
+
+      const displayName = document.getElementById('profileDisplayName')?.value?.trim() || '';
+      const { error } = await supabaseClient
+        .from('user_profiles')
+        .upsert({
+          user_id: currentUser.id,
+          display_name: displayName || null,
+          weekday_blocks: getSavedBlocksForDay('weekday'),
+          saturday_blocks: getSavedBlocksForDay('saturday'),
+          sunday_blocks: getSavedBlocksForDay('sunday'),
+          saved_shuttles: getSavedShuttles(),
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        setAccountNotice(error.message || 'Could not save your settings.', 'warn');
+        return;
+      }
+
+      await supabaseClient.auth.updateUser({
+        data: {
+          display_name: displayName,
+          username: displayName,
+        },
+      });
+
+      setAccountNotice('Settings saved.', 'ok');
+      await loadProfile();
+    }
+
+    async function signOutUser() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      setAccountNotice('Signed out.', 'ok');
+    }
+
+    async function handleSession(session) {
+      currentUser = session?.user || null;
+      updateAccountButton();
+      await loadProfile();
+    }
+
+    async function initSupabase() {
+      await loadAccountOptions();
+      const config = await fetchSupabaseConfig();
+      supabaseEnabled = Boolean(config && window.supabase && typeof window.supabase.createClient === 'function');
+      updateAccountButton();
+      renderAccountModal();
+      renderQuickLookup();
+
+      if (!supabaseEnabled) {
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+      if (isRecoveryUrl()) {
+        accountRecoveryMode = true;
+      }
+      const { data } = await supabaseClient.auth.getSession();
+      await handleSession(data.session);
+      if (accountRecoveryMode) {
+        openAccountModal();
+      }
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setAccountRecoveryMode(true);
+          openAccountModal();
+        }
+        handleSession(session);
+      });
     }
 
     function addCards(data) {
@@ -886,6 +1952,34 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function formatServiceDayLabel(day) {
+      const value = String(day || '').replace(/_/g, ' ');
+      if (!value) return 'Today';
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function addShuttleDayActions(days, selectedDay) {
+      if (!Array.isArray(days) || !days.length) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'bot-actions';
+
+      for (const day of days) {
+        const button = document.createElement('button');
+        button.className = 'link-btn';
+        button.type = 'button';
+        button.textContent = formatServiceDayLabel(day);
+        if (day === selectedDay) {
+          button.style.borderColor = 'rgba(255, 179, 72, 0.55)';
+          button.style.color = '#ffcf85';
+        }
+        button.addEventListener('click', () => sendMessage(`shuttle ${day}`));
+        wrap.appendChild(button);
+      }
+
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
     function renderShuttleSchedule(data) {
       const headers = Array.isArray(data.stops) ? data.stops : [];
       const trips = Array.isArray(data.trips) ? data.trips : [];
@@ -948,13 +2042,13 @@
       document.body.style.overflow = '';
     }
 
-    async function showShuttle(id) {
+    async function showShuttle(id, day) {
       const previousStatus = statusEl.textContent;
       statusEl.textContent = 'Loading shuttle...';
       statusEl.classList.remove('ok', 'warn');
 
       try {
-        const response = await fetch(`/api/shuttle?id=${encodeURIComponent(id)}`);
+        const response = await fetch(`/api/shuttle?id=${encodeURIComponent(id)}&day=${encodeURIComponent(day || activeShuttleDay || '')}`);
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'Shuttle lookup failed');
@@ -968,7 +2062,7 @@
       }
     }
 
-    function addShuttleActions(shuttles) {
+    function addShuttleActions(shuttles, selectedDay) {
       if (!Array.isArray(shuttles) || !shuttles.length) return;
       const wrap = document.createElement('div');
       wrap.className = 'bot-actions';
@@ -978,7 +2072,7 @@
         button.className = 'link-btn';
         button.type = 'button';
         button.textContent = `${shuttle.route} ${shuttle.name}`;
-        button.addEventListener('click', () => showShuttle(shuttle.id));
+        button.addEventListener('click', () => showShuttle(shuttle.id, selectedDay));
         wrap.appendChild(button);
       }
 
@@ -1012,13 +2106,16 @@
         }
 
         loadingBubble.remove();
+        setLastLookupFromResponse(data);
         addMessage(data.reply, 'bot');
         addCards(data);
         if (data.paddleAvailable) {
           addPaddleAction(data.block);
         }
         if (data.shuttleOptions) {
-          addShuttleActions(data.shuttleOptions);
+          activeShuttleDay = data.shuttleDay || '';
+          addShuttleDayActions(data.shuttleDayOptions, data.shuttleDay);
+          addShuttleActions(data.shuttleOptions, data.shuttleDay);
         }
 
         const elapsedMs = Math.round(performance.now() - started);
@@ -1042,16 +2139,47 @@
       const message = input.value.trim();
       if (!message) return;
       input.value = '';
+      if (message.toLowerCase() === 'clear') {
+        clearChatHistory();
+        return;
+      }
       sendMessage(message);
     });
 
+    quickLookupActions.addEventListener('click', (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.quickBlock) {
+        sendMessage(target.dataset.quickBlock);
+        return;
+      }
+      if (target.dataset.quickBus) {
+        sendMessage(target.dataset.quickBus);
+        return;
+      }
+      if (target.dataset.quickShuttle) {
+        sendMessage(`shuttle ${target.dataset.quickShuttle}`);
+        return;
+      }
+      if (target.dataset.quickSavedShuttle) {
+        showShuttle(target.dataset.quickSavedShuttle, activeShuttleDay || '');
+      }
+    });
+
+    myWorkBtn.addEventListener('click', openMyWorkModal);
+    accountBtn.addEventListener('click', openAccountModal);
+    clearChatBtn.addEventListener('click', clearChatHistory);
     closePaddleBtn.addEventListener('click', closePaddleModal);
     closeShuttleBtn.addEventListener('click', closeShuttleModal);
+    closeAccountBtn.addEventListener('click', closeAccountModal);
     paddleOverlay.addEventListener('click', (event) => {
       if (event.target === paddleOverlay) closePaddleModal();
     });
     shuttleOverlay.addEventListener('click', (event) => {
       if (event.target === shuttleOverlay) closeShuttleModal();
+    });
+    accountOverlay.addEventListener('click', (event) => {
+      if (event.target === accountOverlay) closeAccountModal();
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !paddleOverlay.hidden) {
@@ -1060,7 +2188,12 @@
       if (event.key === 'Escape' && !shuttleOverlay.hidden) {
         closeShuttleModal();
       }
+      if (event.key === 'Escape' && !accountOverlay.hidden) {
+        closeAccountModal();
+      }
     });
+
+    initSupabase();
   </script>
 </body>
 </html>

@@ -12,11 +12,14 @@ const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
 const FALLBACK_TIMEOUT_MS = Number(process.env.FALLBACK_TIMEOUT_MS || 90000);
 const TRACK_CONCURRENCY = Math.max(1, Number(process.env.TRACK_CONCURRENCY || 6));
 const ENABLE_PLAYWRIGHT_FALLBACK = process.env.ENABLE_PLAYWRIGHT_FALLBACK === '1';
+const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
+const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
 
 const pendingByBlock = new Map();
 const queue = [];
 let activeWorkers = 0;
 let paddleIndexCache = null;
+const busBlockCache = new Map();
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -246,6 +249,8 @@ const SHUTTLES_BY_SERVICE_DAY = {
   ],
 };
 
+const SHUTTLE_DAY_OPTIONS = ['weekday', 'saturday', 'sunday'];
+
 function normalizeBlock(input) {
   return String(input || '').trim().toUpperCase();
 }
@@ -258,8 +263,34 @@ function isLikelyBlock(block) {
   return /^[0-9]{1,3}-[0-9]{1,3}$/.test(block);
 }
 
+function isLikelyBusNumber(value) {
+  return /^\d{3,5}$/.test(String(value || '').trim());
+}
+
 function isShuttleRequest(text) {
   return /\bshuttles?\b/i.test(String(text || ''));
+}
+
+function normalizeServiceDay(input) {
+  const value = String(input || '').trim().toLowerCase();
+  if (!value) return '';
+  if (value === 'today') return getOttawaServiceDayKey();
+  if (value === 'weekdays' || value === 'weekday') return 'weekday';
+  if (value === 'saturday' || value === 'sat') return 'saturday';
+  if (value === 'sunday' || value === 'sun') return 'sunday';
+  if (value === 'easter monday' || value === 'easter_monday') return 'easter_monday';
+  return '';
+}
+
+function parseRequestedShuttleDay(text) {
+  const value = String(text || '').trim().toLowerCase();
+  if (!value) return '';
+  const match = value.match(/\b(today|weekday|weekdays|saturday|sat|sunday|sun|easter monday)\b/);
+  return normalizeServiceDay(match ? match[1] : '');
+}
+
+function isShowAllRequest(text) {
+  return /^showall$/i.test(String(text || '').trim());
 }
 
 function withTimeout(promise, ms) {
@@ -371,14 +402,18 @@ function getOttawaServiceDateString() {
   return getOttawaServiceDateIso().slice(0, 10);
 }
 
-function getOttawaServiceDayKey() {
-  const now = new Date();
+function getOttawaDateString(date = new Date()) {
   const ottawaIso = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Toronto',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(now);
+  }).format(date);
+  return ottawaIso;
+}
+
+function getServiceDayKeyForDate(date = new Date()) {
+  const ottawaIso = getOttawaDateString(date);
   if (ottawaIso === '2026-04-06') {
     return 'easter_monday';
   }
@@ -386,11 +421,15 @@ function getOttawaServiceDayKey() {
   const weekday = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Toronto',
     weekday: 'long',
-  }).format(new Date()).toLowerCase();
+  }).format(date).toLowerCase();
 
   if (weekday === 'saturday') return 'saturday';
   if (weekday === 'sunday') return 'sunday';
   return 'weekday';
+}
+
+function getOttawaServiceDayKey() {
+  return getServiceDayKeyForDate(new Date());
 }
 
 function timeToSeconds(value) {
@@ -528,6 +567,25 @@ async function fetchBusesForBlock(block) {
   return [mostRecentBus];
 }
 
+async function fetchTripsForResolvedBlock(block) {
+  const dateIso = getOttawaServiceDateIso();
+  const detailsUrl = `https://bus.ajay.app/api/blockDetails?blockId=${encodeURIComponent(block)}&date=${encodeURIComponent(dateIso)}`;
+
+  let payload;
+  try {
+    payload = JSON.parse(await httpGetText(detailsUrl));
+  } catch (err) {
+    throw new Error(`Failed to read BetterTransit data: ${err.message}`);
+  }
+
+  const trips = payload && payload[block] ? payload[block] : null;
+  if (!Array.isArray(trips)) {
+    throw Object.assign(new Error(`Block not found: ${block}`), { code: 404 });
+  }
+
+  return trips;
+}
+
 function secondsToTime(value) {
   if (!Number.isFinite(value)) return '';
   const total = Math.max(0, Math.trunc(value));
@@ -599,6 +657,141 @@ function getAvailableShuttlesForDay(serviceDay = getOttawaServiceDayKey()) {
     .filter(Boolean);
 }
 
+function paddleIdToBlockLabel(paddleId) {
+  const text = String(paddleId || '').trim();
+  const match = text.match(/^([A-Z0-9]{3})(\d{3})$/);
+  if (!match) return text;
+  return `${String(Number(match[1]))}-${String(Number(match[2]))}`;
+}
+
+function getAccountBlockOptions() {
+  const index = loadPaddleIndex();
+  const result = {
+    weekday: [],
+    saturday: [],
+    sunday: [],
+  };
+
+  for (const serviceDay of Object.keys(result)) {
+    const runs = index?.service_days?.[serviceDay] || {};
+    result[serviceDay] = Object.keys(runs)
+      .map((paddleId) => paddleIdToBlockLabel(paddleId))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+
+  return result;
+}
+
+function getAccountShuttleOptions() {
+  return Object.values(SHUTTLE_DEFINITIONS)
+    .map((shuttle) => ({
+      id: shuttle.id,
+      route: shuttle.route,
+      name: shuttle.name,
+      label: `${shuttle.route} ${shuttle.name}`,
+    }))
+    .sort((a, b) =>
+      a.route.localeCompare(b.route, undefined, { numeric: true }) ||
+      a.name.localeCompare(b.name, undefined, { numeric: true })
+    );
+}
+
+function getOttawaNowSeconds() {
+  return timeToSeconds(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Toronto',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  ) ?? 0;
+}
+
+function buildRunTimeline(run) {
+  const trips = Array.isArray(run?.trips) ? run.trips : [];
+  const timeline = [];
+  let dayOffset = 0;
+  let previousStart = null;
+
+  for (const trip of trips) {
+    const rawStart = timeToSeconds(trip.start_time);
+    const rawEnd = timeToSeconds(trip.end_time);
+    if (rawStart === null) continue;
+
+    if (previousStart !== null && rawStart < previousStart) {
+      dayOffset += 24 * 3600;
+    }
+
+    let start = rawStart + dayOffset;
+    let end = (rawEnd === null ? rawStart : rawEnd) + dayOffset;
+    if (end < start) {
+      end += 24 * 3600;
+    }
+
+    timeline.push({
+      tripNumber: trip.trip_number,
+      route: String(trip.route || ''),
+      headsign: String(trip.headsign || ''),
+      startTime: String(trip.start_time || ''),
+      endTime: String(trip.end_time || ''),
+      start,
+      end,
+    });
+    previousStart = rawStart;
+  }
+
+  return timeline;
+}
+
+function findActiveTripInRun(run, compareSeconds) {
+  const timeline = buildRunTimeline(run);
+  return timeline.find((trip) => trip.start <= compareSeconds && compareSeconds <= trip.end + 20 * 60) || null;
+}
+
+function getActivePaddlesForNow() {
+  const index = loadPaddleIndex();
+  const now = new Date();
+  const currentSeconds = getOttawaNowSeconds();
+  const currentDayKey = getServiceDayKeyForDate(now);
+  const previousDate = new Date(now.getTime() - 24 * 3600 * 1000);
+  const previousDayKey = getServiceDayKeyForDate(previousDate);
+
+  const results = [];
+  const seen = new Set();
+
+  function collectRuns(serviceDay, compareSeconds, requireOvernightCarry = false) {
+    const runs = index?.service_days?.[serviceDay] || {};
+    for (const [paddleId, run] of Object.entries(runs)) {
+      const activeTrip = findActiveTripInRun(run, compareSeconds);
+      if (!activeTrip) continue;
+      if (requireOvernightCarry && activeTrip.end <= 24 * 3600) continue;
+      const block = paddleIdToBlockLabel(paddleId);
+      if (seen.has(block)) continue;
+      seen.add(block);
+      results.push({
+        block,
+        paddleId,
+        serviceDay,
+        route: activeTrip.route,
+        headsign: activeTrip.headsign,
+        tripNumber: activeTrip.tripNumber,
+        startTime: activeTrip.startTime,
+        endTime: activeTrip.endTime,
+      });
+    }
+  }
+
+  collectRuns(currentDayKey, currentSeconds, false);
+  collectRuns(previousDayKey, currentSeconds + 24 * 3600, true);
+
+  return results.sort((a, b) =>
+    a.route.localeCompare(b.route, undefined, { numeric: true }) ||
+    a.block.localeCompare(b.block, undefined, { numeric: true })
+  );
+}
+
 function describeNextShuttleStop(shuttle) {
   const nowSeconds = timeToSeconds(
     new Intl.DateTimeFormat('en-GB', {
@@ -658,8 +851,8 @@ function describeNextShuttleStop(shuttle) {
   };
 }
 
-function buildShuttleResponse(id) {
-  const serviceDay = getOttawaServiceDayKey();
+function buildShuttleResponse(id, requestedDay) {
+  const serviceDay = normalizeServiceDay(requestedDay) || getOttawaServiceDayKey();
   const availableIds = SHUTTLES_BY_SERVICE_DAY[serviceDay] || [];
   if (!availableIds.includes(id)) return null;
 
@@ -682,22 +875,7 @@ function buildShuttleResponse(id) {
 }
 
 async function fetchTripsForBlock(block) {
-  const dateIso = getOttawaServiceDateIso();
-  const detailsUrl = `https://bus.ajay.app/api/blockDetails?blockId=${encodeURIComponent(block)}&date=${encodeURIComponent(dateIso)}`;
-
-  let payload;
-  try {
-    payload = JSON.parse(await httpGetText(detailsUrl));
-  } catch (err) {
-    throw new Error(`Failed to read BetterTransit data: ${err.message}`);
-  }
-
-  const trips = payload && payload[block] ? payload[block] : null;
-  if (!Array.isArray(trips)) {
-    throw Object.assign(new Error(`Block not found: ${block}`), { code: 404 });
-  }
-
-  return trips;
+  return fetchTripsForResolvedBlock(block);
 }
 
 function loadPaddleIndex() {
@@ -718,8 +896,8 @@ async function fetchPaddleTripsForBlock(block) {
   const paddleId = blockToPaddleId(block);
   if (!paddleId) return [];
 
-  const serviceDay = getOttawaServiceDayKey();
-  const run = getPaddleRunForDay(serviceDay, paddleId);
+  const resolved = resolvePaddleRunForCurrentContext(paddleId);
+  const run = resolved?.run;
   if (!run || !Array.isArray(run.trips)) {
     return [];
   }
@@ -749,18 +927,67 @@ function getPaddleRunForDay(serviceDay, paddleId) {
   return index?.service_days?.[serviceDay]?.[paddleId] || null;
 }
 
+function getPreviousOttawaDate(date = new Date()) {
+  return new Date(date.getTime() - 24 * 3600 * 1000);
+}
+
+function resolvePaddleRunForCurrentContext(paddleId) {
+  if (!paddleId) return null;
+
+  const now = new Date();
+  const currentServiceDay = getServiceDayKeyForDate(now);
+  const previousServiceDay = getServiceDayKeyForDate(getPreviousOttawaDate(now));
+  const nowSeconds = getOttawaNowSeconds();
+
+  const currentRun = getPaddleRunForDay(currentServiceDay, paddleId);
+  const previousRun = getPaddleRunForDay(previousServiceDay, paddleId);
+
+  const previousActiveTrip = previousRun
+    ? findActiveTripInRun(previousRun, nowSeconds + 24 * 3600)
+    : null;
+  if (previousActiveTrip && previousActiveTrip.end > 24 * 3600) {
+    return {
+      serviceDay: previousServiceDay,
+      run: previousRun,
+      activeTrip: previousActiveTrip,
+      carryover: true,
+    };
+  }
+
+  if (currentRun) {
+    return {
+      serviceDay: currentServiceDay,
+      run: currentRun,
+      activeTrip: currentRun ? findActiveTripInRun(currentRun, nowSeconds) : null,
+      carryover: false,
+    };
+  }
+
+  if (previousRun) {
+    return {
+      serviceDay: previousServiceDay,
+      run: previousRun,
+      activeTrip: previousActiveTrip,
+      carryover: Boolean(previousActiveTrip),
+    };
+  }
+
+  return null;
+}
+
 function buildPaddleResponse(block) {
   const paddleId = blockToPaddleId(block);
   if (!paddleId) return null;
 
-  const serviceDay = getOttawaServiceDayKey();
-  const run = getPaddleRunForDay(serviceDay, paddleId);
-  if (!run) return null;
+  const resolved = resolvePaddleRunForCurrentContext(paddleId);
+  if (!resolved || !resolved.run) return null;
+  const { serviceDay, run, carryover } = resolved;
 
   return {
     block: String(block),
     paddleId,
     serviceDay,
+    carryover,
     sourceId: run.source_id || null,
     sourceLabel: run.source_label || null,
     effective: run.effective || null,
@@ -882,6 +1109,48 @@ async function resolveCanonicalBlock(inputBlock) {
     if (key && !keyToCanonical.has(key)) keyToCanonical.set(key, b);
   }
   return keyToCanonical.get(inputKey) || null;
+}
+
+async function resolveBlockForBus(busNumber) {
+  const normalizedBus = String(busNumber || '').trim();
+  const cached = busBlockCache.get(normalizedBus);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return cached.block;
+  }
+
+  const availableBlocks = await fetchAvailableBlocks();
+  const concurrency = Math.min(Math.max(4, TRACK_CONCURRENCY), 12);
+  let index = 0;
+  let foundBlock = null;
+
+  async function worker() {
+    while (!foundBlock && index < availableBlocks.length) {
+      const currentIndex = index;
+      index += 1;
+      const block = availableBlocks[currentIndex];
+      try {
+        const trips = await fetchTripsForResolvedBlock(block);
+        if (trips.some((trip) => String(trip?.busId || '').trim() === normalizedBus)) {
+          foundBlock = block;
+          return;
+        }
+      } catch (_) {
+        // Ignore per-block failures and keep scanning.
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+  if (foundBlock) {
+    busBlockCache.set(normalizedBus, {
+      block: foundBlock,
+      expiresAt: now + 3 * 60 * 1000,
+    });
+  }
+
+  return foundBlock;
 }
 
 async function fetchLocationForBus(busNumber) {
@@ -1182,6 +1451,26 @@ function parseMessageText(req) {
   return '';
 }
 
+function parseLookupTarget(req) {
+  if (typeof req.query.block === 'string') {
+    return { type: 'block', value: normalizeBlock(req.query.block) };
+  }
+  if (typeof req.query.bus === 'string') {
+    return { type: 'bus', value: normalizeMessage(req.query.bus) };
+  }
+
+  const text = parseMessageText(req);
+  const blockMatch = text.match(/\b(\d{1,3}-\d{1,3})\b/);
+  if (blockMatch) {
+    return { type: 'block', value: normalizeBlock(blockMatch[1]) };
+  }
+  const busMatch = text.match(/\b(\d{3,5})\b/);
+  if (busMatch) {
+    return { type: 'bus', value: normalizeMessage(busMatch[1]) };
+  }
+  return { type: 'block', value: normalizeBlock(text) };
+}
+
 function validateBlockOrSend(block, res) {
   if (!block) {
     res.status(400).json({ ok: false, error: 'Send a block number like 44-07.' });
@@ -1212,9 +1501,9 @@ function formatChatReply(payload) {
 function formatShuttleListReply(serviceDay, shuttles) {
   const label = serviceDay.replace(/_/g, ' ');
   if (!shuttles.length) {
-    return `No worker shuttles are listed for ${label}.`;
+    return `No shuttles are listed for ${label}.`;
   }
-  const lines = [`Available worker shuttles for ${label}:`];
+  const lines = [`Available shuttles for ${label}:`];
   for (const shuttle of shuttles) {
     lines.push(`${shuttle.route}: ${shuttle.name}`);
   }
@@ -1222,8 +1511,82 @@ function formatShuttleListReply(serviceDay, shuttles) {
   return lines.join('\n');
 }
 
+function formatShowAllReply(activePaddles) {
+  if (!activePaddles.length) {
+    return 'No paddles look active right now.';
+  }
+
+  const lines = [`Active paddles right now (${activePaddles.length}):`];
+  for (const item of activePaddles) {
+    const routePart = item.route ? `Route ${item.route}` : 'Route n/a';
+    const headsignPart = item.headsign ? ` | ${item.headsign}` : '';
+    lines.push(`${item.block} | Trip ${item.tripNumber} | ${routePart}${headsignPart} | ${item.startTime}-${item.endTime}`);
+  }
+  return lines.join('\n');
+}
+
+function formatBusReply(payload) {
+  const buses = Array.isArray(payload?.buses) ? payload.buses : [];
+  if (!buses.length) {
+    return `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim();
+  }
+
+  const lines = [`Bus ${payload.busNumber}`];
+  for (const bus of buses) {
+    lines.push(`${bus.locationText}`);
+  }
+  if (payload.block) {
+    lines.push(`Current block: ${payload.block}`);
+  }
+  return lines.join('\n');
+}
+
+async function handleBusLookup(busNumber, res) {
+  if (!isLikelyBusNumber(busNumber)) {
+    res.status(400).json({ ok: false, error: 'Bus format must look like 6448.' });
+    return;
+  }
+
+  try {
+    const [location, block] = await Promise.all([
+      fetchLocationForBus(busNumber),
+      resolveBlockForBus(busNumber).catch(() => null),
+    ]);
+    const paddle = block ? buildPaddleResponse(block) : null;
+    const payload = {
+      busNumber: String(busNumber),
+      block: block || null,
+      buses: [location],
+    };
+
+    res.json({
+      ok: true,
+      mode: 'bus',
+      busNumber: payload.busNumber,
+      block: payload.block,
+      buses: payload.buses,
+      paddleAvailable: Boolean(paddle),
+      cached: false,
+      reply: formatBusReply(payload),
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : code === 504 ? 504 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleLookup(req, res) {
-  const rawBlock = parseBlockFromReq(req);
+  const target = parseLookupTarget(req);
+  if (target.type === 'bus') {
+    return handleBusLookup(target.value, res);
+  }
+
+  const rawBlock = target.value;
   if (!validateBlockOrSend(rawBlock, res)) return;
 
   try {
@@ -1260,8 +1623,20 @@ async function handleLookup(req, res) {
 
 async function handleChat(req, res) {
   const message = parseMessageText(req);
+  if (isShowAllRequest(message)) {
+    const activePaddles = getActivePaddlesForNow();
+    res.json({
+      ok: true,
+      mode: 'showall',
+      reply: formatShowAllReply(activePaddles),
+      activePaddles,
+      generatedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
   if (isShuttleRequest(message)) {
-    const serviceDay = getOttawaServiceDayKey();
+    const serviceDay = parseRequestedShuttleDay(message) || getOttawaServiceDayKey();
     const shuttles = getAvailableShuttlesForDay(serviceDay).map((shuttle) => ({
       id: shuttle.id,
       route: shuttle.route,
@@ -1273,6 +1648,8 @@ async function handleChat(req, res) {
       ok: true,
       mode: 'shuttle-list',
       reply: formatShuttleListReply(serviceDay, shuttles),
+      shuttleDay: serviceDay,
+      shuttleDayOptions: SHUTTLE_DAY_OPTIONS,
       shuttleOptions: shuttles,
       generatedAt: new Date().toISOString(),
     });
@@ -1314,6 +1691,7 @@ async function handlePaddle(req, res) {
 
 async function handleShuttle(req, res) {
   const shuttleId = normalizeMessage(req.query.id || req.query.shuttle);
+  const requestedDay = normalizeServiceDay(req.query.day);
   if (!shuttleId) {
     res.status(400).json({
       ok: false,
@@ -1322,7 +1700,7 @@ async function handleShuttle(req, res) {
     return;
   }
 
-  const shuttle = buildShuttleResponse(shuttleId);
+  const shuttle = buildShuttleResponse(shuttleId, requestedDay);
   if (!shuttle) {
     res.status(404).json({
       ok: false,
@@ -1338,6 +1716,25 @@ app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/shuttle', handleShuttle);
+app.get('/api/supabase-config', (_req, res) => {
+  const enabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+  res.json({
+    ok: true,
+    enabled,
+    url: enabled ? SUPABASE_URL : '',
+    anonKey: enabled ? SUPABASE_ANON_KEY : '',
+  });
+});
+app.get('/api/account-options', (_req, res) => {
+  res.json({
+    ok: true,
+    blocks: getAccountBlockOptions(),
+    shuttles: getAccountShuttleOptions(),
+  });
+});
+app.get('/vendor/supabase.js', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'));
+});
 
 app.get('/healthz', (_req, res) => {
   res.json({
