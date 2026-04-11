@@ -794,8 +794,10 @@
 
       .app {
         width: 100%;
-        height: calc(100dvh - 16px);
+        min-height: calc(100dvh - 16px);
+        height: auto;
         border-radius: 18px;
+        overflow: visible;
       }
 
       .header,
@@ -872,6 +874,8 @@
       .chat {
         padding-top: 14px;
         padding-bottom: 14px;
+        min-height: 180px;
+        overflow-y: visible;
       }
 
       .message {
