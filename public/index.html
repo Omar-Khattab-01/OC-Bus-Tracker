@@ -787,14 +787,119 @@
     }
 
     @media (max-width: 700px) {
-      body { padding: 8px; }
-      .app { height: calc(100vh - 16px); border-radius: 16px; }
-      .title h1 { font-size: 25px; }
-      .message { max-width: 95%; }
+      body {
+        padding: 8px;
+        overflow: auto;
+      }
+
+      .app {
+        width: 100%;
+        height: calc(100dvh - 16px);
+        border-radius: 18px;
+      }
+
+      .header,
+      .quick-panel,
+      .chat,
+      .composer {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .header {
+        padding-top: 14px;
+        padding-bottom: 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 18px;
+      }
+
+      .title h1 {
+        font-size: 22px;
+        line-height: 0.95;
+      }
+
+      .title p {
+        margin-top: 6px;
+        max-width: 18ch;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .header-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .header-btn,
+      .status {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
+
+      .status {
+        grid-column: 1 / -1;
+      }
+
+      .quick-panel {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .quick-panel-top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .quick-subtitle {
+        line-height: 1.4;
+      }
+
+      .chat {
+        padding-top: 14px;
+        padding-bottom: 14px;
+      }
+
+      .message {
+        max-width: 100%;
+      }
+
+      .bot-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .bot-actions > * {
+        width: 100%;
+      }
+
+      .composer {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
       .composer form { grid-template-columns: 1fr; }
-      .btn { min-height: 44px; }
-      .hint { flex-direction: column; }
-      .quick-panel-top { flex-direction: column; align-items: flex-start; }
+      .input { font-size: 16px; }
+      .btn { min-height: 46px; }
+
+      .hint {
+        flex-direction: column;
+        gap: 6px;
+      }
     }
   </style>
 </head>
