@@ -1152,6 +1152,10 @@
       return activeShuttleDay || '';
     }
 
+    function getAuthRedirectUrl() {
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
     function escapeAttribute(value) {
       return escapeHtml(value).replace(/"/g, '&quot;');
     }
@@ -1781,7 +1785,9 @@
         return;
       }
 
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: getAuthRedirectUrl(),
+      });
       if (error) {
         markAccountFieldError('resetEmail');
         setAccountNotice(error.message || 'Could not send reset email.', 'warn');
@@ -1800,7 +1806,9 @@
         return;
       }
 
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: getAuthRedirectUrl(),
+      });
       if (error) {
         setAccountNotice(error.message || 'Could not send reset email.', 'warn');
         return;
