@@ -20,6 +20,10 @@ const queue = [];
 let activeWorkers = 0;
 let paddleIndexCache = null;
 const busBlockCache = new Map();
+const liveBusPaddleCache = new Map();
+const LIVE_BUS_PADDLE_TTL_MS = 2 * 60 * 1000;
+let liveBusPaddleCacheBuiltAt = 0;
+let liveBusPaddleRefreshPromise = null;
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -816,6 +820,135 @@ function getActivePaddlesForNow() {
   );
 }
 
+async function buildLiveBusPaddleMappings() {
+  const activePaddles = getActivePaddlesForNow();
+  if (!activePaddles.length) return new Map();
+
+  const mappings = new Map();
+  const concurrency = Math.min(Math.max(2, TRACK_CONCURRENCY), 6);
+  let index = 0;
+
+  async function worker() {
+    while (index < activePaddles.length) {
+      const currentIndex = index;
+      index += 1;
+      const activePaddle = activePaddles[currentIndex];
+
+      try {
+        const payload = await fetchLiveResultWithFallback(activePaddle.block);
+        for (const bus of payload?.buses || []) {
+          const busNumber = String(bus?.busNumber || '').trim();
+          if (!busNumber) continue;
+          mappings.set(busNumber, {
+            block: activePaddle.block,
+            paddleId: activePaddle.paddleId,
+            serviceDay: activePaddle.serviceDay,
+            route: activePaddle.route,
+            headsign: activePaddle.headsign,
+            tripNumber: activePaddle.tripNumber,
+            startTime: activePaddle.startTime,
+            endTime: activePaddle.endTime,
+            verifiedAt: new Date().toISOString(),
+          });
+        }
+      } catch (_) {
+        // Ignore per-paddle failures so one bad lookup doesn't block the cache.
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  return mappings;
+}
+
+function triggerLiveBusPaddleRefresh(force = false) {
+  refreshLiveBusPaddleCache(force).catch(() => null);
+}
+
+async function refreshLiveBusPaddleCache(force = false) {
+  const now = Date.now();
+  if (!force && liveBusPaddleCacheBuiltAt && now - liveBusPaddleCacheBuiltAt < LIVE_BUS_PADDLE_TTL_MS) {
+    return liveBusPaddleCache;
+  }
+
+  if (liveBusPaddleRefreshPromise) {
+    return liveBusPaddleRefreshPromise;
+  }
+
+  liveBusPaddleRefreshPromise = (async () => {
+    const nextMappings = await buildLiveBusPaddleMappings();
+    liveBusPaddleCache.clear();
+    for (const [busNumber, value] of nextMappings.entries()) {
+      liveBusPaddleCache.set(busNumber, value);
+      busBlockCache.set(busNumber, {
+        block: value.block,
+        expiresAt: Date.now() + 3 * 60 * 1000,
+      });
+    }
+    liveBusPaddleCacheBuiltAt = Date.now();
+    return liveBusPaddleCache;
+  })().finally(() => {
+    liveBusPaddleRefreshPromise = null;
+  });
+
+  return liveBusPaddleRefreshPromise;
+}
+
+async function findBlockForBusFromActivePaddles(busNumber) {
+  const normalizedBus = String(busNumber || '').trim();
+  if (!normalizedBus) return null;
+
+  const activePaddles = getActivePaddlesForNow();
+  if (!activePaddles.length) return null;
+
+  const concurrency = Math.min(Math.max(2, TRACK_CONCURRENCY), 6);
+  let index = 0;
+  let foundBlock = null;
+
+  async function worker() {
+    while (!foundBlock && index < activePaddles.length) {
+      const currentIndex = index;
+      index += 1;
+      const activePaddle = activePaddles[currentIndex];
+
+      try {
+        const payload = await fetchLiveResultWithFallback(activePaddle.block);
+        for (const bus of payload?.buses || []) {
+          const currentBusNumber = String(bus?.busNumber || '').trim();
+          if (!currentBusNumber) continue;
+
+          const mapping = {
+            block: activePaddle.block,
+            paddleId: activePaddle.paddleId,
+            serviceDay: activePaddle.serviceDay,
+            route: activePaddle.route,
+            headsign: activePaddle.headsign,
+            tripNumber: activePaddle.tripNumber,
+            startTime: activePaddle.startTime,
+            endTime: activePaddle.endTime,
+            verifiedAt: new Date().toISOString(),
+          };
+          liveBusPaddleCache.set(currentBusNumber, mapping);
+          busBlockCache.set(currentBusNumber, {
+            block: mapping.block,
+            expiresAt: Date.now() + 3 * 60 * 1000,
+          });
+
+          if (currentBusNumber === normalizedBus) {
+            foundBlock = mapping.block;
+            return;
+          }
+        }
+      } catch (_) {
+        // Ignore per-paddle failures and keep scanning active paddles.
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  return foundBlock;
+}
+
 function describeNextShuttleStop(shuttle) {
   const nowSeconds = timeToSeconds(
     new Intl.DateTimeFormat('en-GB', {
@@ -1052,11 +1185,13 @@ function buildPaddleResponse(block, requestedDay = '') {
   if (!paddleId) return null;
 
   const explicitDay = normalizeServiceDay(requestedDay);
+  const currentResolved = resolvePaddleRunForCurrentContext(paddleId);
+  const explicitRun = explicitDay ? getPaddleRunForDay(explicitDay, paddleId) : null;
   const resolved = explicitDay
     ? {
         serviceDay: explicitDay,
-        run: getPaddleRunForDay(explicitDay, paddleId),
-        activeTrip: null,
+        run: explicitRun,
+        activeTrip: currentResolved?.serviceDay === explicitDay ? (currentResolved.activeTrip || null) : null,
         carryover: false,
       }
     : resolvePaddleRunForCurrentContext(paddleId);
@@ -1075,6 +1210,9 @@ function buildPaddleResponse(block, requestedDay = '') {
     signOn: run.sign_on || null,
     routes: Array.isArray(run.routes) ? run.routes : [],
     busType: run.bus_type || null,
+    activeTrip: resolved.activeTrip || null,
+    currentServiceDay: currentResolved?.serviceDay || null,
+    isLiveDay: Boolean(resolved.activeTrip),
     trips: Array.isArray(run.trips) ? run.trips : [],
   };
 }
@@ -1199,38 +1337,26 @@ async function resolveBlockForBus(busNumber) {
     return cached.block;
   }
 
-  const availableBlocks = await fetchAvailableBlocks();
-  const concurrency = Math.min(Math.max(4, TRACK_CONCURRENCY), 12);
-  let index = 0;
-  let foundBlock = null;
-
-  async function worker() {
-    while (!foundBlock && index < availableBlocks.length) {
-      const currentIndex = index;
-      index += 1;
-      const block = availableBlocks[currentIndex];
-      try {
-        const trips = await fetchTripsForResolvedBlock(block);
-        if (trips.some((trip) => String(trip?.busId || '').trim() === normalizedBus)) {
-          foundBlock = block;
-          return;
-        }
-      } catch (_) {
-        // Ignore per-block failures and keep scanning.
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: concurrency }, () => worker()));
-
-  if (foundBlock) {
+  triggerLiveBusPaddleRefresh();
+  const confirmedMappings = liveBusPaddleCache;
+  const confirmed = confirmedMappings?.get(normalizedBus);
+  if (confirmed?.block) {
     busBlockCache.set(normalizedBus, {
-      block: foundBlock,
+      block: confirmed.block,
       expiresAt: now + 3 * 60 * 1000,
     });
+    return confirmed.block;
   }
 
-  return foundBlock;
+  const activePaddleMatch = await findBlockForBusFromActivePaddles(normalizedBus).catch(() => null);
+  if (activePaddleMatch) {
+    busBlockCache.set(normalizedBus, {
+      block: activePaddleMatch,
+      expiresAt: now + 3 * 60 * 1000,
+    });
+    return activePaddleMatch;
+  }
+  return null;
 }
 
 async function fetchLocationForBus(busNumber) {
@@ -1617,8 +1743,16 @@ function formatBusReply(payload) {
   }
   if (payload.block) {
     lines.push(`Current block: ${payload.block}`);
+  } else if (payload.parked) {
+    lines.push('Status: parked');
   }
   return lines.join('\n');
+}
+
+function locationSuggestsParked(locationText) {
+  const value = String(locationText || '').toLowerCase();
+  if (!value) return false;
+  return /\b(garage|depot|parked)\b/i.test(value);
 }
 
 async function handleBusLookup(busNumber, res) {
@@ -1630,7 +1764,7 @@ async function handleBusLookup(busNumber, res) {
   try {
     const [location, block] = await Promise.all([
       fetchLocationForBus(busNumber),
-      resolveBlockForBus(busNumber).catch(() => null),
+      withTimeout(resolveBlockForBus(busNumber).catch(() => null), 3000).catch(() => null),
     ]);
     const paddle = block ? buildPaddleResponse(block) : null;
     const paddleOptions = block ? getPaddleOptionsForBlock(block) : [];
@@ -1638,6 +1772,7 @@ async function handleBusLookup(busNumber, res) {
       busNumber: String(busNumber),
       block: block || null,
       buses: [location],
+      parked: !block && locationSuggestsParked(location?.locationText),
     };
 
     res.json({

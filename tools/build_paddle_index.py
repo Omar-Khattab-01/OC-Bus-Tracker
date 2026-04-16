@@ -102,23 +102,28 @@ def parse_trip_header(line: str, routes):
     text = line.strip()
     if re.match(r"^\d{1,2}:\d{2}\b", text):
         return None
-    match = re.match(r"^(\d+)(.+)$", text)
-    if not match:
-        return None
-
-    trip_number = int(match.group(1))
-    if trip_number > 999:
-        return None
-    rest = match.group(2).strip()
     for route in sorted(routes, key=len, reverse=True):
-      if rest.endswith(route):
-        headsign = rest[:-len(route)].strip()
-        if headsign:
-          return {
-              "trip_number": trip_number,
-              "headsign": headsign,
-              "route": route,
-          }
+        if not text.endswith(route):
+            continue
+        rest = text[:-len(route)].strip()
+        max_trip_len = min(3, len(rest) - 1)
+        for trip_len in range(1, max_trip_len + 1):
+            trip_digits = rest[:trip_len]
+            if not trip_digits.isdigit():
+                continue
+            trip_number = int(trip_digits)
+            if trip_number > 999:
+                continue
+            headsign = rest[trip_len:].strip()
+            if not headsign:
+                continue
+            if re.match(r"^\d+[A-Za-z]", headsign):
+                continue
+            return {
+                "trip_number": trip_number,
+                "headsign": headsign,
+                "route": route,
+            }
     return None
 
 
@@ -233,14 +238,23 @@ def split_trip_section(section_lines):
     note_lines = []
     in_directions = False
     skipping_note = False
+    school_trip_prefix = "THIS IS A SCHOOL TRIP"
 
     for raw_line in section_lines:
         line = clean_line(raw_line)
         if not line:
             continue
 
+        upper = line.upper()
+        if not stop_lines and upper.startswith(school_trip_prefix):
+            note_lines.append("This is a school trip")
+            line = clean_line(line[len(school_trip_prefix):])
+            if not line:
+                continue
+            upper = line.upper()
+
         has_time = bool(re.search(r"\d{1,2}:\d{2}", line))
-        if not stop_lines and line.upper().startswith("NOTE:"):
+        if not stop_lines and upper.startswith("NOTE:"):
             skipping_note = True
             note_lines.append(line)
             continue
