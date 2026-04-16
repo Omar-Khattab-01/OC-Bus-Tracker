@@ -1747,6 +1747,9 @@ function isAuthorizedCronRequest(req) {
   if (CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`) {
     return true;
   }
+  if (CRON_SECRET && String(req.query?.key || '').trim() === CRON_SECRET) {
+    return true;
+  }
   if (String(req.get('x-vercel-cron') || '').trim() === '1') {
     return true;
   }
@@ -2046,6 +2049,8 @@ app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/shuttle', handleShuttle);
 app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
+app.get('/api/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
+app.get('/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/api/supabase-config', (_req, res) => {
   const enabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
   res.json({
