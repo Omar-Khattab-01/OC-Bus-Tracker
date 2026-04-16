@@ -559,12 +559,6 @@
       padding: 12px;
     }
 
-    .trip-item.active {
-      border-color: rgba(255, 179, 72, 0.42);
-      box-shadow: inset 0 0 0 1px rgba(255, 179, 72, 0.12);
-      background: rgba(42, 30, 12, 0.36);
-    }
-
     .trip-top {
       display: flex;
       align-items: center;
@@ -996,6 +990,7 @@
       <div class="hint">
         <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
         <span>Do not use your phone while operating the bus, and always follow the deadheads shown on the paddle.</span>
+        <span id="latencyHint">Always live lookup (no cache)</span>
       </div>
     </section>
   </main>
@@ -1051,6 +1046,7 @@
     const chat = document.getElementById('chat');
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
+    const latencyHint = document.getElementById('latencyHint');
     const myWorkBtn = document.getElementById('myWorkBtn');
     const accountBtn = document.getElementById('accountBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
@@ -1127,6 +1123,7 @@
       chat.innerHTML = defaultChatMarkup;
       statusEl.textContent = 'Ready';
       statusEl.classList.remove('ok', 'warn');
+      latencyHint.textContent = 'Always live lookup (no cache)';
       activeShuttleDay = '';
       closePaddleModal();
       closeShuttleModal();
@@ -2040,14 +2037,9 @@
       `;
     }
 
-    function renderPaddleTrips(trips, garage, activeTrip) {
+    function renderPaddleTrips(trips, garage) {
       return trips.map((trip, index) => {
         const nextTrip = trips[index + 1] || null;
-        const isActive = Boolean(
-          activeTrip &&
-          String(activeTrip.tripNumber || '') === String(trip.trip_number || '') &&
-          String(activeTrip.route || '') === String(trip.route || '')
-        );
         const reliefAtEnd = Boolean(
           trip.relief_stop &&
           trip.relief_time &&
@@ -2080,7 +2072,7 @@
           nextTrip ? nextTrip.start_stop : garage
         );
         return `
-          <article class="trip-item ${isActive ? 'active' : ''}">
+          <article class="trip-item">
             <div class="trip-top">
               <div class="trip-title">Trip ${escapeHtml(trip.trip_number)}: ${escapeHtml(trip.headsign || 'No headsign')}</div>
               <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
@@ -2100,16 +2092,8 @@
     function openPaddleModal(data) {
       paddleTitle.textContent = `Paddle ${data.block}`;
       paddleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Paddle index'}${data.effective ? ` | effective ${data.effective}` : ''}`;
-      const summaryCard = data.isLiveDay && data.activeTrip ? `
-        <section class="summary-card">
-          <div class="summary-title">Active Trip</div>
-          <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
-          <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
-        </section>
-      ` : '';
 
       paddleBody.innerHTML = `
-        ${summaryCard}
         <section class="meta-grid">
           <article class="meta-card"><strong>Paddle ID</strong><span>${data.paddleId || 'N/A'}</span></article>
           <article class="meta-card"><strong>Routes</strong><span>${Array.isArray(data.routes) && data.routes.length ? data.routes.join(', ') : 'N/A'}</span></article>
@@ -2118,7 +2102,7 @@
           <article class="meta-card"><strong>Bus Type</strong><span>${data.busType || 'N/A'}</span></article>
         </section>
         <section class="trip-list">
-          ${renderPaddleTrips(Array.isArray(data.trips) ? data.trips : [], data.garage || '', data.activeTrip || null)}
+          ${renderPaddleTrips(Array.isArray(data.trips) ? data.trips : [], data.garage || '')}
         </section>
       `;
 
@@ -2361,8 +2345,12 @@
           addShuttleActions(data.shuttleOptions, data.shuttleDay);
         }
 
+        const elapsedMs = Math.round(performance.now() - started);
         statusEl.textContent = data.mode === 'shuttle-list' ? 'Shuttles ready' : 'Live result';
         statusEl.classList.add('ok');
+        latencyHint.textContent = data.mode === 'shuttle-list'
+          ? `Response time: ${elapsedMs}ms`
+          : `Response time: ${elapsedMs}ms (live)`;
       } catch (err) {
         loadingBubble.remove();
         addMessage(err.message || 'Unexpected error.', 'bot');
