@@ -100,15 +100,11 @@ def paddle_id_to_block_label(paddle_id: str) -> str:
 
 def parse_trip_header(line: str, routes):
     text = line.strip()
-    if re.match(r"^\d{1,2}:\d{2}\b", text):
-        return None
     match = re.match(r"^(\d+)(.+)$", text)
     if not match:
         return None
 
     trip_number = int(match.group(1))
-    if trip_number > 999:
-        return None
     rest = match.group(2).strip()
     for route in sorted(routes, key=len, reverse=True):
       if rest.endswith(route):
@@ -128,10 +124,6 @@ def parse_trip_header_at(lines, index, routes):
 
     max_parts = min(3, len(lines) - index)
     for parts in range(1, max_parts + 1):
-        if parts > 1:
-            next_line = clean_line(lines[index + parts - 1])
-            if parse_trip_header(next_line, routes):
-                break
         candidate = clean_line(" ".join(lines[index:index + parts]))
         header = parse_trip_header(candidate, routes)
         if header:
@@ -230,36 +222,22 @@ def format_direction_text(lines):
 def split_trip_section(section_lines):
     stop_lines = []
     direction_lines = []
-    note_lines = []
     in_directions = False
-    skipping_note = False
 
     for raw_line in section_lines:
-        line = clean_line(raw_line)
-        if not line:
-            continue
+      line = clean_line(raw_line)
+      if not line:
+          continue
 
-        has_time = bool(re.search(r"\d{1,2}:\d{2}", line))
-        if not stop_lines and line.upper().startswith("NOTE:"):
-            skipping_note = True
-            note_lines.append(line)
-            continue
-        if skipping_note and not stop_lines:
-            if has_time:
-                skipping_note = False
-            else:
-                note_lines.append(line)
-                continue
+      if not in_directions and looks_like_instruction(line):
+          in_directions = True
 
-        if not in_directions and looks_like_instruction(line):
-            in_directions = True
+      if in_directions:
+          direction_lines.append(line)
+      else:
+          stop_lines.append(line)
 
-        if in_directions:
-            direction_lines.append(line)
-        else:
-            stop_lines.append(line)
-
-    return parse_stop_times(stop_lines), format_direction_text(direction_lines), format_direction_text(note_lines)
+    return parse_stop_times(stop_lines), format_direction_text(direction_lines)
 
 
 def is_preamble_metadata_line(line, paddle_id, effective, routes, service_day, bus_type, garage, sign_on):
@@ -326,7 +304,7 @@ def parse_page(text: str, source_meta, page_number: int):
             section_lines = []
             return
 
-        stop_times, next_directions, notes = split_trip_section(section_lines)
+        stop_times, next_directions = split_trip_section(section_lines)
         trip_record = {
             "trip_number": active_trip["trip_number"],
             "route": active_trip["route"],
@@ -336,10 +314,8 @@ def parse_page(text: str, source_meta, page_number: int):
             "start_stop": stop_times[0]["stop"] if stop_times else None,
             "end_stop": stop_times[-1]["stop"] if stop_times else None,
             "relief_stop": next((entry["stop"] for entry in stop_times if entry["relief"]), None),
-            "relief_time": next((entry["time"] for entry in stop_times if entry["relief"]), None),
             "start_directions": start_directions if not trips else None,
             "next_directions": next_directions,
-            "notes": notes,
         }
         trips.append(trip_record)
         start_directions = None
