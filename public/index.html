@@ -588,6 +588,11 @@
       line-height: 1.5;
     }
 
+    .trip-relief {
+      color: #ff7f7f;
+      font-weight: 600;
+    }
+
     .direction-block {
       margin-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -2035,6 +2040,25 @@
     function renderPaddleTrips(trips, garage) {
       return trips.map((trip, index) => {
         const nextTrip = trips[index + 1] || null;
+        const reliefAtEnd = Boolean(
+          trip.relief_stop &&
+          trip.relief_time &&
+          trip.relief_stop === trip.end_stop &&
+          trip.relief_time === trip.end_time
+        );
+        const startRow = `Start: ${escapeHtml(trip.start_stop || 'N/A')} ${trip.start_time ? `at ${escapeHtml(trip.start_time)}` : ''}`;
+        const reliefRow = trip.relief_stop && trip.relief_time && !reliefAtEnd
+          ? `<div class="trip-row"><span class="trip-relief">Relief:</span> ${escapeHtml(trip.relief_stop)} at ${escapeHtml(trip.relief_time)}</div>`
+          : '';
+        const endRow = reliefAtEnd
+          ? `End: ${escapeHtml(trip.end_stop || 'N/A')} ${trip.end_time ? `at ${escapeHtml(trip.end_time)}` : ''} <span class="trip-relief">(Relief)</span>`
+          : `End: ${escapeHtml(trip.end_stop || 'N/A')} ${trip.end_time ? `at ${escapeHtml(trip.end_time)}` : ''}`;
+        const notes = trip.notes ? `
+          <div class="direction-block">
+            <div class="direction-label">Note</div>
+            <div class="direction-text">${escapeHtml(trip.notes)}</div>
+          </div>
+        ` : '';
         const startDirections = renderDirectionBlock(
           'Garage to trip start',
           trip.start_directions,
@@ -2048,19 +2072,20 @@
           nextTrip ? nextTrip.start_stop : garage
         );
         return `
-        <article class="trip-item">
-          <div class="trip-top">
-            <div class="trip-title">Trip ${escapeHtml(trip.trip_number)}: ${escapeHtml(trip.headsign || 'No headsign')}</div>
-            <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
-          </div>
-          <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
-          <div class="trip-row">Start: ${escapeHtml(trip.start_stop || 'N/A')}</div>
-          <div class="trip-row">End: ${escapeHtml(trip.end_stop || 'N/A')}</div>
-          ${trip.relief_stop ? `<div class="trip-row">Relief: ${escapeHtml(trip.relief_stop)}</div>` : ''}
-          ${startDirections}
-          ${nextDirections}
-        </article>
-      `;
+          <article class="trip-item">
+            <div class="trip-top">
+              <div class="trip-title">Trip ${escapeHtml(trip.trip_number)}: ${escapeHtml(trip.headsign || 'No headsign')}</div>
+              <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
+            </div>
+            <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
+            <div class="trip-row">${startRow}</div>
+            ${reliefRow}
+            <div class="trip-row">${endRow}</div>
+            ${notes}
+            ${startDirections}
+            ${nextDirections}
+          </article>
+        `;
       }).join('');
     }
 
@@ -2083,6 +2108,10 @@
 
       paddleOverlay.hidden = false;
       document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => {
+        paddleBody.scrollTop = 0;
+        paddleOverlay.scrollTop = 0;
+      });
     }
 
     function closePaddleModal() {
@@ -2090,13 +2119,15 @@
       document.body.style.overflow = '';
     }
 
-    async function showPaddle(block) {
+    async function showPaddle(block, day) {
       const previousStatus = statusEl.textContent;
       statusEl.textContent = 'Loading paddle...';
       statusEl.classList.remove('ok', 'warn');
 
       try {
-        const response = await fetch(`/api/paddle?block=${encodeURIComponent(block)}`);
+        const params = new URLSearchParams({ block: String(block || '') });
+        if (day) params.set('day', String(day));
+        const response = await fetch(`/api/paddle?${params.toString()}`);
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'Paddle lookup failed');
@@ -2110,15 +2141,26 @@
       }
     }
 
-    function addPaddleAction(block) {
+    function addPaddleActions(block, options) {
+      if (!block) return;
       const wrap = document.createElement('div');
       wrap.className = 'bot-actions';
-      const button = document.createElement('button');
-      button.className = 'link-btn';
-      button.type = 'button';
-      button.textContent = 'View Paddle';
-      button.addEventListener('click', () => showPaddle(block));
-      wrap.appendChild(button);
+
+      const paddleOptions = Array.isArray(options) && options.length
+        ? options
+        : [{ serviceDay: '', sourceLabel: '', effective: '' }];
+
+      for (const option of paddleOptions) {
+        const button = document.createElement('button');
+        button.className = 'link-btn';
+        button.type = 'button';
+        button.textContent = option.serviceDay
+          ? `${formatServiceDayLabel(option.serviceDay)} Paddle`
+          : 'Paddle';
+        button.addEventListener('click', () => showPaddle(block, option.serviceDay || ''));
+        wrap.appendChild(button);
+      }
+
       chat.appendChild(wrap);
       chat.scrollTop = chat.scrollHeight;
     }
@@ -2294,8 +2336,8 @@
         setLastLookupFromResponse(data);
         addMessage(data.reply, 'bot');
         addCards(data);
-        if (data.paddleAvailable) {
-          addPaddleAction(data.block);
+        if ((Array.isArray(data.paddleOptions) && data.paddleOptions.length) || data.paddleAvailable) {
+          addPaddleActions(data.block, data.paddleOptions || []);
         }
         if (data.shuttleOptions) {
           activeShuttleDay = data.shuttleDay || '';

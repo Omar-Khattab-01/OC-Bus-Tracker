@@ -432,6 +432,11 @@ function getOttawaServiceDayKey() {
   return getServiceDayKeyForDate(new Date());
 }
 
+function isEasterMondayOptionVisible(referenceDate = new Date()) {
+  const ottawaIso = getOttawaDateString(referenceDate);
+  return ottawaIso === '2026-04-05' || ottawaIso === '2026-04-06';
+}
+
 function timeToSeconds(value) {
   const t = String(value || '').trim();
   const m = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
@@ -960,6 +965,40 @@ function getPaddleRunForDay(serviceDay, paddleId) {
   return index?.service_days?.[serviceDay]?.[paddleId] || null;
 }
 
+function getPaddleOptionsForBlock(block) {
+  const paddleId = blockToPaddleId(block);
+  if (!paddleId) return [];
+
+  const index = loadPaddleIndex();
+  const options = [];
+  for (const [serviceDay, runs] of Object.entries(index?.service_days || {})) {
+    if (serviceDay === 'easter_monday' && !isEasterMondayOptionVisible()) {
+      continue;
+    }
+    const run = runs?.[paddleId];
+    if (!run) continue;
+    options.push({
+      serviceDay,
+      sourceId: run.source_id || null,
+      sourceLabel: run.source_label || null,
+      effective: run.effective || null,
+    });
+  }
+
+  const currentServiceDay = getOttawaServiceDayKey();
+  const baseOrder = new Map([
+    ['weekday', 0],
+    ['saturday', 1],
+    ['sunday', 2],
+    ['easter_monday', 3],
+  ]);
+  return options.sort((a, b) => {
+    if (a.serviceDay === currentServiceDay && b.serviceDay !== currentServiceDay) return -1;
+    if (b.serviceDay === currentServiceDay && a.serviceDay !== currentServiceDay) return 1;
+    return (baseOrder.get(a.serviceDay) ?? 99) - (baseOrder.get(b.serviceDay) ?? 99);
+  });
+}
+
 function getPreviousOttawaDate(date = new Date()) {
   return new Date(date.getTime() - 24 * 3600 * 1000);
 }
@@ -1008,11 +1047,19 @@ function resolvePaddleRunForCurrentContext(paddleId) {
   return null;
 }
 
-function buildPaddleResponse(block) {
+function buildPaddleResponse(block, requestedDay = '') {
   const paddleId = blockToPaddleId(block);
   if (!paddleId) return null;
 
-  const resolved = resolvePaddleRunForCurrentContext(paddleId);
+  const explicitDay = normalizeServiceDay(requestedDay);
+  const resolved = explicitDay
+    ? {
+        serviceDay: explicitDay,
+        run: getPaddleRunForDay(explicitDay, paddleId),
+        activeTrip: null,
+        carryover: false,
+      }
+    : resolvePaddleRunForCurrentContext(paddleId);
   if (!resolved || !resolved.run) return null;
   const { serviceDay, run, carryover } = resolved;
 
@@ -1586,6 +1633,7 @@ async function handleBusLookup(busNumber, res) {
       resolveBlockForBus(busNumber).catch(() => null),
     ]);
     const paddle = block ? buildPaddleResponse(block) : null;
+    const paddleOptions = block ? getPaddleOptionsForBlock(block) : [];
     const payload = {
       busNumber: String(busNumber),
       block: block || null,
@@ -1599,6 +1647,7 @@ async function handleBusLookup(busNumber, res) {
       block: payload.block,
       buses: payload.buses,
       paddleAvailable: Boolean(paddle),
+      paddleOptions,
       cached: false,
       reply: formatBusReply(payload),
       generatedAt: new Date().toISOString(),
@@ -1635,11 +1684,13 @@ async function handleLookup(req, res) {
     const block = canonicalBlock || rawBlock;
     const payload = await fetchLiveResultWithFallback(block);
     const paddle = buildPaddleResponse(block);
+    const paddleOptions = getPaddleOptionsForBlock(block);
     res.json({
       ok: true,
       block: payload.block,
       buses: payload.buses,
       paddleAvailable: Boolean(paddle),
+      paddleOptions,
       cached: false,
       reply: formatChatReply(payload),
       generatedAt: new Date().toISOString(),
@@ -1699,7 +1750,8 @@ async function handlePaddle(req, res) {
   try {
     const canonicalBlock = await resolveCanonicalBlock(rawBlock);
     const block = canonicalBlock || rawBlock;
-    const paddle = buildPaddleResponse(block);
+    const requestedDay = normalizeServiceDay(req.query.day);
+    const paddle = buildPaddleResponse(block, requestedDay);
     if (!paddle) {
       res.status(404).json({
         ok: false,
