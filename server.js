@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
 const { trackBlock } = require('./track_block');
 
 const PORT = Number(process.env.PORT || 7860);
@@ -14,6 +15,9 @@ const TRACK_CONCURRENCY = Math.max(1, Number(process.env.TRACK_CONCURRENCY || 6)
 const ENABLE_PLAYWRIGHT_FALLBACK = process.env.ENABLE_PLAYWRIGHT_FALLBACK === '1';
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
+const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
+const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -21,9 +25,13 @@ let activeWorkers = 0;
 let paddleIndexCache = null;
 const busBlockCache = new Map();
 const liveBusPaddleCache = new Map();
-const LIVE_BUS_PADDLE_TTL_MS = 2 * 60 * 1000;
-let liveBusPaddleCacheBuiltAt = 0;
 let liveBusPaddleRefreshPromise = null;
+
+const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  : null;
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -861,32 +869,107 @@ async function buildLiveBusPaddleMappings() {
   return mappings;
 }
 
-function triggerLiveBusPaddleRefresh(force = false) {
-  refreshLiveBusPaddleCache(force).catch(() => null);
+function buildLiveBusPaddleRow(busNumber, value) {
+  return {
+    bus_number: String(busNumber || '').trim(),
+    block: String(value.block || '').trim(),
+    paddle_id: String(value.paddleId || '').trim(),
+    service_day: String(value.serviceDay || '').trim(),
+    route: String(value.route || '').trim(),
+    trip_number: String(value.tripNumber || '').trim(),
+    headsign: String(value.headsign || '').trim(),
+    start_time: String(value.startTime || '').trim(),
+    end_time: String(value.endTime || '').trim(),
+    verified_at: String(value.verifiedAt || new Date().toISOString()),
+  };
 }
 
-async function refreshLiveBusPaddleCache(force = false) {
-  const now = Date.now();
-  if (!force && liveBusPaddleCacheBuiltAt && now - liveBusPaddleCacheBuiltAt < LIVE_BUS_PADDLE_TTL_MS) {
-    return liveBusPaddleCache;
+function rememberLiveBusPaddleMapping(busNumber, value) {
+  const normalizedBus = String(busNumber || '').trim();
+  if (!normalizedBus || !value?.block) return;
+  const entry = {
+    block: String(value.block || '').trim(),
+    paddleId: String(value.paddleId || '').trim(),
+    serviceDay: String(value.serviceDay || '').trim(),
+    route: String(value.route || '').trim(),
+    headsign: String(value.headsign || '').trim(),
+    tripNumber: String(value.tripNumber || '').trim(),
+    startTime: String(value.startTime || '').trim(),
+    endTime: String(value.endTime || '').trim(),
+    verifiedAt: String(value.verifiedAt || new Date().toISOString()),
+  };
+  liveBusPaddleCache.set(normalizedBus, entry);
+  busBlockCache.set(normalizedBus, {
+    block: entry.block,
+    expiresAt: Date.now() + 3 * 60 * 1000,
+  });
+}
+
+function isLiveBusMappingFresh(value) {
+  if (!value?.block || !value?.verifiedAt) return false;
+  const verifiedAtMs = Date.parse(String(value.verifiedAt));
+  if (!Number.isFinite(verifiedAtMs)) return false;
+  return Date.now() - verifiedAtMs <= LIVE_BUS_MAPPING_TTL_MS;
+}
+
+async function persistLiveBusPaddleMappings(mappings) {
+  if (!adminSupabase) {
+    return { persisted: false, reason: 'missing-service-role' };
   }
 
+  const rows = Array.from(mappings.entries())
+    .map(([busNumber, value]) => buildLiveBusPaddleRow(busNumber, value))
+    .filter((row) => row.bus_number && row.block);
+
+  if (!rows.length) {
+    return { persisted: false, reason: 'no-live-mappings' };
+  }
+
+  const snapshotIso = new Date().toISOString();
+  for (const row of rows) {
+    row.verified_at = snapshotIso;
+  }
+
+  const { error: upsertError } = await adminSupabase
+    .from('live_bus_paddles')
+    .upsert(rows, { onConflict: 'bus_number' });
+  if (upsertError) {
+    throw upsertError;
+  }
+
+  const { error: deleteError } = await adminSupabase
+    .from('live_bus_paddles')
+    .delete()
+    .lt('verified_at', snapshotIso);
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  for (const row of rows) {
+    rememberLiveBusPaddleMapping(row.bus_number, {
+      block: row.block,
+      paddleId: row.paddle_id,
+      serviceDay: row.service_day,
+      route: row.route,
+      headsign: row.headsign,
+      tripNumber: row.trip_number,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      verifiedAt: row.verified_at,
+    });
+  }
+
+  return { persisted: true, count: rows.length, verifiedAt: snapshotIso };
+}
+
+async function refreshLiveBusPaddleMappings() {
   if (liveBusPaddleRefreshPromise) {
     return liveBusPaddleRefreshPromise;
   }
 
   liveBusPaddleRefreshPromise = (async () => {
-    const nextMappings = await buildLiveBusPaddleMappings();
-    liveBusPaddleCache.clear();
-    for (const [busNumber, value] of nextMappings.entries()) {
-      liveBusPaddleCache.set(busNumber, value);
-      busBlockCache.set(busNumber, {
-        block: value.block,
-        expiresAt: Date.now() + 3 * 60 * 1000,
-      });
-    }
-    liveBusPaddleCacheBuiltAt = Date.now();
-    return liveBusPaddleCache;
+    const mappings = await buildLiveBusPaddleMappings();
+    return persistLiveBusPaddleMappings(mappings);
   })().finally(() => {
     liveBusPaddleRefreshPromise = null;
   });
@@ -894,59 +977,47 @@ async function refreshLiveBusPaddleCache(force = false) {
   return liveBusPaddleRefreshPromise;
 }
 
-async function findBlockForBusFromActivePaddles(busNumber) {
+async function getStoredLiveBusPaddleMapping(busNumber) {
   const normalizedBus = String(busNumber || '').trim();
   if (!normalizedBus) return null;
 
-  const activePaddles = getActivePaddlesForNow();
-  if (!activePaddles.length) return null;
-
-  const concurrency = Math.min(Math.max(2, TRACK_CONCURRENCY), 6);
-  let index = 0;
-  let foundBlock = null;
-
-  async function worker() {
-    while (!foundBlock && index < activePaddles.length) {
-      const currentIndex = index;
-      index += 1;
-      const activePaddle = activePaddles[currentIndex];
-
-      try {
-        const payload = await fetchLiveResultWithFallback(activePaddle.block);
-        for (const bus of payload?.buses || []) {
-          const currentBusNumber = String(bus?.busNumber || '').trim();
-          if (!currentBusNumber) continue;
-
-          const mapping = {
-            block: activePaddle.block,
-            paddleId: activePaddle.paddleId,
-            serviceDay: activePaddle.serviceDay,
-            route: activePaddle.route,
-            headsign: activePaddle.headsign,
-            tripNumber: activePaddle.tripNumber,
-            startTime: activePaddle.startTime,
-            endTime: activePaddle.endTime,
-            verifiedAt: new Date().toISOString(),
-          };
-          liveBusPaddleCache.set(currentBusNumber, mapping);
-          busBlockCache.set(currentBusNumber, {
-            block: mapping.block,
-            expiresAt: Date.now() + 3 * 60 * 1000,
-          });
-
-          if (currentBusNumber === normalizedBus) {
-            foundBlock = mapping.block;
-            return;
-          }
-        }
-      } catch (_) {
-        // Ignore per-paddle failures and keep scanning active paddles.
-      }
-    }
+  const cached = liveBusPaddleCache.get(normalizedBus);
+  if (cached && isLiveBusMappingFresh(cached)) {
+    return cached;
   }
 
-  await Promise.all(Array.from({ length: concurrency }, () => worker()));
-  return foundBlock;
+  if (!adminSupabase) {
+    return null;
+  }
+
+  const cutoffIso = new Date(Date.now() - LIVE_BUS_MAPPING_TTL_MS).toISOString();
+  const { data, error } = await adminSupabase
+    .from('live_bus_paddles')
+    .select('bus_number, block, paddle_id, service_day, route, trip_number, headsign, start_time, end_time, verified_at')
+    .eq('bus_number', normalizedBus)
+    .gte('verified_at', cutoffIso)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  if (!data?.block) {
+    return null;
+  }
+
+  const mapping = {
+    block: data.block,
+    paddleId: data.paddle_id,
+    serviceDay: data.service_day,
+    route: data.route,
+    tripNumber: data.trip_number,
+    headsign: data.headsign,
+    startTime: data.start_time,
+    endTime: data.end_time,
+    verifiedAt: data.verified_at,
+  };
+  rememberLiveBusPaddleMapping(normalizedBus, mapping);
+  return mapping;
 }
 
 function describeNextShuttleStop(shuttle) {
@@ -1337,24 +1408,13 @@ async function resolveBlockForBus(busNumber) {
     return cached.block;
   }
 
-  triggerLiveBusPaddleRefresh();
-  const confirmedMappings = liveBusPaddleCache;
-  const confirmed = confirmedMappings?.get(normalizedBus);
+  const confirmed = await getStoredLiveBusPaddleMapping(normalizedBus).catch(() => null);
   if (confirmed?.block) {
     busBlockCache.set(normalizedBus, {
       block: confirmed.block,
       expiresAt: now + 3 * 60 * 1000,
     });
     return confirmed.block;
-  }
-
-  const activePaddleMatch = await findBlockForBusFromActivePaddles(normalizedBus).catch(() => null);
-  if (activePaddleMatch) {
-    busBlockCache.set(normalizedBus, {
-      block: activePaddleMatch,
-      expiresAt: now + 3 * 60 * 1000,
-    });
-    return activePaddleMatch;
   }
   return null;
 }
@@ -1677,6 +1737,22 @@ function parseLookupTarget(req) {
   return { type: 'block', value: normalizeBlock(text) };
 }
 
+function isLocalRequest(req) {
+  const ip = String(req.ip || req.connection?.remoteAddress || '').trim();
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+}
+
+function isAuthorizedCronRequest(req) {
+  const authHeader = String(req.get('authorization') || '').trim();
+  if (CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`) {
+    return true;
+  }
+  if (String(req.get('x-vercel-cron') || '').trim() === '1') {
+    return true;
+  }
+  return isLocalRequest(req);
+}
+
 function validateBlockOrSend(block, res) {
   if (!block) {
     res.status(400).json({ ok: false, error: 'Send a block number like 44-07.' });
@@ -1764,7 +1840,7 @@ async function handleBusLookup(busNumber, res) {
   try {
     const [location, block] = await Promise.all([
       fetchLocationForBus(busNumber),
-      withTimeout(resolveBlockForBus(busNumber).catch(() => null), 3000).catch(() => null),
+      withTimeout(resolveBlockForBus(busNumber).catch(() => null), 10000).catch(() => null),
     ]);
     const paddle = block ? buildPaddleResponse(block) : null;
     const paddleOptions = block ? getPaddleOptionsForBlock(block) : [];
@@ -1932,10 +2008,44 @@ async function handleShuttle(req, res) {
   res.json(shuttle);
 }
 
+async function handleRefreshLiveBusPaddles(req, res) {
+  if (!isAuthorizedCronRequest(req)) {
+    res.status(401).json({
+      ok: false,
+      error: 'Unauthorized cron request.',
+    });
+    return;
+  }
+
+  if (!adminSupabase) {
+    res.status(501).json({
+      ok: false,
+      error: 'Set SUPABASE_SERVICE_ROLE_KEY before refreshing live bus paddle mappings.',
+    });
+    return;
+  }
+
+  try {
+    const result = await refreshLiveBusPaddleMappings();
+    res.json({
+      ok: true,
+      ...result,
+      activePaddles: getActivePaddlesForNow().length,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/shuttle', handleShuttle);
+app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/api/supabase-config', (_req, res) => {
   const enabled = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
   res.json({
