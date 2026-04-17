@@ -2104,6 +2104,10 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.error(`OC Bus Tracker web app listening on :${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.error(`OC Bus Tracker web app listening on :${PORT}`);
+  });
+}
+
+module.exports = app;
