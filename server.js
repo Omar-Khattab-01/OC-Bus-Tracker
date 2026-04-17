@@ -1756,6 +1756,17 @@ function isAuthorizedCronRequest(req) {
   return isLocalRequest(req);
 }
 
+function isTrackRefreshRequest(req, target) {
+  const refreshValue = normalizeMessage(req.query?.refresh || req.query?.job || '');
+  if (target?.value) {
+    return false;
+  }
+  if (String(req.get('x-vercel-cron') || '').trim() === '1') {
+    return true;
+  }
+  return refreshValue === 'live-bus-paddles' && isAuthorizedCronRequest(req);
+}
+
 function validateBlockOrSend(block, res) {
   if (!block) {
     res.status(400).json({ ok: false, error: 'Send a block number like 44-07.' });
@@ -1878,6 +1889,9 @@ async function handleBusLookup(busNumber, res) {
 
 async function handleLookup(req, res) {
   const target = parseLookupTarget(req);
+  if (isTrackRefreshRequest(req, target)) {
+    return handleRefreshLiveBusPaddles(req, res);
+  }
   if (target.type === 'bus') {
     return handleBusLookup(target.value, res);
   }

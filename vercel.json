@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/live-bus-paddles",
+      "path": "/api/track",
       "schedule": "*/10 * * * *"
     }
   ]
