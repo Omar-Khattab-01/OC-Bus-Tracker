@@ -1758,13 +1758,16 @@ function isAuthorizedCronRequest(req) {
 
 function isTrackRefreshRequest(req, target) {
   const refreshValue = normalizeMessage(req.query?.refresh || req.query?.job || '');
+  if (!refreshValue) {
+    return false;
+  }
   if (target?.value) {
     return false;
   }
   if (String(req.get('x-vercel-cron') || '').trim() === '1') {
     return true;
   }
-  return refreshValue === 'live-bus-paddles' && isAuthorizedCronRequest(req);
+  return refreshValue === 'live-bus-paddles';
 }
 
 function validateBlockOrSend(block, res) {
