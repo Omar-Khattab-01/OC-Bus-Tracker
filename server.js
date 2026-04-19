@@ -2413,6 +2413,21 @@ async function handleBusLookup(busNumber, res) {
     );
     const paddleOptions = payload.block ? getPaddleOptionsForBlock(payload.block) : [];
 
+    if (payload.block && Array.isArray(payload.buses) && payload.buses.length) {
+      for (const bus of payload.buses) {
+        rememberLiveBusPaddleMapping(bus.busNumber, {
+          block: payload.block,
+          serviceDay: paddle?.serviceDay || storedMapping?.serviceDay || '',
+          paddleId: paddle?.paddleId || storedMapping?.paddleId || '',
+          route: currentTrip?.route || storedMapping?.route || '',
+          headsign: currentTrip?.headsign || storedMapping?.headsign || '',
+          tripNumber: currentTrip?.tripNumber || storedMapping?.tripNumber || '',
+          startTime: currentTrip?.startTime || storedMapping?.startTime || '',
+          endTime: currentTrip?.endTime || storedMapping?.endTime || '',
+        });
+      }
+    }
+
     res.json({
       ok: true,
       mode: 'bus',
@@ -2467,6 +2482,20 @@ async function handleLookup(req, res) {
     const paddle = buildPaddleResponse(block);
     const currentTrip = buildCurrentTripSummary(paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip);
     const paddleOptions = getPaddleOptionsForBlock(block);
+    if (Array.isArray(payload?.buses) && payload.buses.length) {
+      for (const bus of payload.buses) {
+        rememberLiveBusPaddleMapping(bus.busNumber, {
+          block,
+          serviceDay: paddle?.serviceDay || '',
+          paddleId: paddle?.paddleId || '',
+          route: currentTrip?.route || '',
+          headsign: currentTrip?.headsign || '',
+          tripNumber: currentTrip?.tripNumber || '',
+          startTime: currentTrip?.startTime || '',
+          endTime: currentTrip?.endTime || '',
+        });
+      }
+    }
     res.json({
       ok: true,
       block: payload.block,

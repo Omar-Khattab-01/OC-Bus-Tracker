@@ -2075,7 +2075,7 @@
       const lat = Number(latitude);
       const lon = Number(longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return '';
-      const delta = 0.004;
+      const delta = 0.0015;
       const left = lon - delta;
       const right = lon + delta;
       const top = lat + delta;
