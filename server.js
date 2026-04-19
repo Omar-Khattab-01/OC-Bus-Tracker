@@ -1670,11 +1670,45 @@ async function resolveBlockForBus(busNumber) {
   return null;
 }
 
+function extractTransSeeCoordinates(html, busNumber) {
+  const escapedBus = String(busNumber || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const specificPattern = new RegExp(
+    `AddMarker\\(\\[\\s*(-?\\d+(?:\\.\\d+)?)\\s*,\\s*(-?\\d+(?:\\.\\d+)?)\\s*\\][\\s\\S]*?"${escapedBus}"\\s*,"Coctranspo`,
+    'i'
+  );
+  const specificMatch = String(html || '').match(specificPattern);
+  if (specificMatch) {
+    const latitude = Number(specificMatch[1]);
+    const longitude = Number(specificMatch[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return {
+        latitude: Number(latitude.toFixed(6)),
+        longitude: Number(longitude.toFixed(6)),
+      };
+    }
+  }
+
+  const genericMatch = String(html || '').match(/AddMarker\(\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]/i);
+  if (genericMatch) {
+    const latitude = Number(genericMatch[1]);
+    const longitude = Number(genericMatch[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return {
+        latitude: Number(latitude.toFixed(6)),
+        longitude: Number(longitude.toFixed(6)),
+      };
+    }
+  }
+
+  return null;
+}
+
 async function fetchLocationForBus(busNumber) {
   const url = `https://transsee.ca/fleetfind?a=octranspo&q=${encodeURIComponent(busNumber)}&Go=Go`;
   const html = await fetchTransSeeText(url);
   const lines = htmlToLines(html);
   const locationText = pickBestLocationLine(lines, busNumber);
+  const coords = extractTransSeeCoordinates(html, busNumber);
 
   if (!locationText) {
     throw Object.assign(new Error(`No location found for bus ${busNumber}`), { code: 404 });
@@ -1684,6 +1718,8 @@ async function fetchLocationForBus(busNumber) {
     busNumber: String(busNumber),
     locationText,
     url,
+    latitude: coords?.latitude ?? null,
+    longitude: coords?.longitude ?? null,
   };
 }
 
@@ -2297,6 +2333,7 @@ async function handleBusLookup(busNumber, res) {
     const startedAt = Date.now();
     let payload = null;
     const storedMapping = await getStoredLiveBusPaddleMapping(busNumber).catch(() => null);
+    let gtfsMatched = null;
 
     if (isGtfsRtConfigured()) {
       const gtfsStartedAt = Date.now();
@@ -2304,15 +2341,38 @@ async function handleBusLookup(busNumber, res) {
         let cachedBlock = storedMapping?.block || await resolveBlockForBus(busNumber).catch(() => null);
         const gtfsPayload = await lookupBusPositionWithGtfsRt(busNumber);
         if (gtfsPayload?.position) {
+          const routeHint = String(gtfsPayload.position.routeShortName || gtfsPayload.position.routeId || '').trim();
+          const activeCandidates = getActivePaddlesForNow();
+          const filteredCandidates = routeHint
+            ? activeCandidates.filter((item) => String(item.route || '').trim() === routeHint)
+            : activeCandidates;
+          const lookupCandidates = filteredCandidates.length ? filteredCandidates : activeCandidates;
+          if (lookupCandidates.length) {
+            const activePaddlesWithTrips = await Promise.all(
+              lookupCandidates.map(async (item) => ({
+                ...item,
+                trips: await fetchPaddleTripsForBlock(item.block),
+              }))
+            );
+            gtfsMatched = await withTimeout(
+              lookupBusWithGtfsRt(busNumber, activePaddlesWithTrips),
+              2500
+            ).catch(() => null);
+          }
+
+          if (!cachedBlock && gtfsMatched?.matched?.block) {
+            cachedBlock = gtfsMatched.matched.block;
+          }
           if (!cachedBlock && gtfsPayload.position.blockId) {
             cachedBlock = await resolveCanonicalBlock(gtfsPayload.position.blockId).catch(() => null) || normalizeBlock(gtfsPayload.position.blockId);
           }
-          const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, {});
+          const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null);
           payload = {
             busNumber: String(busNumber),
             block: cachedBlock || null,
             buses: [gtfsBus],
             gtfsPosition: gtfsPayload.position,
+            gtfsMatched: gtfsMatched?.matched || null,
             parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
             liveSource: 'gtfs-rt',
             timings: {
@@ -2347,6 +2407,7 @@ async function handleBusLookup(busNumber, res) {
     const paddle = payload.block ? buildPaddleResponse(payload.block) : null;
     const currentTrip = buildCurrentTripSummary(
       paddle?.activeTrip ||
+      payload?.gtfsMatched?.paddleTrip ||
       (payload.liveSource === 'gtfs-rt' ? buildCurrentTripSummaryFromGtfsPosition(payload.gtfsPosition || null) : null) ||
       storedMapping
     );
