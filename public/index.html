@@ -1227,6 +1227,24 @@
       return parts.length ? `<div class="subtle-text">${parts.join(' · ')}</div>` : '';
     }
 
+    function buildDebugText(data) {
+      if (!isLocalDevEnvironment()) return '';
+      const parts = [];
+      if (data.liveSource) {
+        parts.push(`Source: ${data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource === 'bettertransit' ? 'BetterTransit' : data.liveSource === 'transsee' ? 'TransSee' : data.liveSource}`);
+      }
+      const timings = data.timings || {};
+      const timingParts = [];
+      if (Number(timings.totalLookupMs || 0) > 0) timingParts.push(`total ${timings.totalLookupMs}ms`);
+      if (Number(timings.gtfsMs || 0) > 0) timingParts.push(`GTFS ${timings.gtfsMs}ms`);
+      if (Number(timings.betterTransitMs || 0) > 0) timingParts.push(`BetterTransit ${timings.betterTransitMs}ms`);
+      if (Number(timings.transSeeMs || 0) > 0) timingParts.push(`TransSee ${timings.transSeeMs}ms`);
+      if (timingParts.length) {
+        parts.push(`Timing: ${timingParts.join(' | ')}`);
+      }
+      return parts.join('\n');
+    }
+
     function closeAccountModal() {
       accountOverlay.hidden = true;
       document.body.style.overflow = '';
@@ -2458,7 +2476,8 @@
         setLastLookupFromResponse(data);
         const hasLiveCards = Array.isArray(data.buses) && data.buses.length > 0;
         if (!hasLiveCards) {
-          addMessage(data.reply, 'bot');
+          const debugText = buildDebugText(data);
+          addMessage(debugText ? `${data.reply}\n${debugText}` : data.reply, 'bot');
         }
         addCards(data);
         if ((Array.isArray(data.paddleOptions) && data.paddleOptions.length) || data.paddleAvailable) {

@@ -2218,13 +2218,7 @@ function formatTimingLine(timings = {}) {
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    const lines = [
-      `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim(),
-      `Source: ${describeLiveSource(payload?.liveSource)}`,
-    ];
-    const timingLine = formatTimingLine(payload?.timings);
-    if (timingLine) lines.push(timingLine);
-    return lines.join('\n');
+    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
@@ -2235,9 +2229,6 @@ function formatChatReply(payload) {
     const tripSuffix = payload.currentTrip.tripNumber ? ` (Trip ${payload.currentTrip.tripNumber})` : '';
     lines.push(`Current trip: ${payload.currentTrip.label}${tripSuffix}`);
   }
-  lines.push(`Source: ${describeLiveSource(payload?.liveSource)}`);
-  const timingLine = formatTimingLine(payload?.timings);
-  if (timingLine) lines.push(timingLine);
   return lines.join('\n');
 }
 
@@ -2271,13 +2262,7 @@ function formatShowAllReply(activePaddles) {
 function formatBusReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    const lines = [
-      `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim(),
-      `Source: ${describeLiveSource(payload?.liveSource || 'transsee')}`,
-    ];
-    const timingLine = formatTimingLine(payload?.timings);
-    if (timingLine) lines.push(timingLine);
-    return lines.join('\n');
+    return `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim();
   }
 
   const lines = [`Bus ${payload.busNumber}`];
@@ -2293,9 +2278,6 @@ function formatBusReply(payload) {
   } else if (payload.parked) {
     lines.push('Status: parked');
   }
-  lines.push(`Source: ${describeLiveSource(payload?.liveSource || 'transsee')}`);
-  const timingLine = formatTimingLine(payload?.timings);
-  if (timingLine) lines.push(timingLine);
   return lines.join('\n');
 }
 
