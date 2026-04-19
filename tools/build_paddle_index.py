@@ -10,57 +10,98 @@ ROOT = Path(__file__).resolve().parents[1]
 PADDLES_DIR = ROOT / "paddles"
 OUTPUT_PATH = ROOT / "data" / "paddles.index.json"
 
-PDF_SOURCES = {
-    "Weekdays(5-01 to 60-05).pdf": {
-        "source_id": "weekday_regular_low",
-        "label": "Weekdays 5-01 to 60-05",
-        "service_day": "weekday",
-        "category": "regular",
+PADDLE_VARIANTS = {
+    "current": {
+        "label": "Current spring paddles",
+        "sources": {
+            "Weekdays(5-01 to 60-05).pdf": {
+                "source_id": "weekday_regular_low",
+                "label": "Weekdays 5-01 to 60-05",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "Weekdays(61-01 to 899-01).pdf": {
+                "source_id": "weekday_regular_high",
+                "label": "Weekdays 61-01 to 899-01",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "ExpressAnd900s(AM & PM).pdf": {
+                "source_id": "weekday_express_900",
+                "label": "Express and 900 series (AM and PM)",
+                "service_day": "weekday",
+                "category": "express_900",
+            },
+            "Saturdays.pdf": {
+                "source_id": "saturday_main",
+                "label": "Saturday paddles",
+                "service_day": "saturday",
+                "category": "regular",
+            },
+            "Sundays.pdf": {
+                "source_id": "sunday_main",
+                "label": "Sunday paddles",
+                "service_day": "sunday",
+                "category": "regular",
+            },
+            "Easter_Monday/Reduced week(5-01 to 60-05).pdf": {
+                "source_id": "easter_monday_low",
+                "label": "Easter Monday reduced 5-01 to 60-05",
+                "service_day": "easter_monday",
+                "category": "reduced_week",
+                "service_header": "Reduced Week",
+            },
+            "Easter_Monday/Reduced weeks(61-01 to 899-04).pdf": {
+                "source_id": "easter_monday_high",
+                "label": "Easter Monday reduced 61-01 to 899-04",
+                "service_day": "easter_monday",
+                "category": "reduced_week",
+                "service_header": "Reduced Week",
+            },
+            "Easter_Monday/Reduced weeks (AM & PM).pdf": {
+                "source_id": "easter_monday_express",
+                "label": "Easter Monday reduced AM and PM",
+                "service_day": "easter_monday",
+                "category": "reduced_week",
+                "service_header": "Reduced Week",
+            },
+        },
     },
-    "Weekdays(61-01 to 899-01).pdf": {
-        "source_id": "weekday_regular_high",
-        "label": "Weekdays 61-01 to 899-01",
-        "service_day": "weekday",
-        "category": "regular",
-    },
-    "ExpressAnd900s(AM & PM).pdf": {
-        "source_id": "weekday_express_900",
-        "label": "Express and 900 series (AM and PM)",
-        "service_day": "weekday",
-        "category": "express_900",
-    },
-    "Saturdays.pdf": {
-        "source_id": "saturday_main",
-        "label": "Saturday paddles",
-        "service_day": "saturday",
-        "category": "regular",
-    },
-    "Sundays.pdf": {
-        "source_id": "sunday_main",
-        "label": "Sunday paddles",
-        "service_day": "sunday",
-        "category": "regular",
-    },
-    "Easter_Monday/Reduced week(5-01 to 60-05).pdf": {
-        "source_id": "easter_monday_low",
-        "label": "Easter Monday reduced 5-01 to 60-05",
-        "service_day": "easter_monday",
-        "category": "reduced_week",
-        "service_header": "Reduced Week",
-    },
-    "Easter_Monday/Reduced weeks(61-01 to 899-04).pdf": {
-        "source_id": "easter_monday_high",
-        "label": "Easter Monday reduced 61-01 to 899-04",
-        "service_day": "easter_monday",
-        "category": "reduced_week",
-        "service_header": "Reduced Week",
-    },
-    "Easter_Monday/Reduced weeks (AM & PM).pdf": {
-        "source_id": "easter_monday_express",
-        "label": "Easter Monday reduced AM and PM",
-        "service_day": "easter_monday",
-        "category": "reduced_week",
-        "service_header": "Reduced Week",
+    "april19": {
+        "label": "Spring paddles",
+        "activation_date": "2026-04-19",
+        "sources": {
+            "April19/Weekdays(5-01 to 53-09).pdf": {
+                "source_id": "april19_weekday_low",
+                "label": "Weekdays 5-01 to 53-09",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "April19/Weekdays(56-01 to 898-01).pdf": {
+                "source_id": "april19_weekday_high",
+                "label": "Weekdays 56-01 to 898-01",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "April19/ExpressAnd900s(AM & PM).pdf": {
+                "source_id": "april19_weekday_express_900",
+                "label": "Express and 900 series (AM and PM)",
+                "service_day": "weekday",
+                "category": "express_900",
+            },
+            "April19/Saturdays.pdf": {
+                "source_id": "april19_saturday_main",
+                "label": "Saturday paddles",
+                "service_day": "saturday",
+                "category": "regular",
+            },
+            "April19/Sundays.pdf": {
+                "source_id": "april19_sunday_main",
+                "label": "Sunday paddles",
+                "service_day": "sunday",
+                "category": "regular",
+            },
+        },
     },
 }
 
@@ -102,6 +143,9 @@ def parse_trip_header(line: str, routes):
     text = line.strip()
     if re.match(r"^\d{1,2}:\d{2}\b", text):
         return None
+    upper_text = text.upper()
+    if any(marker in upper_text for marker in ("EFFECTIVE:", "ROUTES:", "TYPE:", "(TG ", "(SIGN-ON)")):
+        return None
     for route in sorted(routes, key=len, reverse=True):
         if not text.endswith(route):
             continue
@@ -116,6 +160,8 @@ def parse_trip_header(line: str, routes):
                 continue
             headsign = rest[trip_len:].strip()
             if not headsign:
+                continue
+            if not re.search(r"[A-Za-z]", headsign):
                 continue
             if re.match(r"^\d+[A-Za-z]", headsign):
                 continue
@@ -390,6 +436,8 @@ def parse_page(text: str, source_meta, page_number: int):
         "block_label": paddle_id_to_block_label(paddle_id),
         "source_id": source_meta["source_id"],
         "source_label": source_meta["label"],
+        "variant_id": source_meta.get("variant_id") or "current",
+        "variant_label": source_meta.get("variant_label") or "Current spring paddles",
         "service_day": source_meta["service_day"],
         "category": source_meta["category"],
         "effective": effective,
@@ -428,50 +476,72 @@ def build_index():
         "sunday": {},
         "easter_monday": {},
     }
+    runs_by_variant = {}
     source_summaries = {}
 
-    for filename, source_meta in PDF_SOURCES.items():
-        pdf_path = PADDLES_DIR / filename
-        reader = PdfReader(str(pdf_path))
-        parsed_count = 0
-
-        idx = 0
-        while idx < len(reader.pages):
-            page_text = reader.pages[idx].extract_text() or ""
-            if not has_paddle_header(page_text):
-                idx += 1
-                continue
-
-            combined_text = page_text
-            next_idx = idx + 1
-            while next_idx < len(reader.pages):
-                next_text = reader.pages[next_idx].extract_text() or ""
-                if has_paddle_header(next_text):
-                    break
-                if clean_line(next_text):
-                    combined_text += "\n" + normalize_continuation_page_text(next_text)
-                next_idx += 1
-
-            parsed = parse_page(combined_text, source_meta, idx + 1)
-            if not parsed:
-                idx = next_idx
-                continue
-
-            runs_by_service[source_meta["service_day"]][parsed["paddle_id"]] = parsed
-            parsed_count += 1
-            idx = next_idx
-
-        source_summaries[source_meta["source_id"]] = {
-            **source_meta,
-            "filename": filename,
-            "pages": len(reader.pages),
-            "parsed_runs": parsed_count,
+    for variant_id, variant_meta in PADDLE_VARIANTS.items():
+        runs_by_variant[variant_id] = {
+            "label": variant_meta["label"],
+            "activation_date": variant_meta.get("activation_date"),
+            "service_days": {
+                "weekday": {},
+                "saturday": {},
+                "sunday": {},
+                "easter_monday": {},
+            },
         }
+
+        for filename, base_source_meta in variant_meta["sources"].items():
+            source_meta = {
+                **base_source_meta,
+                "variant_id": variant_id,
+                "variant_label": variant_meta["label"],
+            }
+            pdf_path = PADDLES_DIR / filename
+            reader = PdfReader(str(pdf_path))
+            parsed_count = 0
+
+            idx = 0
+            while idx < len(reader.pages):
+                page_text = reader.pages[idx].extract_text() or ""
+                if not has_paddle_header(page_text):
+                    idx += 1
+                    continue
+
+                combined_text = page_text
+                next_idx = idx + 1
+                while next_idx < len(reader.pages):
+                    next_text = reader.pages[next_idx].extract_text() or ""
+                    if has_paddle_header(next_text):
+                        break
+                    if clean_line(next_text):
+                        combined_text += "\n" + normalize_continuation_page_text(next_text)
+                    next_idx += 1
+
+                parsed = parse_page(combined_text, source_meta, idx + 1)
+                if not parsed:
+                    idx = next_idx
+                    continue
+
+                service_day = source_meta["service_day"]
+                runs_by_variant[variant_id]["service_days"][service_day][parsed["paddle_id"]] = parsed
+                if variant_id == "current":
+                    runs_by_service[service_day][parsed["paddle_id"]] = parsed
+                parsed_count += 1
+                idx = next_idx
+
+            source_summaries[source_meta["source_id"]] = {
+                **source_meta,
+                "filename": filename,
+                "pages": len(reader.pages),
+                "parsed_runs": parsed_count,
+            }
 
     return {
         "generated_by": "tools/build_paddle_index.py",
         "sources": source_summaries,
         "service_days": runs_by_service,
+        "variants": runs_by_variant,
     }
 
 

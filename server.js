@@ -7,6 +7,15 @@ const https = require('https');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { trackBlock } = require('./track_block');
+const {
+  debugGtfsState,
+  getGtfsWarmupStatus,
+  isConfigured: isGtfsRtConfigured,
+  lookupBlockWithGtfsRt,
+  lookupBusPositionWithGtfsRt,
+  lookupBusWithGtfsRt,
+  warmGtfsRtCaches,
+} = require('./lib/gtfs_rt_runtime');
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
@@ -18,6 +27,7 @@ const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
 const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
+const APRIL19_PADDLE_SWITCH_DATE = '2026-04-19';
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -292,6 +302,12 @@ function normalizeServiceDay(input) {
   if (value === 'sunday' || value === 'sun') return 'sunday';
   if (value === 'easter monday' || value === 'easter_monday') return 'easter_monday';
   return '';
+}
+
+function formatServiceDayLabel(day) {
+  const value = String(day || '').replace(/_/g, ' ').trim();
+  if (!value) return 'Today';
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function parseRequestedShuttleDay(text) {
@@ -1123,15 +1139,115 @@ async function fetchTripsForBlock(block) {
 function loadPaddleIndex() {
   if (!paddleIndexCache) {
     const filePath = path.join(__dirname, 'data', 'paddles.index.json');
-    paddleIndexCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    paddleIndexCache = sanitizePaddleIndex(JSON.parse(fs.readFileSync(filePath, 'utf8')));
   }
   return paddleIndexCache;
+}
+
+function isUsablePaddleTrip(trip) {
+  if (!trip || typeof trip !== 'object') return false;
+  const tripNumber = Number(trip.trip_number ?? trip.tripNumber ?? 0);
+  const startTime = String(trip.start_time || trip.startTime || '').trim();
+  const endTime = String(trip.end_time || trip.endTime || '').trim();
+  const startStop = String(trip.start_stop || trip.startStop || '').trim();
+  const endStop = String(trip.end_stop || trip.endStop || '').trim();
+  const headsign = String(trip.headsign || trip.headSign || '').trim();
+
+  if (tripNumber <= 0 && !startTime && !endTime) return false;
+  if (!startTime && !endTime && !startStop && !endStop) return false;
+  if (!headsign && !startTime && !endTime) return false;
+  return true;
+}
+
+function sanitizeRunTrips(run) {
+  if (!run || typeof run !== 'object') return run;
+  const trips = Array.isArray(run.trips) ? run.trips.filter(isUsablePaddleTrip) : [];
+  return {
+    ...run,
+    trips,
+  };
+}
+
+function sanitizePaddleIndex(index) {
+  if (!index || typeof index !== 'object') return index;
+  const serviceDays = {};
+  for (const [serviceDay, runs] of Object.entries(index.service_days || {})) {
+    const sanitizedRuns = {};
+    for (const [paddleId, run] of Object.entries(runs || {})) {
+      sanitizedRuns[paddleId] = sanitizeRunTrips(run);
+    }
+    serviceDays[serviceDay] = sanitizedRuns;
+  }
+
+  const variants = {};
+  for (const [variantId, variant] of Object.entries(index.variants || {})) {
+    const sanitizedVariantServiceDays = {};
+    for (const [serviceDay, runs] of Object.entries(variant.service_days || {})) {
+      const sanitizedRuns = {};
+      for (const [paddleId, run] of Object.entries(runs || {})) {
+        sanitizedRuns[paddleId] = sanitizeRunTrips(run);
+      }
+      sanitizedVariantServiceDays[serviceDay] = sanitizedRuns;
+    }
+    variants[variantId] = {
+      ...variant,
+      service_days: sanitizedVariantServiceDays,
+    };
+  }
+
+  return {
+    ...index,
+    service_days: serviceDays,
+    variants,
+  };
+}
+
+function getPaddleVariants() {
+  const index = loadPaddleIndex();
+  if (index?.variants && typeof index.variants === 'object') {
+    return index.variants;
+  }
+  return {
+    current: {
+      label: 'Current spring paddles',
+      activation_date: null,
+      service_days: index?.service_days || {},
+    },
+  };
+}
+
+function getPaddleVariantMeta(variantId) {
+  const variants = getPaddleVariants();
+  return variants?.[variantId] || null;
 }
 
 function blockToPaddleId(block) {
   const match = String(block || '').trim().toUpperCase().match(/^([A-Z0-9]+)-(\d{1,3})$/);
   if (!match) return null;
   return `${match[1].padStart(3, '0')}${match[2].padStart(3, '0')}`;
+}
+
+function isApril19PaddleVariantActive(referenceDate = new Date()) {
+  return getOttawaDateString(referenceDate) >= APRIL19_PADDLE_SWITCH_DATE;
+}
+
+function getDefaultPaddleVariantIdForDate(referenceDate = new Date(), serviceDay = '') {
+  if (serviceDay === 'easter_monday') return 'current';
+  return isApril19PaddleVariantActive(referenceDate) ? 'april19' : 'current';
+}
+
+function getPaddleDisplayVariantLabel(referenceDate = new Date(), variantId = '', serviceDay = '') {
+  if (serviceDay === 'easter_monday') return null;
+  if (!isApril19PaddleVariantActive(referenceDate) && variantId === 'april19') {
+    return `${formatServiceDayLabel(serviceDay)} paddles (Spring)`;
+  }
+  return null;
+}
+
+function getPaddleRunForVariant(variantId, serviceDay, paddleId) {
+  if (!variantId || !serviceDay || !paddleId) return null;
+  const variant = getPaddleVariantMeta(variantId);
+  return variant?.service_days?.[serviceDay]?.[paddleId] || null;
 }
 
 async function fetchPaddleTripsForBlock(block) {
@@ -1144,7 +1260,13 @@ async function fetchPaddleTripsForBlock(block) {
     return [];
   }
 
+  const previousServiceDay = getServiceDayKeyForDate(getPreviousOttawaDate(new Date()));
+  const serviceDate = resolved?.carryover && resolved?.serviceDay === previousServiceDay
+    ? formatOttawaDateForTransSee(getPreviousOttawaDate(new Date()))
+    : getOttawaServiceDateString();
+
   return run.trips.map((trip) => ({
+    tripNumber: Number(trip.trip_number || 0) || null,
     tripId: null,
     sourceType: 'paddle',
     routeId: String(trip.route || ''),
@@ -1161,10 +1283,25 @@ async function fetchPaddleTripsForBlock(block) {
     endStop: String(trip.end_stop || ''),
     paddleId,
     sourceId: run.source_id,
+    serviceDate,
   })).filter((trip) => trip.routeId && trip.scheduledStartTime);
 }
 
-function getPaddleRunForDay(serviceDay, paddleId) {
+function getPaddleRunForDay(serviceDay, paddleId, options = {}) {
+  const referenceDate = options.referenceDate || new Date();
+  const preferredVariantId = options.variantId || getDefaultPaddleVariantIdForDate(referenceDate, serviceDay);
+  const preferredRun = getPaddleRunForVariant(preferredVariantId, serviceDay, paddleId);
+  if (preferredRun) return preferredRun;
+
+  if (preferredVariantId !== 'current') {
+    const fallbackCurrent = getPaddleRunForVariant('current', serviceDay, paddleId);
+    if (fallbackCurrent) return fallbackCurrent;
+  }
+  if (preferredVariantId !== 'april19') {
+    const fallbackApril19 = getPaddleRunForVariant('april19', serviceDay, paddleId);
+    if (fallbackApril19) return fallbackApril19;
+  }
+
   const index = loadPaddleIndex();
   return index?.service_days?.[serviceDay]?.[paddleId] || null;
 }
@@ -1173,20 +1310,53 @@ function getPaddleOptionsForBlock(block) {
   const paddleId = blockToPaddleId(block);
   if (!paddleId) return [];
 
-  const index = loadPaddleIndex();
+  const referenceDate = new Date();
+  const beforeSwitch = !isApril19PaddleVariantActive(referenceDate);
   const options = [];
-  for (const [serviceDay, runs] of Object.entries(index?.service_days || {})) {
-    if (serviceDay === 'easter_monday' && !isEasterMondayOptionVisible()) {
-      continue;
+
+  const addOption = (serviceDay, run, variantId) => {
+    if (!run) return;
+    const variantLabel = run.variant_label || getPaddleVariantMeta(variantId)?.label || null;
+    const displayVariantLabel = getPaddleDisplayVariantLabel(referenceDate, variantId, serviceDay);
+    const currentDefaultVariantId = getDefaultPaddleVariantIdForDate(referenceDate, serviceDay);
+    let buttonLabel = `${formatServiceDayLabel(serviceDay)}`;
+    if (beforeSwitch && serviceDay !== 'easter_monday') {
+      buttonLabel = variantId === 'april19'
+        ? `${formatServiceDayLabel(serviceDay)} (Spring)`
+        : `${formatServiceDayLabel(serviceDay)}`;
+    } else if (variantId !== currentDefaultVariantId && serviceDay !== 'easter_monday') {
+      buttonLabel = `${formatServiceDayLabel(serviceDay)} (${variantLabel || variantId})`;
     }
-    const run = runs?.[paddleId];
-    if (!run) continue;
     options.push({
       serviceDay,
       sourceId: run.source_id || null,
       sourceLabel: run.source_label || null,
       effective: run.effective || null,
+      variantId: variantId || run.variant_id || null,
+      variantLabel,
+      displayVariantLabel,
+      buttonLabel,
     });
+  };
+
+  for (const serviceDay of ['weekday', 'saturday', 'sunday']) {
+    if (beforeSwitch) {
+      addOption(serviceDay, getPaddleRunForVariant('current', serviceDay, paddleId), 'current');
+      addOption(serviceDay, getPaddleRunForVariant('april19', serviceDay, paddleId), 'april19');
+    } else {
+      const preferredRun = getPaddleRunForDay(serviceDay, paddleId, {
+        referenceDate,
+        variantId: getDefaultPaddleVariantIdForDate(referenceDate, serviceDay),
+      });
+      addOption(serviceDay, preferredRun, preferredRun?.variant_id || getDefaultPaddleVariantIdForDate(referenceDate, serviceDay));
+    }
+  }
+
+  if (isEasterMondayOptionVisible(referenceDate)) {
+    addOption('easter_monday', getPaddleRunForDay('easter_monday', paddleId, {
+      referenceDate,
+      variantId: 'current',
+    }), 'current');
   }
 
   const currentServiceDay = getOttawaServiceDayKey();
@@ -1196,9 +1366,20 @@ function getPaddleOptionsForBlock(block) {
     ['sunday', 2],
     ['easter_monday', 3],
   ]);
-  return options.sort((a, b) => {
+  const seen = new Set();
+  return options.filter((option) => {
+    const key = `${option.serviceDay}|${option.variantId || ''}|${option.sourceId || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => {
     if (a.serviceDay === currentServiceDay && b.serviceDay !== currentServiceDay) return -1;
     if (b.serviceDay === currentServiceDay && a.serviceDay !== currentServiceDay) return 1;
+    if (a.serviceDay === b.serviceDay) {
+      const defaultVariantId = getDefaultPaddleVariantIdForDate(referenceDate, a.serviceDay);
+      if (a.variantId === defaultVariantId && b.variantId !== defaultVariantId) return -1;
+      if (b.variantId === defaultVariantId && a.variantId !== defaultVariantId) return 1;
+    }
     return (baseOrder.get(a.serviceDay) ?? 99) - (baseOrder.get(b.serviceDay) ?? 99);
   });
 }
@@ -1207,16 +1388,28 @@ function getPreviousOttawaDate(date = new Date()) {
   return new Date(date.getTime() - 24 * 3600 * 1000);
 }
 
+function formatOttawaDateForTransSee(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
 function resolvePaddleRunForCurrentContext(paddleId) {
   if (!paddleId) return null;
 
   const now = new Date();
+  const previousDate = getPreviousOttawaDate(now);
   const currentServiceDay = getServiceDayKeyForDate(now);
-  const previousServiceDay = getServiceDayKeyForDate(getPreviousOttawaDate(now));
+  const previousServiceDay = getServiceDayKeyForDate(previousDate);
   const nowSeconds = getOttawaNowSeconds();
+  const currentVariantId = getDefaultPaddleVariantIdForDate(now, currentServiceDay);
+  const previousVariantId = getDefaultPaddleVariantIdForDate(previousDate, previousServiceDay);
 
-  const currentRun = getPaddleRunForDay(currentServiceDay, paddleId);
-  const previousRun = getPaddleRunForDay(previousServiceDay, paddleId);
+  const currentRun = getPaddleRunForDay(currentServiceDay, paddleId, { referenceDate: now, variantId: currentVariantId });
+  const previousRun = getPaddleRunForDay(previousServiceDay, paddleId, { referenceDate: previousDate, variantId: previousVariantId });
 
   const previousActiveTrip = previousRun
     ? findActiveTripInRun(previousRun, nowSeconds + 24 * 3600)
@@ -1224,6 +1417,8 @@ function resolvePaddleRunForCurrentContext(paddleId) {
   if (previousActiveTrip && previousActiveTrip.end > 24 * 3600) {
     return {
       serviceDay: previousServiceDay,
+      variantId: previousRun?.variant_id || previousVariantId,
+      variantLabel: previousRun?.variant_label || getPaddleVariantMeta(previousVariantId)?.label || null,
       run: previousRun,
       activeTrip: previousActiveTrip,
       carryover: true,
@@ -1233,6 +1428,8 @@ function resolvePaddleRunForCurrentContext(paddleId) {
   if (currentRun) {
     return {
       serviceDay: currentServiceDay,
+      variantId: currentRun?.variant_id || currentVariantId,
+      variantLabel: currentRun?.variant_label || getPaddleVariantMeta(currentVariantId)?.label || null,
       run: currentRun,
       activeTrip: currentRun ? findActiveTripInRun(currentRun, nowSeconds) : null,
       carryover: false,
@@ -1242,6 +1439,8 @@ function resolvePaddleRunForCurrentContext(paddleId) {
   if (previousRun) {
     return {
       serviceDay: previousServiceDay,
+      variantId: previousRun?.variant_id || previousVariantId,
+      variantLabel: previousRun?.variant_label || getPaddleVariantMeta(previousVariantId)?.label || null,
       run: previousRun,
       activeTrip: previousActiveTrip,
       carryover: Boolean(previousActiveTrip),
@@ -1251,28 +1450,44 @@ function resolvePaddleRunForCurrentContext(paddleId) {
   return null;
 }
 
-function buildPaddleResponse(block, requestedDay = '') {
+function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
   const paddleId = blockToPaddleId(block);
   if (!paddleId) return null;
 
+  const now = new Date();
   const explicitDay = normalizeServiceDay(requestedDay);
+  const explicitVariantId = String(requestedVariant || '').trim().toLowerCase();
   const currentResolved = resolvePaddleRunForCurrentContext(paddleId);
-  const explicitRun = explicitDay ? getPaddleRunForDay(explicitDay, paddleId) : null;
+  const resolvedExplicitVariantId = explicitDay
+    ? (explicitVariantId || getDefaultPaddleVariantIdForDate(now, explicitDay))
+    : '';
+  const explicitRun = explicitDay
+    ? getPaddleRunForDay(explicitDay, paddleId, { referenceDate: now, variantId: resolvedExplicitVariantId })
+    : null;
   const resolved = explicitDay
     ? {
         serviceDay: explicitDay,
+        variantId: explicitRun?.variant_id || resolvedExplicitVariantId || null,
+        variantLabel: explicitRun?.variant_label || getPaddleVariantMeta(resolvedExplicitVariantId)?.label || null,
         run: explicitRun,
-        activeTrip: currentResolved?.serviceDay === explicitDay ? (currentResolved.activeTrip || null) : null,
+        activeTrip:
+          currentResolved?.serviceDay === explicitDay &&
+          currentResolved?.variantId === (explicitRun?.variant_id || resolvedExplicitVariantId || null)
+            ? (currentResolved.activeTrip || null)
+            : null,
         carryover: false,
       }
     : resolvePaddleRunForCurrentContext(paddleId);
   if (!resolved || !resolved.run) return null;
-  const { serviceDay, run, carryover } = resolved;
+  const { serviceDay, variantId, variantLabel, run, carryover } = resolved;
 
   return {
     block: String(block),
     paddleId,
     serviceDay,
+    variantId: variantId || run.variant_id || null,
+    variantLabel: variantLabel || run.variant_label || null,
+    displayVariantLabel: getPaddleDisplayVariantLabel(now, variantId || run.variant_id || null, serviceDay),
     carryover,
     sourceId: run.source_id || null,
     sourceLabel: run.source_label || null,
@@ -1299,23 +1514,46 @@ function getBestPaddleTripCandidates(trips) {
     }).format(new Date())
   ) ?? 0;
 
-  const scheduled = [...trips]
+  const scheduledBase = [...trips]
     .filter((trip) => trip && trip.sourceType === 'paddle')
     .map((trip) => ({
       trip,
       start: timeToSeconds(trip.scheduledStartTime),
       end: timeToSeconds(trip.scheduledEndTime),
     }))
-    .filter((entry) => entry.start !== null)
-    .sort((a, b) => a.start - b.start)
+    .filter((entry) => entry.start !== null);
+
+  if (!scheduledBase.length) return [];
+
+  let dayOffset = 0;
+  let previousStart = null;
+  const scheduled = scheduledBase
+    .sort((a, b) => {
+      const aTrip = Number(a.trip?.tripNumber) || 0;
+      const bTrip = Number(b.trip?.tripNumber) || 0;
+      if (aTrip && bTrip) return aTrip - bTrip;
+      return a.start - b.start;
+    })
+    .map((entry) => {
+      if (previousStart !== null && entry.start < previousStart) {
+        dayOffset += 24 * 3600;
+      }
+      previousStart = entry.start;
+      const start = entry.start + dayOffset;
+      let end = (entry.end ?? entry.start) + dayOffset;
+      if (end < start) end += 24 * 3600;
+      return { ...entry, start, end };
+    })
     .map((entry, index, arr) => ({ ...entry, index, total: arr.length }));
 
-  if (!scheduled.length) return [];
+  const compareNow = nowSeconds < 4 * 3600 && scheduled.some((entry) => entry.end > 24 * 3600)
+    ? nowSeconds + 24 * 3600
+    : nowSeconds;
 
   const currentIndex = scheduled.findIndex((entry) =>
     entry.end !== null
-      ? entry.start <= nowSeconds && nowSeconds <= entry.end + 20 * 60
-      : Math.abs(nowSeconds - entry.start) <= 20 * 60
+      ? entry.start <= compareNow && compareNow <= entry.end + 20 * 60
+      : Math.abs(compareNow - entry.start) <= 20 * 60
   );
   const seen = new Set();
   const candidates = [];
@@ -1332,13 +1570,13 @@ function getBestPaddleTripCandidates(trips) {
     const previous = scheduled[currentIndex - 1];
     if (previous) {
       const previousEnd = previous.end ?? previous.start;
-      if (previousEnd !== null && nowSeconds - previousEnd <= 45 * 60) {
+      if (previousEnd !== null && compareNow - previousEnd <= 45 * 60) {
         push(previous);
       }
     }
 
     const next = scheduled[currentIndex + 1];
-    if (next && next.start - nowSeconds <= 20 * 60) {
+    if (next && next.start - compareNow <= 20 * 60) {
       push(next);
     }
 
@@ -1347,7 +1585,7 @@ function getBestPaddleTripCandidates(trips) {
     return candidates;
   }
 
-  const nextIndex = scheduled.findIndex((entry) => entry.start > nowSeconds);
+  const nextIndex = scheduled.findIndex((entry) => entry.start > compareNow);
   if (nextIndex >= 0) {
     push(scheduled[nextIndex]);
     push(scheduled[nextIndex - 1]);
@@ -1359,6 +1597,19 @@ function getBestPaddleTripCandidates(trips) {
   push(scheduled[scheduled.length - 1]);
   push(scheduled[scheduled.length - 2]);
   return candidates;
+}
+
+async function getActivePaddlesWithTrips(preferredBlock = '') {
+  const activePaddles = getActivePaddlesForNow();
+  const ordered = [...activePaddles].sort((a, b) => {
+    if (preferredBlock && a.block === preferredBlock) return -1;
+    if (preferredBlock && b.block === preferredBlock) return 1;
+    return 0;
+  });
+  return Promise.all(ordered.map(async (item) => ({
+    ...item,
+    trips: await fetchPaddleTripsForBlock(item.block),
+  })));
 }
 
 async function fetchAvailableBlocks() {
@@ -1436,6 +1687,61 @@ async function fetchLocationForBus(busNumber) {
   };
 }
 
+function buildGtfsLocationForBus(busNumber, position = null, match = null) {
+  const latitude = Number(position?.latitude);
+  const longitude = Number(position?.longitude);
+  const hasCoords = Number.isFinite(latitude) && Number.isFinite(longitude);
+  const routeId = String(match?.paddleTrip?.routeId || position?.routeShortName || position?.routeId || '').trim();
+  const headSign = String(match?.paddleTrip?.headSign || position?.headsign || '').trim();
+  const stopName = String(position?.stopName || '').trim();
+  const directionText = routeId && headSign
+    ? `on route ${routeId} toward ${headSign}`
+    : routeId
+      ? `on route ${routeId}`
+      : headSign
+        ? `toward ${headSign}`
+        : 'location available in GTFS-RT';
+  const locationText = stopName ? `at ${stopName}` : `GTFS-RT ${directionText}`.trim();
+  return {
+    busNumber: String(busNumber),
+    locationText,
+    latitude: hasCoords ? Number(latitude.toFixed(6)) : null,
+    longitude: hasCoords ? Number(longitude.toFixed(6)) : null,
+  };
+}
+
+function buildCurrentTripSummary(trip = null) {
+  if (!trip) return null;
+
+  const route = String(trip.route || trip.routeId || '').trim();
+  const headsign = String(trip.headsign || trip.headSign || '').trim();
+  const tripNumber = String(trip.tripNumber || trip.trip_number || '').trim();
+  const startTime = String(trip.startTime || trip.start_time || '').trim();
+  const endTime = String(trip.endTime || trip.end_time || '').trim();
+  const label = [route, headsign].filter(Boolean).join(' ').trim();
+
+  if (!route && !headsign && !tripNumber && !startTime && !endTime) {
+    return null;
+  }
+
+  return {
+    route,
+    headsign,
+    tripNumber,
+    startTime,
+    endTime,
+    label,
+  };
+}
+
+function buildCurrentTripSummaryFromGtfsPosition(position = null) {
+  if (!position) return null;
+  return buildCurrentTripSummary({
+    route: position.routeShortName || position.routeId || '',
+    headsign: position.headsign || '',
+  });
+}
+
 function normalizeHeadsign(value) {
   return String(value || '')
     .toLowerCase()
@@ -1476,7 +1782,8 @@ async function fetchTripIdFromTransSeeRouteSchedule(trip) {
   const route = String(trip.routeId || '').trim();
   if (!route) return null;
 
-  const url = `https://www.transsee.ca/routesched?a=octranspo&r=${encodeURIComponent(route)}&date=${encodeURIComponent(getOttawaServiceDateString())}`;
+  const serviceDate = String(trip.serviceDate || getOttawaServiceDateString()).trim();
+  const url = `https://www.transsee.ca/routesched?a=octranspo&r=${encodeURIComponent(route)}&date=${encodeURIComponent(serviceDate)}`;
   const html = await fetchTransSeeText(url, FALLBACK_TIMEOUT_MS);
 
   const targetStart = String(trip.scheduledStartTime || '').slice(0, 5);
@@ -1569,27 +1876,37 @@ function getTripCandidatesForTransSee(trips) {
     .slice(0, 5);
 }
 
-function extractBusNumberFromTripSched(html) {
+function extractBusNumberFromTripSched(html, tripId) {
   const blockSectionMatch = html.match(/<div id=block><h4>Trips in this block<\/h4>([\s\S]*?)<\/table><\/div>/i);
   if (!blockSectionMatch) return null;
 
   const section = blockSectionMatch[1];
-  const currentRowMatch = section.match(/<tr><td>[\s\S]*?<td style="font-weight:\s*bold;">[\s\S]*?<\/td><td[\s\S]*?<\/td><td[\s\S]*?<\/td><td[\s\S]*?<\/td><td>([\s\S]*?)<\/td><\/tr>/i);
-  if (!currentRowMatch) return null;
-
-  const tripPathCell = currentRowMatch[1];
+  const escapedTripId = String(tripId || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+  let tripPathCell = '';
+  let rowMatch;
+  while ((rowMatch = rowRegex.exec(section))) {
+    const row = rowMatch[0];
+    if (escapedTripId && !new RegExp(`tripsched\\?a=octranspo&t=${escapedTripId}(?:&|")`, 'i').test(row)) {
+      continue;
+    }
+    const cellMatches = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((match) => match[1]);
+    tripPathCell = cellMatches[cellMatches.length - 1] || '';
+    break;
+  }
+  if (!tripPathCell) return null;
   const busMatch = tripPathCell.match(/>(\d{3,5})<\/a>/);
   return busMatch ? busMatch[1] : null;
 }
 
 async function fetchBusFromTransSeeTrip(trip) {
-  const date = getOttawaServiceDateString();
+  const date = String(trip.serviceDate || getOttawaServiceDateString()).trim();
   const tripId = trip.tripId || await fetchTripIdFromTransSeeRouteSchedule(trip);
   if (!tripId) return null;
 
   const url = `https://www.transsee.ca/tripsched?a=octranspo&t=${encodeURIComponent(tripId)}&date=${encodeURIComponent(date)}`;
   const html = await fetchTransSeeText(url, FALLBACK_TIMEOUT_MS);
-  const busNumber = extractBusNumberFromTripSched(html);
+  const busNumber = extractBusNumberFromTripSched(html, tripId);
   if (!busNumber) return null;
   return fetchLocationForBus(busNumber);
 }
@@ -1609,53 +1926,117 @@ async function fetchTransSeeTripFallback(block, trips) {
   return null;
 }
 
+async function fetchGtfsBlockFallback(block, trips) {
+  if (!isGtfsRtConfigured() || !Array.isArray(trips) || !trips.length) {
+    return null;
+  }
+
+  let payload;
+  try {
+    payload = await lookupBlockWithGtfsRt(block, trips);
+  } catch (_) {
+    return null;
+  }
+
+  const seen = new Set();
+  const vehicleMatches = [];
+  for (const match of payload?.matches || []) {
+    const vehicleId = String(match?.vehicleId || '').trim();
+    if (!vehicleId || seen.has(vehicleId)) continue;
+    seen.add(vehicleId);
+    vehicleMatches.push(match);
+  }
+  if (!vehicleMatches.length) {
+    return null;
+  }
+
+  const primary = vehicleMatches[0];
+  return {
+    block,
+    buses: [buildGtfsLocationForBus(primary.vehicleId, primary.position, primary)],
+    liveSource: 'gtfs-rt',
+    gtfsMatch: primary,
+  };
+}
+
 async function fetchLiveResult(block) {
   if (pendingByBlock.has(block)) {
     return pendingByBlock.get(block);
   }
 
   const job = enqueue(async () => {
+    const timings = {
+      tripsFetchMs: 0,
+      paddleFetchMs: 0,
+      gtfsMs: 0,
+      betterTransitMs: 0,
+      transSeeMs: 0,
+    };
     let trips = [];
+    let paddleTrips = [];
     let directLookupError = null;
 
     try {
+      const startedAt = Date.now();
       trips = await fetchTripsForBlock(block);
+      timings.tripsFetchMs = Date.now() - startedAt;
     } catch (err) {
       directLookupError = err;
     }
 
-    if (!trips.length) {
-      trips = await fetchPaddleTripsForBlock(block);
+    try {
+      const startedAt = Date.now();
+      paddleTrips = await fetchPaddleTripsForBlock(block);
+      timings.paddleFetchMs = Date.now() - startedAt;
+    } catch (_) {
+      paddleTrips = [];
+    }
+
+    const gtfsTrips = paddleTrips.length ? paddleTrips : trips;
+    if (gtfsTrips.length > 0) {
+      const startedAt = Date.now();
+      const gtfsFallback = await fetchGtfsBlockFallback(block, gtfsTrips);
+      timings.gtfsMs = Date.now() - startedAt;
+      if (gtfsFallback) {
+        return { ...gtfsFallback, timings };
+      }
     }
 
     let buses = [];
     if (!directLookupError) {
       try {
+        const startedAt = Date.now();
         buses = await fetchBusesForBlock(block);
+        timings.betterTransitMs += Date.now() - startedAt;
       } catch (err) {
         directLookupError = err;
       }
     }
     if (buses.length > 0) {
+      const startedAt = Date.now();
       const results = await Promise.allSettled(buses.map((bus) => fetchLocationForBus(bus)));
+      timings.betterTransitMs += Date.now() - startedAt;
       const locations = results
         .filter((result) => result.status === 'fulfilled')
         .map((result) => result.value);
       if (locations.length > 0) {
-        return { block, buses: locations };
+        return { block, buses: locations, liveSource: 'bettertransit', timings };
       }
     }
 
-    if (trips.length > 0) {
-      const transSeeFallback = await fetchTransSeeTripFallback(block, trips);
+    const fallbackTrips = trips.length ? trips : paddleTrips;
+    if (fallbackTrips.length > 0) {
+      const startedAt = Date.now();
+      const transSeeFallback = await fetchTransSeeTripFallback(block, fallbackTrips);
+      timings.transSeeMs = Date.now() - startedAt;
       if (transSeeFallback) {
-        return transSeeFallback;
+        return { ...transSeeFallback, liveSource: 'transsee', timings };
       }
     } else if (directLookupError) {
       throw directLookupError;
     }
 
-    return { block, buses: [] };
+    return { block, buses: [], liveSource: 'none', timings };
   }).finally(() => {
     pendingByBlock.delete(block);
   });
@@ -1665,13 +2046,30 @@ async function fetchLiveResult(block) {
 }
 
 async function fetchLiveResultWithFallback(block) {
+  const startedAt = Date.now();
   try {
-    return await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
+    const payload = await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
+    return {
+      ...payload,
+      timings: {
+        ...(payload?.timings || {}),
+        totalLookupMs: Date.now() - startedAt,
+      },
+    };
   } catch (directErr) {
     if (!ENABLE_PLAYWRIGHT_FALLBACK) throw directErr;
     if (Number(directErr.code) === 400) throw directErr;
+    const fallbackStartedAt = Date.now();
     const fallback = await withTimeout(trackBlock(block, { headless: true }), FALLBACK_TIMEOUT_MS);
-    return fallback;
+    return {
+      ...fallback,
+      liveSource: fallback.liveSource || 'playwright-fallback',
+      timings: {
+        ...(fallback?.timings || {}),
+        fallbackMs: Date.now() - fallbackStartedAt,
+        totalLookupMs: Date.now() - startedAt,
+      },
+    };
   }
 }
 
@@ -1737,6 +2135,13 @@ function parseLookupTarget(req) {
   return { type: 'block', value: normalizeBlock(text) };
 }
 
+function parseTimeParamToSeconds(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return null;
+  return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0);
+}
+
 function isLocalRequest(req) {
   const ip = String(req.ip || req.connection?.remoteAddress || '').trim();
   return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
@@ -1784,16 +2189,55 @@ function validateBlockOrSend(block, res) {
   return true;
 }
 
+function describeLiveSource(value) {
+  const source = String(value || '').trim().toLowerCase();
+  if (source === 'gtfs-rt') return 'GTFS-RT';
+  if (source === 'bettertransit') return 'BetterTransit';
+  if (source === 'transsee') return 'TransSee';
+  if (source === 'playwright-fallback') return 'Playwright fallback';
+  if (source === 'none') return 'No live source';
+  if (source === 'direct') return 'Direct lookup';
+  return source ? source : 'Unknown';
+}
+
+function formatTimingLine(timings = {}) {
+  const parts = [];
+  const totalLookupMs = Number(timings?.totalLookupMs || 0);
+  const gtfsMs = Number(timings?.gtfsMs || 0);
+  const betterTransitMs = Number(timings?.betterTransitMs || 0);
+  const transSeeMs = Number(timings?.transSeeMs || 0);
+  const fallbackMs = Number(timings?.fallbackMs || 0);
+  if (totalLookupMs > 0) parts.push(`total ${totalLookupMs}ms`);
+  if (gtfsMs > 0) parts.push(`GTFS ${gtfsMs}ms`);
+  if (betterTransitMs > 0) parts.push(`BetterTransit ${betterTransitMs}ms`);
+  if (transSeeMs > 0) parts.push(`TransSee ${transSeeMs}ms`);
+  if (fallbackMs > 0) parts.push(`fallback ${fallbackMs}ms`);
+  return parts.length ? `Timing: ${parts.join(' | ')}` : '';
+}
+
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim();
+    const lines = [
+      `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim(),
+      `Source: ${describeLiveSource(payload?.liveSource)}`,
+    ];
+    const timingLine = formatTimingLine(payload?.timings);
+    if (timingLine) lines.push(timingLine);
+    return lines.join('\n');
   }
 
   const lines = [`Block ${payload.block}`];
   for (const bus of buses) {
     lines.push(`Bus ${bus.busNumber}: ${bus.locationText}`);
   }
+  if (payload?.currentTrip?.label) {
+    const tripSuffix = payload.currentTrip.tripNumber ? ` (Trip ${payload.currentTrip.tripNumber})` : '';
+    lines.push(`Current trip: ${payload.currentTrip.label}${tripSuffix}`);
+  }
+  lines.push(`Source: ${describeLiveSource(payload?.liveSource)}`);
+  const timingLine = formatTimingLine(payload?.timings);
+  if (timingLine) lines.push(timingLine);
   return lines.join('\n');
 }
 
@@ -1827,18 +2271,31 @@ function formatShowAllReply(activePaddles) {
 function formatBusReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim();
+    const lines = [
+      `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim(),
+      `Source: ${describeLiveSource(payload?.liveSource || 'transsee')}`,
+    ];
+    const timingLine = formatTimingLine(payload?.timings);
+    if (timingLine) lines.push(timingLine);
+    return lines.join('\n');
   }
 
   const lines = [`Bus ${payload.busNumber}`];
   for (const bus of buses) {
     lines.push(`${bus.locationText}`);
   }
+  if (payload?.currentTrip?.label) {
+    const tripSuffix = payload.currentTrip.tripNumber ? ` (Trip ${payload.currentTrip.tripNumber})` : '';
+    lines.push(`Current trip: ${payload.currentTrip.label}${tripSuffix}`);
+  }
   if (payload.block) {
     lines.push(`Current block: ${payload.block}`);
   } else if (payload.parked) {
     lines.push('Status: parked');
   }
+  lines.push(`Source: ${describeLiveSource(payload?.liveSource || 'transsee')}`);
+  const timingLine = formatTimingLine(payload?.timings);
+  if (timingLine) lines.push(timingLine);
   return lines.join('\n');
 }
 
@@ -1855,18 +2312,63 @@ async function handleBusLookup(busNumber, res) {
   }
 
   try {
-    const [location, block] = await Promise.all([
-      fetchLocationForBus(busNumber),
-      withTimeout(resolveBlockForBus(busNumber).catch(() => null), 10000).catch(() => null),
-    ]);
-    const paddle = block ? buildPaddleResponse(block) : null;
-    const paddleOptions = block ? getPaddleOptionsForBlock(block) : [];
-    const payload = {
-      busNumber: String(busNumber),
-      block: block || null,
-      buses: [location],
-      parked: !block && locationSuggestsParked(location?.locationText),
+    const startedAt = Date.now();
+    let payload = null;
+    const storedMapping = await getStoredLiveBusPaddleMapping(busNumber).catch(() => null);
+
+    if (isGtfsRtConfigured()) {
+      const gtfsStartedAt = Date.now();
+      try {
+        let cachedBlock = storedMapping?.block || await resolveBlockForBus(busNumber).catch(() => null);
+        const gtfsPayload = await lookupBusPositionWithGtfsRt(busNumber);
+        if (gtfsPayload?.position) {
+          if (!cachedBlock && gtfsPayload.position.blockId) {
+            cachedBlock = await resolveCanonicalBlock(gtfsPayload.position.blockId).catch(() => null) || normalizeBlock(gtfsPayload.position.blockId);
+          }
+          const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, {});
+          payload = {
+            busNumber: String(busNumber),
+            block: cachedBlock || null,
+            buses: [gtfsBus],
+            gtfsPosition: gtfsPayload.position,
+            parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
+            liveSource: 'gtfs-rt',
+            timings: {
+              gtfsMs: Date.now() - gtfsStartedAt,
+            },
+          };
+        }
+      } catch (_) {
+        // Fall through to the older location path below.
+      }
+    }
+
+    if (!payload) {
+      const [location, block] = await Promise.all([
+        fetchLocationForBus(busNumber),
+        withTimeout(resolveBlockForBus(busNumber).catch(() => null), 10000).catch(() => null),
+      ]);
+      payload = {
+        busNumber: String(busNumber),
+        block: block || null,
+        buses: [location],
+        parked: !block && locationSuggestsParked(location?.locationText),
+        liveSource: 'transsee',
+        timings: {},
+      };
+    }
+
+    payload.timings = {
+      ...(payload.timings || {}),
+      totalLookupMs: Date.now() - startedAt,
     };
+    const paddle = payload.block ? buildPaddleResponse(payload.block) : null;
+    const currentTrip = buildCurrentTripSummary(
+      paddle?.activeTrip ||
+      (payload.liveSource === 'gtfs-rt' ? buildCurrentTripSummaryFromGtfsPosition(payload.gtfsPosition || null) : null) ||
+      storedMapping
+    );
+    const paddleOptions = payload.block ? getPaddleOptionsForBlock(payload.block) : [];
 
     res.json({
       ok: true,
@@ -1874,10 +2376,13 @@ async function handleBusLookup(busNumber, res) {
       busNumber: payload.busNumber,
       block: payload.block,
       buses: payload.buses,
+      currentTrip,
       paddleAvailable: Boolean(paddle),
       paddleOptions,
       cached: false,
-      reply: formatBusReply(payload),
+      responseMs: payload.timings.totalLookupMs,
+      timings: payload.timings,
+      reply: formatBusReply({ ...payload, currentTrip }),
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -1903,6 +2408,7 @@ async function handleLookup(req, res) {
   if (!validateBlockOrSend(rawBlock, res)) return;
 
   try {
+    const startedAt = Date.now();
     const canonicalBlock = await resolveCanonicalBlock(rawBlock);
     if (!canonicalBlock && !blockToPaddleId(rawBlock)) {
       res.status(404).json({
@@ -1914,16 +2420,25 @@ async function handleLookup(req, res) {
 
     const block = canonicalBlock || rawBlock;
     const payload = await fetchLiveResultWithFallback(block);
+    const responseMs = Date.now() - startedAt;
     const paddle = buildPaddleResponse(block);
+    const currentTrip = buildCurrentTripSummary(paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip);
     const paddleOptions = getPaddleOptionsForBlock(block);
     res.json({
       ok: true,
       block: payload.block,
       buses: payload.buses,
+      liveSource: payload.liveSource || 'direct',
+      currentTrip,
       paddleAvailable: Boolean(paddle),
       paddleOptions,
       cached: false,
-      reply: formatChatReply(payload),
+      responseMs,
+      timings: {
+        ...(payload?.timings || {}),
+        totalRequestMs: responseMs,
+      },
+      reply: formatChatReply({ ...payload, currentTrip }),
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -1982,7 +2497,8 @@ async function handlePaddle(req, res) {
     const canonicalBlock = await resolveCanonicalBlock(rawBlock);
     const block = canonicalBlock || rawBlock;
     const requestedDay = normalizeServiceDay(req.query.day);
-    const paddle = buildPaddleResponse(block, requestedDay);
+    const requestedVariant = String(req.query.variant || '').trim().toLowerCase();
+    const paddle = buildPaddleResponse(block, requestedDay, requestedVariant);
     if (!paddle) {
       res.status(404).json({
         ok: false,
@@ -2061,10 +2577,86 @@ async function handleRefreshLiveBusPaddles(req, res) {
   }
 }
 
+async function handleGtfsLookup(req, res) {
+  const target = parseLookupTarget(req);
+  const nowSeconds = parseTimeParamToSeconds(req.query.at);
+  const candidateBlock = normalizeBlock(req.query.candidateBlock || req.query.contextBlock || '');
+  if (!isGtfsRtConfigured()) {
+    res.status(501).json({
+      ok: false,
+      error: 'Set OCTRANSPO_GTFS_STATIC_URL, OCTRANSPO_GTFS_RT_TRIP_UPDATES_URL, OCTRANSPO_GTFS_RT_VEHICLE_POSITIONS_URL, and OCTRANSPO_GTFS_API_KEY to test GTFS-RT lookup.',
+    });
+    return;
+  }
+
+  try {
+    if (target.type === 'bus') {
+      if (candidateBlock && !isLikelyBlock(candidateBlock)) {
+        res.status(400).json({
+          ok: false,
+          error: 'candidateBlock format must look like 44-07.',
+        });
+        return;
+      }
+      const activePaddles = candidateBlock
+        ? [{ block: candidateBlock, serviceDay: normalizeServiceDay(req.query.day) || getOttawaServiceDayKey() }]
+        : getActivePaddlesForNow();
+      const activePaddlesWithTrips = await Promise.all(activePaddles.map(async (item) => {
+        const block = item.block;
+        return {
+          ...item,
+          block,
+          trips: await fetchPaddleTripsForBlock(block),
+        };
+      }));
+      const payload = await lookupBusWithGtfsRt(target.value, activePaddlesWithTrips);
+      res.json(payload);
+      return;
+    }
+
+    const rawBlock = target.value;
+    if (!validateBlockOrSend(rawBlock, res)) return;
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock).catch(() => null);
+    const block = canonicalBlock || rawBlock;
+    const paddleTrips = await fetchPaddleTripsForBlock(block);
+    const payload = await lookupBlockWithGtfsRt(block, paddleTrips, { nowSeconds });
+    res.json(payload);
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: String(err.message || 'Unexpected GTFS-RT lookup error').slice(0, 500),
+    });
+  }
+}
+
+async function handleGtfsDebug(req, res) {
+  if (!isGtfsRtConfigured()) {
+    res.status(501).json({
+      ok: false,
+      error: 'GTFS-RT is not configured.',
+    });
+    return;
+  }
+
+  try {
+    const payload = await debugGtfsState({
+      routeId: String(req.query.route || req.query.routeId || '').trim(),
+    });
+    res.json(payload);
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: String(err.message || 'Unexpected GTFS debug error').slice(0, 500),
+    });
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/shuttle', handleShuttle);
+app.get('/api/gtfs-lookup', handleGtfsLookup);
+app.get('/api/gtfs-debug', handleGtfsDebug);
 app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/api/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
@@ -2097,6 +2689,7 @@ app.get('/healthz', (_req, res) => {
     pendingBlocks: pendingByBlock.size,
     liveOnly: true,
     mode: 'direct-http',
+    gtfsWarmup: getGtfsWarmupStatus(),
   });
 });
 
@@ -2104,10 +2697,26 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-if (require.main === module) {
+async function startServer() {
+  if (isGtfsRtConfigured()) {
+    try {
+      console.error('Warming GTFS caches before accepting requests...');
+      const warmResult = await warmGtfsRtCaches();
+      if (warmResult?.ok) {
+        console.error(`GTFS warmup complete in ${warmResult.durationMs}ms`);
+      }
+    } catch (error) {
+      console.error(`GTFS warmup failed: ${String(error?.message || error)}`);
+    }
+  }
+
   app.listen(PORT, () => {
     console.error(`OC Bus Tracker web app listening on :${PORT}`);
   });
+}
+
+if (require.main === module) {
+  startServer();
 }
 
 module.exports = app;

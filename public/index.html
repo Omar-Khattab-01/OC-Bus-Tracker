@@ -365,6 +365,25 @@
       word-break: break-all;
     }
 
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .card-link-btn {
+      appearance: none;
+      border: 1px solid rgba(158, 194, 255, 0.28);
+      background: rgba(17, 24, 32, 0.72);
+      color: #9ec2ff;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .composer {
       grid-row: 4;
       border-top: 1px solid var(--border);
@@ -1007,7 +1026,7 @@
           <h2 id="paddleTitle">Paddle</h2>
           <p id="paddleMeta" class="modal-meta"></p>
         </div>
-        <button id="closePaddleBtn" class="close-btn" type="button" aria-label="Close paddle viewer">×</button>
+        <button id="closePaddleBtn" class="close-btn" type="button" aria-label="Close paddle viewer">x</button>
       </header>
       <div id="paddleBody" class="modal-body"></div>
     </section>
@@ -1020,7 +1039,7 @@
           <h2 id="shuttleTitle">Shuttle</h2>
           <p id="shuttleMeta" class="modal-meta"></p>
         </div>
-        <button id="closeShuttleBtn" class="close-btn" type="button" aria-label="Close shuttle viewer">×</button>
+        <button id="closeShuttleBtn" class="close-btn" type="button" aria-label="Close shuttle viewer">x</button>
       </header>
       <div id="shuttleBody" class="modal-body"></div>
     </section>
@@ -1033,9 +1052,22 @@
           <h2 id="accountTitle">Account</h2>
           <p id="accountMeta" class="modal-meta"></p>
         </div>
-        <button id="closeAccountBtn" class="close-btn" type="button" aria-label="Close account">×</button>
+        <button id="closeAccountBtn" class="close-btn" type="button" aria-label="Close account">x</button>
       </header>
       <div id="accountBody" class="modal-body"></div>
+    </section>
+  </div>
+
+  <div id="mapOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="mapTitle">Bus Location</h2>
+          <p id="mapMeta" class="modal-meta"></p>
+        </div>
+        <button id="closeMapBtn" class="close-btn" type="button" aria-label="Close map">x</button>
+      </header>
+      <div id="mapBody" class="modal-body"></div>
     </section>
   </div>
 
@@ -1071,6 +1103,10 @@
     const accountMeta = document.getElementById('accountMeta');
     const accountBody = document.getElementById('accountBody');
     const closeAccountBtn = document.getElementById('closeAccountBtn');
+    const mapOverlay = document.getElementById('mapOverlay');
+    const mapMeta = document.getElementById('mapMeta');
+    const mapBody = document.getElementById('mapBody');
+    const closeMapBtn = document.getElementById('closeMapBtn');
     let supabaseClient = null;
     let supabaseEnabled = false;
     let currentUser = null;
@@ -1166,6 +1202,29 @@
 
     function escapeAttribute(value) {
       return escapeHtml(value).replace(/"/g, '&quot;');
+    }
+
+    function isLocalDevEnvironment() {
+      const host = String(window.location.hostname || '').toLowerCase();
+      return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    }
+
+    function buildDebugSummary(data) {
+      if (!isLocalDevEnvironment()) return '';
+      const parts = [];
+      if (data.liveSource) {
+        parts.push(`Source: ${escapeHtml(data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource === 'bettertransit' ? 'BetterTransit' : data.liveSource === 'transsee' ? 'TransSee' : data.liveSource)}`);
+      }
+      const timings = data.timings || {};
+      const timingParts = [];
+      if (Number(timings.totalLookupMs || 0) > 0) timingParts.push(`total ${escapeHtml(timings.totalLookupMs)}ms`);
+      if (Number(timings.gtfsMs || 0) > 0) timingParts.push(`GTFS ${escapeHtml(timings.gtfsMs)}ms`);
+      if (Number(timings.betterTransitMs || 0) > 0) timingParts.push(`BetterTransit ${escapeHtml(timings.betterTransitMs)}ms`);
+      if (Number(timings.transSeeMs || 0) > 0) timingParts.push(`TransSee ${escapeHtml(timings.transSeeMs)}ms`);
+      if (timingParts.length) {
+        parts.push(`Timing: ${timingParts.join(' | ')}`);
+      }
+      return parts.length ? `<div class="subtle-text">${parts.join(' · ')}</div>` : '';
     }
 
     function closeAccountModal() {
@@ -1965,23 +2024,68 @@
 
       const wrap = document.createElement('div');
       wrap.className = 'cards';
+      const currentTrip = data.currentTrip || null;
+      const debugSummary = buildDebugSummary(data);
 
       for (const bus of data.buses) {
         const card = document.createElement('article');
         card.className = 'card';
+        const hasCoords = Number.isFinite(Number(bus.latitude)) && Number.isFinite(Number(bus.longitude));
+        const tripLabel = currentTrip && currentTrip.label
+          ? `Current trip: ${escapeHtml(currentTrip.label)}${currentTrip.tripNumber ? ` (Trip ${escapeHtml(currentTrip.tripNumber)})` : ''}`
+          : '';
         card.innerHTML = `
           <div class="row">
             <div class="bus">#${bus.busNumber}</div>
             <span class="pill">live</span>
           </div>
+          ${tripLabel ? `<div class="loc">${tripLabel}</div>` : ''}
           <div class="loc">${bus.locationText}</div>
-          <a class="url" href="${bus.url}" target="_blank" rel="noopener noreferrer">Open in TransSee</a>
+          ${debugSummary}
+          <div class="card-actions">
+            ${hasCoords ? `<button class="card-link-btn" type="button" data-show-map="1" data-lat="${escapeAttribute(bus.latitude)}" data-lon="${escapeAttribute(bus.longitude)}" data-bus="${escapeAttribute(bus.busNumber)}" data-label="${escapeAttribute(bus.locationText)}">Show on Map</button>` : ''}
+          </div>
         `;
         wrap.appendChild(card);
       }
 
       chat.appendChild(wrap);
       chat.scrollTop = chat.scrollHeight;
+    }
+
+    function buildOpenStreetMapEmbedUrl(latitude, longitude) {
+      const lat = Number(latitude);
+      const lon = Number(longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return '';
+      const delta = 0.004;
+      const left = lon - delta;
+      const right = lon + delta;
+      const top = lat + delta;
+      const bottom = lat - delta;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lon}`;
+    }
+
+    function openMapModal(busNumber, label, latitude, longitude) {
+      const embedUrl = buildOpenStreetMapEmbedUrl(latitude, longitude);
+      if (!embedUrl) return;
+      mapMeta.textContent = `Bus ${busNumber} · ${label}`;
+      mapBody.innerHTML = `
+        <iframe
+          title="Bus location map"
+          src="${embedUrl}"
+          loading="lazy"
+          style="width:100%; min-height:420px; border:0; border-radius:18px; background:#0b1018;"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      `;
+      mapOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMapModal() {
+      mapOverlay.hidden = true;
+      mapBody.innerHTML = '';
+      document.body.style.overflow = '';
     }
 
     function escapeHtml(value) {
@@ -2099,7 +2203,8 @@
 
     function openPaddleModal(data) {
       paddleTitle.textContent = `Paddle ${data.block}`;
-      paddleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Paddle index'}${data.effective ? ` | effective ${data.effective}` : ''}`;
+      const paddleSourceLabel = data.displayVariantLabel || data.sourceLabel || 'Paddle index';
+      paddleMeta.textContent = `${data.serviceDay} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
       const summaryCard = data.isLiveDay && data.activeTrip ? `
         <section class="summary-card">
           <div class="summary-title">Active Trip</div>
@@ -2135,7 +2240,7 @@
       document.body.style.overflow = '';
     }
 
-    async function showPaddle(block, day) {
+    async function showPaddle(block, day, variantId = '') {
       const previousStatus = statusEl.textContent;
       statusEl.textContent = 'Loading paddle...';
       statusEl.classList.remove('ok', 'warn');
@@ -2143,6 +2248,7 @@
       try {
         const params = new URLSearchParams({ block: String(block || '') });
         if (day) params.set('day', String(day));
+        if (variantId) params.set('variant', String(variantId));
         const response = await fetch(`/api/paddle?${params.toString()}`);
         const data = await response.json();
         if (!response.ok || !data.ok) {
@@ -2170,10 +2276,10 @@
         const button = document.createElement('button');
         button.className = 'link-btn';
         button.type = 'button';
-        button.textContent = option.serviceDay
+        button.textContent = option.buttonLabel || (option.serviceDay
           ? `${formatServiceDayLabel(option.serviceDay)} Paddle`
-          : 'Paddle';
-        button.addEventListener('click', () => showPaddle(block, option.serviceDay || ''));
+          : 'Paddle');
+        button.addEventListener('click', () => showPaddle(block, option.serviceDay || '', option.variantId || ''));
         wrap.appendChild(button);
       }
 
@@ -2350,7 +2456,10 @@
 
         loadingBubble.remove();
         setLastLookupFromResponse(data);
-        addMessage(data.reply, 'bot');
+        const hasLiveCards = Array.isArray(data.buses) && data.buses.length > 0;
+        if (!hasLiveCards) {
+          addMessage(data.reply, 'bot');
+        }
         addCards(data);
         if ((Array.isArray(data.paddleOptions) && data.paddleOptions.length) || data.paddleAvailable) {
           addPaddleActions(data.block, data.paddleOptions || []);
@@ -2361,7 +2470,13 @@
           addShuttleActions(data.shuttleOptions, data.shuttleDay);
         }
 
-        statusEl.textContent = data.mode === 'shuttle-list' ? 'Shuttles ready' : 'Live result';
+        const measuredMs = Number(data.responseMs || 0);
+        const clientMs = Math.round(performance.now() - started);
+        if (data.mode === 'shuttle-list') {
+          statusEl.textContent = measuredMs > 0 ? `Shuttles ready (${measuredMs}ms)` : `Shuttles ready (${clientMs}ms)`;
+        } else {
+          statusEl.textContent = measuredMs > 0 ? `Live result (${measuredMs}ms)` : `Live result (${clientMs}ms)`;
+        }
         statusEl.classList.add('ok');
       } catch (err) {
         loadingBubble.remove();
@@ -2411,6 +2526,7 @@
     closePaddleBtn.addEventListener('click', closePaddleModal);
     closeShuttleBtn.addEventListener('click', closeShuttleModal);
     closeAccountBtn.addEventListener('click', closeAccountModal);
+    closeMapBtn.addEventListener('click', closeMapModal);
     paddleOverlay.addEventListener('click', (event) => {
       if (event.target === paddleOverlay) closePaddleModal();
     });
@@ -2419,6 +2535,14 @@
     });
     accountOverlay.addEventListener('click', (event) => {
       if (event.target === accountOverlay) closeAccountModal();
+    });
+    mapOverlay.addEventListener('click', (event) => {
+      if (event.target === mapOverlay) closeMapModal();
+    });
+    chat.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-show-map]');
+      if (!target) return;
+      openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !paddleOverlay.hidden) {
@@ -2429,6 +2553,9 @@
       }
       if (event.key === 'Escape' && !accountOverlay.hidden) {
         closeAccountModal();
+      }
+      if (event.key === 'Escape' && !mapOverlay.hidden) {
+        closeMapModal();
       }
     });
 
