@@ -1131,7 +1131,6 @@
       bus: '',
       shuttleDay: '',
     };
-    const busContextCache = new Map();
     const defaultChatMarkup = `
       <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
     `;
@@ -1165,53 +1164,8 @@
       statusEl.textContent = 'Ready';
       statusEl.classList.remove('ok', 'warn');
       activeShuttleDay = '';
-      busContextCache.clear();
       closePaddleModal();
       closeShuttleModal();
-    }
-
-    function normalizeBusNumber(value) {
-      return String(value || '').trim();
-    }
-
-    function cacheBusContextFromResponse(data) {
-      if (!data || !Array.isArray(data.buses) || !data.buses.length) return;
-      const currentTrip = data.currentTrip || null;
-      const block = data.block || '';
-      const paddleOptions = Array.isArray(data.paddleOptions) ? data.paddleOptions : [];
-      if (!block && !currentTrip && !paddleOptions.length) return;
-
-      for (const bus of data.buses) {
-        const busNumber = normalizeBusNumber(bus?.busNumber);
-        if (!busNumber) continue;
-        const existing = busContextCache.get(busNumber) || {};
-        busContextCache.set(busNumber, {
-          block: block || existing.block || '',
-          currentTrip: currentTrip || existing.currentTrip || null,
-          paddleOptions: paddleOptions.length ? paddleOptions : (existing.paddleOptions || []),
-        });
-      }
-    }
-
-    function mergeBusResponseWithSessionContext(data) {
-      if (!data || data.mode !== 'bus' || !Array.isArray(data.buses) || !data.buses.length) {
-        return data;
-      }
-
-      const busNumber = normalizeBusNumber(data.busNumber || data.buses[0]?.busNumber);
-      if (!busNumber) return data;
-      const cached = busContextCache.get(busNumber);
-      if (!cached) return data;
-
-      return {
-        ...data,
-        block: data.block || cached.block || null,
-        currentTrip: data.currentTrip || cached.currentTrip || null,
-        paddleAvailable: Boolean(data.paddleAvailable || cached.block),
-        paddleOptions: Array.isArray(data.paddleOptions) && data.paddleOptions.length
-          ? data.paddleOptions
-          : (cached.paddleOptions || []),
-      };
     }
 
     function normalizeBlockValue(value) {
@@ -2518,11 +2472,8 @@
           throw new Error(data.error || 'Lookup failed');
         }
 
-        data = mergeBusResponseWithSessionContext(data);
-
         loadingBubble.remove();
         setLastLookupFromResponse(data);
-        cacheBusContextFromResponse(data);
         const hasLiveCards = Array.isArray(data.buses) && data.buses.length > 0;
         if (!hasLiveCards) {
           const debugText = buildDebugText(data);
