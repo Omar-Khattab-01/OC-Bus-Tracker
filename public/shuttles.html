@@ -520,6 +520,7 @@
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: rgba(255, 255, 255, 0.03);
+      table-layout: fixed;
     }
 
     .schedule-table th,
@@ -544,6 +545,71 @@
 
     .schedule-table tr.highlight td {
       background: rgba(255, 179, 72, 0.12);
+    }
+
+    .schedule-mobile-list {
+      display: none;
+      gap: 10px;
+    }
+
+    .schedule-mobile-card {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .schedule-mobile-card.highlight {
+      border-color: rgba(255, 179, 72, 0.38);
+      background: rgba(255, 179, 72, 0.12);
+    }
+
+    .schedule-mobile-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .schedule-mobile-trip {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .schedule-mobile-stops {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .schedule-mobile-stop {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(14, 18, 24, 0.72);
+      min-width: 0;
+    }
+
+    .schedule-mobile-stop strong {
+      display: block;
+      color: var(--oc-mist);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .schedule-mobile-stop span {
+      display: block;
+      font-size: 18px;
+      line-height: 1.2;
     }
 
     .shuttle-jump-col {
@@ -608,7 +674,7 @@
         <div class="badge">OC</div>
         <div class="title">
           <h1>Shuttles</h1>
-          <p>Current shuttle activity and schedule access for every service day.</p>
+          <p>View the current shuttle set for today or switch to another service day.</p>
         </div>
       </div>
       <div class="header-actions">
@@ -621,8 +687,8 @@
     <section class="main">
       <section class="page-head">
         <div>
-          <h2>Shuttle Access</h2>
-          <p id="pageSummary">Loading shuttle schedules and current-day activity.</p>
+          <h2 id="pageTitle">Shuttles</h2>
+          <p id="pageSummary">Loading shuttle schedules for the selected service day.</p>
         </div>
         <div id="metaStrip" class="meta-strip" aria-label="Shuttle totals"></div>
       </section>
@@ -652,6 +718,7 @@
   <script>
     const statusEl = document.getElementById('status');
     const refreshBtn = document.getElementById('refreshBtn');
+    const pageTitle = document.getElementById('pageTitle');
     const pageSummary = document.getElementById('pageSummary');
     const metaStrip = document.getElementById('metaStrip');
     const daySwitcher = document.getElementById('daySwitcher');
@@ -688,6 +755,11 @@
       const text = String(value || '').trim();
       if (!text) return 'Today';
       return titleCase(text);
+    }
+
+    function buildPageHeading(serviceDay, currentServiceDay) {
+      if (serviceDay === 'today') return `Current ${titleCase(currentServiceDay || 'today')} Shuttles`;
+      return `${titleCase(serviceDay)} Shuttles`;
     }
 
     function setStatus(text, tone = '') {
@@ -771,9 +843,38 @@
       const nextStopName = shouldHighlight ? (data.nextStop?.nextStopName || '') : '';
       const nextStopTime = shouldHighlight ? (data.nextStop?.nextStopTime || '') : '';
       const topAnchorId = String(options.topAnchorId || 'shuttleTopAnchor');
+      const isMobile = window.innerWidth <= 640;
 
       if (!trips.length) {
         return '<div class="empty">No shuttle times are available for this service day.</div>';
+      }
+
+      if (isMobile) {
+        const cards = trips.map((trip) => {
+          const stops = headers.map((stopName, index) => {
+            const stop = Array.isArray(trip.stops) ? trip.stops[index] : null;
+            return `
+              <div class="schedule-mobile-stop">
+                <strong>${escapeHtml(stopName)}</strong>
+                <span>${escapeHtml(stop?.time || '--:--')}</span>
+              </div>
+            `;
+          }).join('');
+          const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
+            stop.name === nextStopName && stop.time === nextStopTime
+          );
+          return `
+            <article class="schedule-mobile-card${isHighlighted ? ' highlight' : ''}" ${isHighlighted ? 'id="currentShuttleTarget"' : ''}>
+              <div class="schedule-mobile-top">
+                <div class="schedule-mobile-trip">Trip ${escapeHtml(trip.tripNumber)}</div>
+                ${isHighlighted ? `<button class="jump-btn" type="button" aria-label="Back to top of shuttle" data-scroll-to="${escapeAttribute(topAnchorId)}">&#8593;</button>` : ''}
+              </div>
+              <div class="schedule-mobile-stops">${stops}</div>
+            </article>
+          `;
+        }).join('');
+
+        return `<div class="schedule-mobile-list" style="display:grid">${cards}</div>`;
       }
 
       const rows = trips.map((trip) => {
@@ -887,9 +988,10 @@
         renderDaySwitcher();
         renderMetaStrip(data);
         renderCards(data);
+        pageTitle.textContent = buildPageHeading(data.serviceDay, data.currentServiceDay);
         pageSummary.textContent = data.serviceDay === data.currentServiceDay
-          ? `Showing the current ${titleCase(data.serviceDay)} shuttles with live next-stop guidance where available.`
-          : `Showing the saved ${titleCase(data.serviceDay)} shuttle schedules. Switch back to Today for the live current set.`;
+          ? `Showing the current ${titleCase(data.serviceDay)} shuttles.`
+          : `Showing the ${titleCase(data.serviceDay)} shuttles.`;
         setStatus(`Shuttles ready (${data.shuttles.length})`, 'ok');
       } catch (error) {
         shuttleGrid.innerHTML = '<div class="empty">Shuttles could not be loaded right now.</div>';
