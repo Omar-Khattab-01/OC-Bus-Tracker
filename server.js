@@ -2990,11 +2990,18 @@ app.get('/api/today-board', async (_req, res) => {
 app.get('/vendor/supabase.js', (_req, res) => {
   res.sendFile(path.join(__dirname, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'));
 });
+function sendHtmlNoCache(res, filePath) {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(filePath);
+}
+
 app.get('/summer-booking', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'summer-booking.html'));
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
 app.get('/today-board', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'today-board.html'));
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'today-board.html'));
 });
 
 app.get('/healthz', (_req, res) => {
@@ -3011,7 +3018,7 @@ app.get('/healthz', (_req, res) => {
 });
 
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
 });
 
 async function startServer() {
