@@ -103,6 +103,42 @@ PADDLE_VARIANTS = {
             },
         },
     },
+    "june29": {
+        "label": "Summer paddles",
+        "activation_date": "2026-06-29",
+        "sources": {
+            "June29/Weekdays(5-01 to 53-05).pdf": {
+                "source_id": "june29_weekday_low",
+                "label": "Weekdays 5-01 to 53-05",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "June29/Weekdays(56-01 to 899-01).pdf": {
+                "source_id": "june29_weekday_high",
+                "label": "Weekdays 56-01 to 899-01",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "June29/ExpressAnd900s(AM & PM).pdf": {
+                "source_id": "june29_weekday_express_900",
+                "label": "Express and 900 series (AM and PM)",
+                "service_day": "weekday",
+                "category": "express_900",
+            },
+            "June29/Saturdays.pdf": {
+                "source_id": "june29_saturday_main",
+                "label": "Saturday paddles",
+                "service_day": "saturday",
+                "category": "regular",
+            },
+            "June29/Sundays.pdf": {
+                "source_id": "june29_sunday_main",
+                "label": "Sunday paddles",
+                "service_day": "sunday",
+                "category": "regular",
+            },
+        },
+    },
 }
 
 INSTRUCTION_PREFIXES = (

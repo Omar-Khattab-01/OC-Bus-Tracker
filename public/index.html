@@ -26,6 +26,10 @@
 
     * { box-sizing: border-box; }
 
+    [hidden] {
+      display: none !important;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -39,6 +43,13 @@
       place-items: center;
       padding: 20px;
       overflow: hidden;
+    }
+
+    body.page-mode {
+      display: block;
+      place-items: initial;
+      overflow: auto;
+      padding: 20px;
     }
 
     body::before {
@@ -64,15 +75,22 @@
     .app {
       width: min(980px, 100%);
       height: min(860px, calc(100vh - 40px));
+      min-height: 0;
       border: 1px solid var(--border);
       border-radius: 22px;
       box-shadow: var(--shadow);
       background: var(--card);
       backdrop-filter: blur(12px);
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr);
       overflow: hidden;
       animation: enter 420ms ease;
+    }
+
+    .app.page-mode {
+      height: auto;
+      min-height: calc(100vh - 40px);
+      margin: 0 auto;
     }
 
     @keyframes enter {
@@ -81,7 +99,6 @@
     }
 
     .header {
-      grid-row: 1;
       border-bottom: 1px solid var(--border);
       padding: 16px 18px;
       display: flex;
@@ -138,10 +155,73 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      position: relative;
+    }
+
+    .mobile-menu-btn,
+    .mobile-menu {
+      display: none;
+    }
+
+    .mobile-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 220px;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(17, 22, 28, 0.96);
+      box-shadow: var(--shadow);
+      z-index: 30;
+      gap: 8px;
+    }
+
+    .mobile-menu.open {
+      display: grid;
+    }
+
+    .mobile-menu .menu-section-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--oc-mist);
+      opacity: 0.8;
+      padding: 4px 6px 0;
+    }
+
+    .mobile-menu .menu-status {
+      font-size: 12px;
+      color: var(--oc-mist);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+    }
+
+    .quick-panel,
+    .chat,
+    .tool-page-view,
+    .composer {
+      grid-column: 1;
+    }
+
+    .quick-panel {
+      grid-row: 1;
     }
 
     .chat {
-      grid-row: 3;
+      grid-row: 2;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
       padding: 18px;
       overflow-y: auto;
       display: flex;
@@ -292,10 +372,15 @@
 
     .header-btn:active { transform: translateY(1px); }
 
+    .header-btn.is-active {
+      background: linear-gradient(180deg, rgba(218, 41, 28, 0.22), rgba(184, 32, 21, 0.14));
+      border-color: rgba(255, 179, 72, 0.28);
+      color: #fff2de;
+    }
+
     .quick-panel[hidden] { display: none; }
 
     .quick-panel {
-      grid-row: 2;
       border-bottom: 1px solid var(--border);
       padding: 12px 18px;
       background: linear-gradient(180deg, rgba(26, 31, 39, 0.72), rgba(18, 23, 29, 0.62));
@@ -384,8 +469,168 @@
       cursor: pointer;
     }
 
+    .jump-btn {
+      appearance: none;
+      border: 1px solid rgba(255, 179, 72, 0.28);
+      background: rgba(44, 30, 14, 0.72);
+      color: #ffe0b8;
+      border-radius: 999px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0 10px;
+      font: inherit;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .tool-page-view[hidden] {
+      display: none;
+    }
+
+    .tool-page-view {
+      grid-row: 2;
+      position: relative;
+      isolation: isolate;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tool-page-view::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 179, 72, 0.08), transparent 28%),
+        linear-gradient(180deg, rgba(18, 23, 29, 0.98), rgba(13, 17, 23, 0.98));
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .tool-page-view > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .app.page-mode .tool-page-view {
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-head h2 {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(32px, 4vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+
+    .page-head p {
+      margin: 8px 0 0;
+      color: var(--oc-mist);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .page-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .page-stat {
+      min-width: 104px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 9px 11px;
+      background: rgba(255, 255, 255, 0.03);
+      text-align: right;
+    }
+
+    .page-stat .k {
+      display: block;
+      color: var(--oc-mist);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .page-stat .v {
+      display: block;
+      margin-top: 2px;
+      color: var(--oc-white);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .saved-paddle-inline {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(17, 22, 28, 0.94);
+      overflow: hidden;
+    }
+
+    .saved-paddle-inline .card-head {
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(110deg, rgba(218, 41, 28, 0.14), rgba(15, 17, 21, 0.2));
+    }
+
+    .saved-paddle-inline .card-head h3 {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 36px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .saved-paddle-inline .card-head p {
+      margin: 6px 0 0;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .saved-paddle-inline .card-body {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
     .composer {
-      grid-row: 4;
+      grid-row: 3;
       border-top: 1px solid var(--border);
       padding: 12px;
       background: rgba(17, 22, 28, 0.8);
@@ -584,10 +829,61 @@
       background: rgba(42, 30, 12, 0.36);
     }
 
-    .trip-top {
+    .trip-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .trip-break {
+      border: 1px solid rgba(255, 179, 72, 0.22);
+      background: rgba(39, 30, 16, 0.52);
+      border-radius: 12px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
+    }
+
+    .trip-break.split {
+      border-color: rgba(255, 179, 72, 0.36);
+      background: rgba(54, 38, 12, 0.5);
+    }
+
+    .trip-break-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .trip-break-label {
+      color: var(--warn);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .trip-break-duration {
+      color: var(--oc-white);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .break-strip-head,
+    .trip-live-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .trip-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
       gap: 12px;
       margin-bottom: 8px;
     }
@@ -597,6 +893,17 @@
       font-size: 24px;
       line-height: 1;
       letter-spacing: 0.4px;
+    }
+
+    .trip-title-prefix {
+      justify-self: start;
+      white-space: nowrap;
+    }
+
+    .trip-title-main {
+      justify-self: center;
+      text-align: center;
+      width: 100%;
     }
 
     .trip-route {
@@ -847,13 +1154,15 @@
       .header {
         padding-top: 14px;
         padding-bottom: 14px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 14px;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 12px;
       }
 
       .brand {
         align-items: flex-start;
+        flex: 1 1 auto;
+        min-width: 0;
       }
 
       .badge {
@@ -870,27 +1179,48 @@
 
       .title p {
         margin-top: 6px;
-        max-width: 18ch;
+        max-width: 20ch;
         font-size: 12px;
         line-height: 1.35;
       }
 
       .header-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        width: auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        max-width: 48%;
       }
 
       .header-btn,
       .status {
-        width: 100%;
+        width: auto;
         text-align: center;
         justify-content: center;
       }
 
-      .status {
-        grid-column: 1 / -1;
+      .header-actions > .status,
+      .header-actions > #clearChatBtn,
+      .header-actions > #accountBtn,
+      .header-actions > #todayBoardBtn,
+      .header-actions > #summerBookingBtn {
+        display: none;
+      }
+
+      .header-actions > .mobile-menu-btn {
+        display: inline-flex;
+      }
+
+      .header-btn,
+      .mobile-menu-btn {
+        min-height: 40px;
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+
+      .mobile-menu {
+        display: none;
       }
 
       .quick-panel {
@@ -963,6 +1293,26 @@
     }
 
     @media (max-width: 430px) {
+      .header {
+        gap: 10px;
+      }
+
+      .brand {
+        gap: 10px;
+      }
+
+      .title h1 {
+        font-size: 20px;
+      }
+
+      .title p {
+        max-width: 16ch;
+      }
+
+      .header-actions {
+        max-width: 44%;
+      }
+
       #quickLookupActions {
         grid-template-columns: 1fr;
       }
@@ -980,43 +1330,61 @@
         </div>
       </div>
       <div class="header-actions">
+        <button id="todayWorkBtn" class="header-btn" type="button" hidden>Today's Work</button>
         <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
+        <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
+        <button id="todayBoardBtn" class="header-btn" type="button" onclick="window.location.href='/today-board'">Today Board</button>
+        <button id="summerBookingBtn" class="header-btn" type="button" onclick="window.location.href='/summer-booking'">Summer Booking</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
+        <button id="mobileMenuBtn" class="header-btn mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileHeaderMenu">Menu</button>
+        <div id="mobileHeaderMenu" class="mobile-menu" hidden>
+          <div class="menu-section-label">Navigation</div>
+          <button id="mobileTodayBoardBtn" class="header-btn" type="button">Today Board</button>
+          <button id="mobileSummerBookingBtn" class="header-btn" type="button">Summer Booking</button>
+          <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
+          <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
+          <div class="menu-section-label">Status</div>
+          <div id="mobileMenuStatus" class="menu-status">Ready</div>
+        </div>
         <div id="status" class="status">Ready</div>
       </div>
     </header>
 
-    <section id="quickLookupPanel" class="quick-panel" hidden>
-      <div class="quick-panel-top">
-        <div>
-          <div class="quick-title">Quick Lookup</div>
-          <div id="quickLookupMeta" class="quick-subtitle"></div>
+    <div class="main">
+      <section id="quickLookupPanel" class="quick-panel" hidden>
+        <div class="quick-panel-top">
+          <div>
+            <div class="quick-title">Quick Lookup</div>
+            <div id="quickLookupMeta" class="quick-subtitle"></div>
+          </div>
         </div>
-      </div>
-      <div id="quickLookupActions" class="bot-actions"></div>
-    </section>
+        <div id="quickLookupActions" class="bot-actions"></div>
+      </section>
 
-    <section id="chat" class="chat" aria-live="polite">
-      <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
-    </section>
+      <section id="chat" class="chat" aria-live="polite">
+        <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
+      </section>
 
-    <section class="composer">
-      <form id="chatForm">
-        <input
-          id="messageInput"
-          class="input"
-          autocomplete="off"
-          placeholder="Type a block, bus number, or shuttle"
-          aria-label="Block number, bus number, or shuttle"
-        />
-        <button id="sendBtn" class="btn" type="submit">Search</button>
-      </form>
-      <div class="hint">
-        <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
-        <span>Do not use your phone while operating the bus, and always follow the deadheads shown on the paddle.</span>
-      </div>
-    </section>
+      <section id="todayWorkView" class="tool-page-view" hidden></section>
+
+      <section class="composer">
+        <form id="chatForm">
+          <input
+            id="messageInput"
+            class="input"
+            autocomplete="off"
+            placeholder="Type a block, bus number, or shuttle"
+            aria-label="Block number, bus number, or shuttle"
+          />
+          <button id="sendBtn" class="btn" type="submit">Search</button>
+        </form>
+        <div class="hint">
+          <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
+          <span>Do not use your phone while operating the bus, and always follow the deadheads shown on the paddle.</span>
+        </div>
+      </section>
+    </div>
   </main>
 
   <div id="paddleOverlay" class="overlay" hidden>
@@ -1073,14 +1441,32 @@
 
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    (() => {
+      const hostname = window.location.hostname || '';
+      const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+      if (isLocalHost) return;
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = '/_vercel/insights/script.js';
+      document.head.appendChild(script);
+    })();
   </script>
-  <script defer src="/_vercel/insights/script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <script>
     const form = document.getElementById('chatForm');
     const input = document.getElementById('messageInput');
     const chat = document.getElementById('chat');
+    const appShell = document.querySelector('.app');
+    const homeBtn = document.getElementById('homeBtn');
+    const todayWorkBtn = document.getElementById('todayWorkBtn');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileHeaderMenu = document.getElementById('mobileHeaderMenu');
+    const mobileTodayBoardBtn = document.getElementById('mobileTodayBoardBtn');
+    const mobileSummerBookingBtn = document.getElementById('mobileSummerBookingBtn');
+    const mobileAccountBtn = document.getElementById('mobileAccountBtn');
+    const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
+    const mobileMenuStatus = document.getElementById('mobileMenuStatus');
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const myWorkBtn = document.getElementById('myWorkBtn');
@@ -1089,6 +1475,7 @@
     const quickLookupPanel = document.getElementById('quickLookupPanel');
     const quickLookupMeta = document.getElementById('quickLookupMeta');
     const quickLookupActions = document.getElementById('quickLookupActions');
+    const todayWorkView = document.getElementById('todayWorkView');
     const paddleOverlay = document.getElementById('paddleOverlay');
     const paddleTitle = document.getElementById('paddleTitle');
     const paddleMeta = document.getElementById('paddleMeta');
@@ -1131,6 +1518,10 @@
       bus: '',
       shuttleDay: '',
     };
+    let currentPaddleContext = null;
+    let todayWorkOpenedForSession = false;
+    let currentMainView = 'chat';
+    const TODAY_WORK_STORAGE_KEY = 'oc-bus-tracker:today-work:v1';
     const defaultChatMarkup = `
       <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
     `;
@@ -1160,16 +1551,245 @@
     }
 
     function clearChatHistory() {
+      setMainView('chat');
       chat.innerHTML = defaultChatMarkup;
       statusEl.textContent = 'Ready';
       statusEl.classList.remove('ok', 'warn');
+      syncMobileMenuStatus();
       activeShuttleDay = '';
       closePaddleModal();
       closeShuttleModal();
     }
 
+    function syncMobileMenuStatus() {
+      if (!mobileMenuStatus) return;
+      mobileMenuStatus.textContent = statusEl.textContent || 'Ready';
+    }
+
+    function closeMobileMenu() {
+      if (!mobileHeaderMenu || !mobileMenuBtn) return;
+      mobileHeaderMenu.hidden = true;
+      mobileHeaderMenu.classList.remove('open');
+      mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleMobileMenu() {
+      if (!mobileHeaderMenu || !mobileMenuBtn) return;
+      const willOpen = mobileHeaderMenu.hidden;
+      if (willOpen) {
+        syncMobileMenuStatus();
+      }
+      mobileHeaderMenu.hidden = !willOpen;
+      mobileHeaderMenu.classList.toggle('open', willOpen);
+      mobileMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    function setMainView(view) {
+      currentMainView = view === 'today-work' ? 'today-work' : 'chat';
+      const showTodayWork = currentMainView === 'today-work';
+      document.body.classList.toggle('page-mode', showTodayWork);
+      appShell.classList.toggle('page-mode', showTodayWork);
+      chat.hidden = showTodayWork;
+      todayWorkView.hidden = !showTodayWork;
+      form.closest('.composer').hidden = showTodayWork;
+      homeBtn.hidden = !showTodayWork;
+      homeBtn.classList.toggle('is-active', !showTodayWork);
+      todayWorkBtn.hidden = !Boolean(readTodayWork());
+      todayWorkBtn.classList.toggle('is-active', showTodayWork);
+      myWorkBtn.classList.remove('is-active');
+      if (showTodayWork) {
+        todayWorkView.scrollTop = 0;
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        appShell.scrollTop = 0;
+        chat.scrollTop = chat.scrollHeight;
+        requestAnimationFrame(() => {
+          input.scrollIntoView({ block: 'nearest' });
+        });
+      }
+      closeMobileMenu();
+    }
+
     function normalizeBlockValue(value) {
       return String(value || '').trim().toUpperCase();
+    }
+
+    function getOttawaDateString(date = new Date()) {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    }
+
+    function getCurrentServiceDayKey(date = new Date()) {
+      const ottawaDate = getOttawaDateString(date);
+      if (ottawaDate === '2026-04-06') return 'easter_monday';
+      const weekday = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Toronto',
+        weekday: 'long',
+      }).format(date).toLowerCase();
+      if (weekday === 'saturday') return 'saturday';
+      if (weekday === 'sunday') return 'sunday';
+      return 'weekday';
+    }
+
+    function getOttawaNowSeconds(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).formatToParts(date);
+      const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+      const hour = Number(values.hour || 0);
+      const minute = Number(values.minute || 0);
+      const second = Number(values.second || 0);
+      return hour * 3600 + minute * 60 + second;
+    }
+
+    function addDaysToOttawaDateString(dateString, days) {
+      const match = String(dateString || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return getOttawaDateString();
+      const next = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]) + Number(days || 0)));
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(next);
+    }
+
+    function parseClockToSeconds(value) {
+      const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (!match) return null;
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      const second = Number(match[3] || 0);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute) || !Number.isFinite(second)) return null;
+      return hour * 3600 + minute * 60 + second;
+    }
+
+    function computeTodayWorkExpiry(data) {
+      const serviceDate = getOttawaDateString();
+      const tripEnds = Array.isArray(data?.trips)
+        ? data.trips
+            .map((trip) => parseClockToSeconds(trip?.endTime || trip?.end_time || ''))
+            .filter((value) => Number.isFinite(value) && value >= 0)
+        : [];
+      const latestTripEnd = tripEnds.length ? Math.max(...tripEnds) : null;
+      if (!Number.isFinite(latestTripEnd)) {
+        return {
+          serviceDate,
+          expiresDate: addDaysToOttawaDateString(serviceDate, 1),
+          expiresTimeSeconds: 0,
+        };
+      }
+      if (latestTripEnd > 24 * 3600) {
+        const dayOffset = Math.floor(latestTripEnd / (24 * 3600));
+        return {
+          serviceDate,
+          expiresDate: addDaysToOttawaDateString(serviceDate, dayOffset),
+          expiresTimeSeconds: latestTripEnd % (24 * 3600),
+        };
+      }
+      return {
+        serviceDate,
+        expiresDate: addDaysToOttawaDateString(serviceDate, 1),
+        expiresTimeSeconds: 0,
+      };
+    }
+
+    function getTodayWorkStorageKey() {
+      return TODAY_WORK_STORAGE_KEY;
+    }
+
+    function readTodayWork() {
+      if (currentUser) {
+        return getDefaultTodayWorkFromProfile();
+      }
+      try {
+        const raw = window.localStorage.getItem(getTodayWorkStorageKey());
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        const todayDate = getOttawaDateString();
+        const expiresDate = String(parsed.expiresDate || '').trim();
+        const expiresTimeSeconds = Number(parsed.expiresTimeSeconds);
+        const hasExpiry = Boolean(expiresDate) && Number.isFinite(expiresTimeSeconds);
+        if (hasExpiry) {
+          if (todayDate > expiresDate || (todayDate === expiresDate && getOttawaNowSeconds() >= expiresTimeSeconds)) {
+            window.localStorage.removeItem(getTodayWorkStorageKey());
+            return null;
+          }
+        } else if (parsed.date !== todayDate) {
+          window.localStorage.removeItem(getTodayWorkStorageKey());
+          return null;
+        }
+        const block = normalizeBlockValue(parsed.block);
+        if (!block) return null;
+        return {
+          date: parsed.date,
+          block,
+          serviceDay: String(parsed.serviceDay || '').trim().toLowerCase(),
+          variantId: String(parsed.variantId || '').trim().toLowerCase(),
+          label: String(parsed.label || '').trim(),
+          source: String(parsed.source || '').trim().toLowerCase(),
+          expiresDate,
+          expiresTimeSeconds: Number.isFinite(expiresTimeSeconds) ? expiresTimeSeconds : null,
+        };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeTodayWork(entry) {
+      const block = normalizeBlockValue(entry?.block);
+      if (!block) return null;
+      const expiry = {
+        serviceDate: String(entry?.date || getOttawaDateString()).trim(),
+        expiresDate: String(entry?.expiresDate || addDaysToOttawaDateString(getOttawaDateString(), 1)).trim(),
+        expiresTimeSeconds: Number.isFinite(Number(entry?.expiresTimeSeconds)) ? Number(entry.expiresTimeSeconds) : 0,
+      };
+      const value = {
+        date: expiry.serviceDate,
+        block,
+        serviceDay: String(entry?.serviceDay || getCurrentServiceDayKey()).trim().toLowerCase(),
+        variantId: String(entry?.variantId || '').trim().toLowerCase(),
+        label: String(entry?.label || '').trim(),
+        source: String(entry?.source || 'local').trim().toLowerCase(),
+        expiresDate: expiry.expiresDate,
+        expiresTimeSeconds: expiry.expiresTimeSeconds,
+      };
+      window.localStorage.setItem(getTodayWorkStorageKey(), JSON.stringify(value));
+      return value;
+    }
+
+    function clearTodayWork() {
+      window.localStorage.removeItem(getTodayWorkStorageKey());
+    }
+
+    function getDefaultTodayWorkFromProfile() {
+      if (!currentUser) return null;
+      const serviceDay = getCurrentServiceDayKey();
+      const savedBlocks = getSavedBlocksForDay(serviceDay);
+      if (!savedBlocks.length) return null;
+      return {
+        block: savedBlocks[0],
+        serviceDay,
+        source: 'account',
+        label: `${formatServiceDayLabel(serviceDay)}: ${savedBlocks[0]}`,
+      };
+    }
+
+    function ensureTodayWorkRecord() {
+      if (currentUser) return getDefaultTodayWorkFromProfile();
+      const existing = readTodayWork();
+      if (existing) return existing;
+      return null;
     }
 
     function getSavedBlocksForDay(day) {
@@ -1243,6 +1863,21 @@
         parts.push(`Timing: ${timingParts.join(' | ')}`);
       }
       return parts.join('\n');
+    }
+
+    function getActiveDayTodayWorkEntry(data) {
+      if (!data || !data.block) return null;
+      const activeServiceDay = getCurrentServiceDayKey();
+      const paddleOptions = Array.isArray(data.paddleOptions) ? data.paddleOptions : [];
+      const activeOption = paddleOptions.find((option) => String(option.serviceDay || '') === activeServiceDay);
+      if (!activeOption) return null;
+      return {
+        block: normalizeBlockValue(data.block),
+        serviceDay: activeServiceDay,
+        variantId: String(activeOption.variantId || '').trim().toLowerCase(),
+        label: `${formatServiceDayLabel(activeServiceDay)}: ${normalizeBlockValue(data.block)}`,
+        source: currentUser ? 'account' : 'local',
+      };
     }
 
     function closeAccountModal() {
@@ -1348,7 +1983,12 @@
     }
 
     function renderQuickLookup() {
-      if (!currentUser) {
+      updateAccountButton();
+      const todayWork = ensureTodayWorkRecord();
+      const todayServiceDay = getCurrentServiceDayKey();
+      const savedTodayBlocks = currentUser ? getSavedBlocksForDay(todayServiceDay) : [];
+
+      if (!currentUser && !todayWork) {
         quickLookupPanel.hidden = true;
         quickLookupMeta.textContent = '';
         quickLookupActions.innerHTML = '';
@@ -1356,29 +1996,28 @@
       }
 
       quickLookupPanel.hidden = false;
-      quickLookupMeta.textContent = currentProfile?.display_name
-        ? `${currentProfile.display_name}'s saved work`
-        : currentUser.email || 'Saved work';
+      quickLookupMeta.textContent = currentUser
+        ? `${formatServiceDayLabel(todayServiceDay)} work${currentProfile?.display_name ? ` for ${currentProfile.display_name}` : ''}`
+        : 'Saved on this device for today';
 
-      const today = activeShuttleDay || 'weekday';
-      const orderedDays = [today, 'weekday', 'saturday', 'sunday'].filter((day, index, arr) => arr.indexOf(day) === index);
       const actions = [];
 
-      for (const day of orderedDays) {
-        const blocks = getSavedBlocksForDay(day);
-        for (const block of blocks) {
-          actions.push(`<button class="link-btn" type="button" data-quick-block="${escapeAttribute(block)}">${escapeHtml(formatServiceDayLabel(day))}: ${escapeHtml(block)}</button>`);
-        }
+      if (todayWork) {
+        actions.push(
+          `<button class="link-btn" type="button" data-today-block="${escapeAttribute(todayWork.block)}" data-today-day="${escapeAttribute(todayWork.serviceDay || todayServiceDay)}" data-today-variant="${escapeAttribute(todayWork.variantId || '')}">Today: ${escapeHtml(todayWork.block)}</button>`
+        );
       }
-      for (const shuttleId of getSavedShuttles()) {
-        const shuttle = getShuttleOptionById(shuttleId);
-        if (!shuttle) continue;
-        actions.push(`<button class="link-btn" type="button" data-quick-saved-shuttle="${escapeAttribute(shuttle.id)}">Shuttle: ${escapeHtml(shuttle.label)}</button>`);
+
+      for (const block of savedTodayBlocks) {
+        if (todayWork && normalizeBlockValue(todayWork.block) === normalizeBlockValue(block)) continue;
+        actions.push(
+          `<button class="link-btn" type="button" data-quick-block="${escapeAttribute(block)}">${escapeHtml(formatServiceDayLabel(todayServiceDay))}: ${escapeHtml(block)}</button>`
+        );
       }
 
       quickLookupActions.innerHTML = actions.length
         ? actions.join('')
-        : '<span class="subtle-text">Open Account to save your work blocks and shuttle shortcuts.</span>';
+        : '<span class="subtle-text">Open a paddle and save it to Today’s Work to bring it back automatically for the rest of the day.</span>';
     }
 
     async function fetchSupabaseConfig() {
@@ -1438,13 +2077,24 @@
       }
 
     function updateAccountButton() {
+      const hasTodayWork = Boolean(readTodayWork());
       if (!supabaseEnabled) {
         accountBtn.textContent = 'Accounts Off';
+        mobileAccountBtn.textContent = 'Accounts Off';
+        todayWorkBtn.hidden = !hasTodayWork;
         myWorkBtn.hidden = true;
         return;
       }
       accountBtn.textContent = currentUser ? 'Settings' : 'Account';
+      mobileAccountBtn.textContent = accountBtn.textContent;
+      todayWorkBtn.hidden = !hasTodayWork;
       myWorkBtn.hidden = !currentUser;
+    }
+
+    async function openTodaysWork() {
+      await openTodayWorkPage();
+      return;
+      addMessage('Save a paddle to Today’s Work first, then it will open here automatically for the rest of the day.', 'bot');
     }
 
     function renderAccountModal() {
@@ -2005,6 +2655,7 @@
       }
       updateAccountButton();
       await loadProfile();
+      await restoreTodayWorkOnLoad();
     }
 
     async function initSupabase() {
@@ -2016,6 +2667,7 @@
       renderQuickLookup();
 
       if (!supabaseEnabled) {
+        await restoreTodayWorkOnLoad();
         return;
       }
 
@@ -2042,33 +2694,51 @@
 
       const wrap = document.createElement('div');
       wrap.className = 'cards';
+      wrap.innerHTML = buildLiveCardsHtml(data);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function buildLiveCardsHtml(data, options = {}) {
+      if (!data || !Array.isArray(data.buses) || !data.buses.length) return '';
       const currentTrip = data.currentTrip || null;
       const debugSummary = buildDebugSummary(data);
-
-      for (const bus of data.buses) {
-        const card = document.createElement('article');
-        card.className = 'card';
+      const jumpTargetId = options.jumpTargetId ? String(options.jumpTargetId) : '';
+      const todayWorkEntry = !currentUser ? getActiveDayTodayWorkEntry(data) : null;
+      const existingTodayWork = readTodayWork();
+      const alreadySavedToTodayWork = Boolean(
+        todayWorkEntry &&
+        existingTodayWork &&
+        normalizeBlockValue(existingTodayWork.block) === normalizeBlockValue(todayWorkEntry.block) &&
+        String(existingTodayWork.serviceDay || '') === String(todayWorkEntry.serviceDay || '') &&
+        String(existingTodayWork.variantId || '') === String(todayWorkEntry.variantId || '')
+      );
+      return data.buses.map((bus) => {
         const hasCoords = Number.isFinite(Number(bus.latitude)) && Number.isFinite(Number(bus.longitude));
         const tripLabel = currentTrip && currentTrip.label
           ? `Current trip: ${escapeHtml(currentTrip.label)}${currentTrip.tripNumber ? ` (Trip ${escapeHtml(currentTrip.tripNumber)})` : ''}`
           : '';
-        card.innerHTML = `
+        return `
+          <article class="card">
           <div class="row">
             <div class="bus">#${bus.busNumber}</div>
-            <span class="pill">live</span>
+            <div class="card-actions">
+              ${jumpTargetId ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">↓</button>` : ''}
+              <span class="pill">live</span>
+            </div>
           </div>
           ${tripLabel ? `<div class="loc">${tripLabel}</div>` : ''}
           <div class="loc">${bus.locationText}</div>
           ${debugSummary}
           <div class="card-actions">
             ${hasCoords ? `<button class="card-link-btn" type="button" data-show-map="1" data-lat="${escapeAttribute(bus.latitude)}" data-lon="${escapeAttribute(bus.longitude)}" data-bus="${escapeAttribute(bus.busNumber)}" data-label="${escapeAttribute(bus.locationText)}">Show on Map</button>` : ''}
+            ${todayWorkEntry
+              ? `<button class="card-link-btn" type="button" data-save-live-today-work="1" data-block="${escapeAttribute(todayWorkEntry.block)}" data-service-day="${escapeAttribute(todayWorkEntry.serviceDay)}" data-variant-id="${escapeAttribute(todayWorkEntry.variantId || '')}" ${alreadySavedToTodayWork ? 'disabled' : ''}>${alreadySavedToTodayWork ? 'Saved to Today\'s Work' : 'Save to Today\'s Work'}</button>`
+              : ''}
           </div>
+          </article>
         `;
-        wrap.appendChild(card);
-      }
-
-      chat.appendChild(wrap);
-      chat.scrollTop = chat.scrollHeight;
+      }).join('');
     }
 
     function buildOpenStreetMapEmbedUrl(latitude, longitude) {
@@ -2162,13 +2832,223 @@
       `;
     }
 
-    function renderPaddleTrips(trips, garage, activeTrip) {
+    function buildPaddleSummaryCard(data) {
+      if (data.isLiveDay && data.activeTrip) {
+        return `
+          <section class="summary-card">
+            <div class="summary-title">Active Trip</div>
+            <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
+            <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
+          </section>
+        `;
+      }
+      if (data.isLiveDay && data.activeBreak) {
+        return `
+          <section class="summary-card">
+            <div class="summary-title">${data.activeBreak.splitBreak ? 'On Split Break' : 'On Break'}</div>
+            <div class="summary-main">${escapeHtml(data.activeBreak.remainingMinutes || 0)} min remaining</div>
+            <div class="summary-sub">Until Trip ${escapeHtml(data.activeBreak.nextTripNumber || '?')}${data.activeBreak.nextTripRoute ? ` · Route ${escapeHtml(data.activeBreak.nextTripRoute)}` : ''}${data.activeBreak.nextTripHeadsign ? ` · ${escapeHtml(data.activeBreak.nextTripHeadsign)}` : ''}</div>
+            <div class="summary-sub">Back at ${escapeHtml(data.activeBreak.nextTripStartTime || '--:--')}${data.activeBreak.nextTripStartStop ? ` from ${escapeHtml(data.activeBreak.nextTripStartStop)}` : ''}</div>
+          </section>
+        `;
+      }
+      return '';
+    }
+
+    function buildPaddleDetailHtml(data, options = {}) {
+      const inlineMode = Boolean(options.inline);
+      const isActiveServiceDay = String(data.serviceDay || '') === getCurrentServiceDayKey();
+      const todayWork = readTodayWork();
+      const isTodaysWork = Boolean(
+        todayWork &&
+        normalizeBlockValue(todayWork.block) === normalizeBlockValue(data.block) &&
+        String(todayWork.serviceDay || '') === String(data.serviceDay || '') &&
+        String(todayWork.variantId || '') === String(data.variantId || '')
+      );
+      const saveLabel = isTodaysWork ? 'Saved to Today\'s Work' : 'Save to Today\'s Work';
+      const showSaveTodayWork = !currentUser && isActiveServiceDay;
+      const removeButton = !inlineMode && isTodaysWork
+        ? '<button id="clearTodayWorkBtn" class="link-btn" type="button">Remove from Today\'s Work</button>'
+        : '';
+      const todayWorkActions = inlineMode || !showSaveTodayWork ? '' : `
+        <section class="section-actions">
+          <button id="saveTodayWorkBtn" class="link-btn" type="button">${saveLabel}</button>
+          ${removeButton}
+        </section>
+      `;
+      return `
+        ${buildPaddleSummaryCard(data)}
+        ${todayWorkActions}
+        <section class="meta-grid">
+          <article class="meta-card"><strong>Paddle ID</strong><span>${data.paddleId || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Routes</strong><span>${Array.isArray(data.routes) && data.routes.length ? data.routes.join(', ') : 'N/A'}</span></article>
+          <article class="meta-card"><strong>Garage</strong><span>${data.garage || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Sign-on</strong><span>${data.signOn || 'N/A'}</span></article>
+          <article class="meta-card"><strong>Bus Type</strong><span>${data.busType || 'N/A'}</span></article>
+        </section>
+        <section class="trip-list">
+          ${renderPaddleTrips(Array.isArray(data.trips) ? data.trips : [], data.garage || '', data.activeTrip || null, data.activeBreak || null)}
+        </section>
+      `;
+    }
+
+    function attachTodayWorkButtons(data, { rerenderPage = false } = {}) {
+      const todayWork = readTodayWork();
+      const isTodaysWork = Boolean(
+        todayWork &&
+        normalizeBlockValue(todayWork.block) === normalizeBlockValue(data.block) &&
+        String(todayWork.serviceDay || '') === String(data.serviceDay || '') &&
+        String(todayWork.variantId || '') === String(data.variantId || '')
+      );
+      const saveTodayWorkBtn = document.getElementById('saveTodayWorkBtn');
+      const clearTodayWorkBtn = document.getElementById('clearTodayWorkBtn');
+      if (saveTodayWorkBtn) {
+        if (isTodaysWork) {
+          saveTodayWorkBtn.disabled = true;
+        } else {
+          saveTodayWorkBtn.addEventListener('click', async () => {
+            const expiry = computeTodayWorkExpiry(data);
+            writeTodayWork({
+              block: data.block,
+              serviceDay: data.serviceDay || getCurrentServiceDayKey(),
+              variantId: data.variantId || '',
+              label: `${formatServiceDayLabel(data.serviceDay || getCurrentServiceDayKey())}: ${data.block}`,
+              source: 'local',
+              date: expiry.serviceDate,
+              expiresDate: expiry.expiresDate,
+              expiresTimeSeconds: expiry.expiresTimeSeconds,
+            });
+            renderQuickLookup();
+            if (rerenderPage) {
+              await openTodayWorkPage();
+            } else {
+              openPaddleModal(data);
+            }
+          });
+        }
+      }
+      if (clearTodayWorkBtn) {
+        clearTodayWorkBtn.addEventListener('click', async () => {
+          clearTodayWork();
+          renderQuickLookup();
+          if (rerenderPage) {
+            await openTodayWorkPage();
+          } else {
+            openPaddleModal(data);
+          }
+        });
+      }
+    }
+
+    async function openTodayWorkPage() {
+      closePaddleModal();
+      closeShuttleModal();
+      closeAccountModal();
+      document.body.style.overflow = '';
+      setMainView('today-work');
+      const todayWork = ensureTodayWorkRecord();
+      if (!todayWork) {
+        todayWorkView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Today's Work</h2>
+              <p>Save a paddle to Today’s Work and it will open here automatically for the rest of the day.</p>
+            </div>
+            <div class="page-meta">
+              <div class="page-actions">
+                <button id="todayWorkBackToChatBtn" class="link-btn" type="button">Back to Lookup</button>
+              </div>
+            </div>
+          </div>
+          <section class="saved-paddle-inline">
+            <div class="card-body">
+              <div class="subtle-text">No paddle is saved for today yet. Open a paddle from chat first, then save it to Today’s Work.</div>
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      const params = new URLSearchParams({ block: String(todayWork.block || '') });
+      if (todayWork.serviceDay) params.set('day', String(todayWork.serviceDay));
+      if (todayWork.variantId) params.set('variant', String(todayWork.variantId));
+      const response = await fetch(`/api/paddle?${params.toString()}`);
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Today’s Work failed to load.');
+      }
+      let liveData = null;
+      try {
+        const liveResponse = await fetch(`/api/track?block=${encodeURIComponent(todayWork.block)}`);
+        const liveJson = await liveResponse.json();
+        if (liveResponse.ok && liveJson?.ok) {
+          liveData = liveJson;
+        }
+      } catch (_) {
+        liveData = null;
+      }
+
+      currentPaddleContext = {
+        block: data.block,
+        serviceDay: data.serviceDay || '',
+        variantId: data.variantId || '',
+        displayVariantLabel: data.displayVariantLabel || data.sourceLabel || '',
+      };
+
+      const todayLabel = formatServiceDayLabel(todayWork.serviceDay || data.serviceDay || getCurrentServiceDayKey());
+      todayWorkView.innerHTML = `
+        <div class="page-head">
+          <div>
+            <h2>Today's Work</h2>
+            <p>${escapeHtml(todayLabel)} work for ${escapeHtml(data.block)}. This page restores the same paddle for the rest of the day.</p>
+          </div>
+          <div class="page-meta" aria-label="Today work counts"></div>
+        </div>
+        <section class="saved-paddle-inline">
+          <div id="paddleTopAnchor" class="card-head">
+            <div>
+              <h3>Paddle ${escapeHtml(data.block)}</h3>
+              <p>${escapeHtml(data.serviceDay)} service | ${escapeHtml(data.displayVariantLabel || data.sourceLabel || 'Paddle index')}${data.effective ? ` | effective ${escapeHtml(data.effective)}` : ''}</p>
+            </div>
+            <div class="page-actions">
+              <button id="todayWorkRemoveBtn" class="link-btn" type="button">Remove from Today's Work</button>
+              <button id="todayWorkBackToChatBtn" class="link-btn" type="button">Back to Lookup</button>
+            </div>
+          </div>
+          <div class="card-body">
+            ${liveData && Array.isArray(liveData.buses) && liveData.buses.length ? `<section class="cards">${buildLiveCardsHtml(liveData, { jumpTargetId: 'currentPaddleTarget' })}</section>` : ''}
+            ${buildPaddleDetailHtml(data, { inline: true })}
+          </div>
+        </section>
+      `;
+
+      const backBtn = document.getElementById('todayWorkBackToChatBtn');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => setMainView('chat'));
+      }
+      const removeBtn = document.getElementById('todayWorkRemoveBtn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', async () => {
+          clearTodayWork();
+          renderQuickLookup();
+          await openTodayWorkPage();
+        });
+      }
+      attachTodayWorkButtons(data, { rerenderPage: true });
+    }
+
+    function renderPaddleTrips(trips, garage, activeTrip, activeBreak) {
       return trips.map((trip, index) => {
         const nextTrip = trips[index + 1] || null;
         const isActive = Boolean(
           activeTrip &&
           String(activeTrip.tripNumber || '') === String(trip.trip_number || '') &&
           String(activeTrip.route || '') === String(trip.route || '')
+        );
+        const isLiveBreak = Boolean(
+          activeBreak &&
+          String(activeBreak.nextTripNumber || '') === String(nextTrip?.trip_number || '') &&
+          String(activeBreak.nextTripRoute || '') === String(nextTrip?.route || '')
         );
         const reliefAtEnd = Boolean(
           trip.relief_stop &&
@@ -2201,49 +3081,50 @@
           trip.end_stop,
           nextTrip ? nextTrip.start_stop : garage
         );
+        const breakMinutes = Number(trip.breakAfterMinutes);
+        const breakStrip = Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
+          <div class="trip-break ${trip.splitBreak ? 'split' : ''}" ${isLiveBreak ? 'id="currentPaddleTarget"' : ''}>
+            ${isLiveBreak
+              ? `<div class="break-strip-head"><span class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">↑</button></div>`
+              : `<div class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</div>`
+            }
+            <div class="trip-break-duration">${escapeHtml(breakMinutes)} min</div>
+          </div>
+        ` : '';
         return `
-          <article class="trip-item ${isActive ? 'active' : ''}">
-            <div class="trip-top">
-              <div class="trip-title">Trip ${escapeHtml(trip.trip_number)}: ${escapeHtml(trip.headsign || 'No headsign')}</div>
-              <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
-            </div>
-            <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
-            <div class="trip-row">${startRow}</div>
-            ${reliefRow}
-            <div class="trip-row">${endRow}</div>
-            ${notes}
-            ${startDirections}
-            ${nextDirections}
-          </article>
+          <div class="trip-stack">
+            <article class="trip-item ${isActive ? 'active' : ''}" ${isActive ? 'id="currentPaddleTarget"' : ''}>
+              <div class="trip-top">
+                <div class="trip-title trip-title-prefix">Trip ${escapeHtml(trip.trip_number)}:</div>
+                <div class="trip-title trip-title-main">${escapeHtml(trip.route || 'N/A')} ${escapeHtml(trip.headsign || 'No headsign')}</div>
+                <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
+              </div>
+              ${isActive ? `<div class="trip-live-actions"><span></span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">↑</button></div>` : ''}
+              <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
+              <div class="trip-row">${startRow}</div>
+              ${reliefRow}
+              <div class="trip-row">${endRow}</div>
+              ${notes}
+              ${startDirections}
+              ${nextDirections}
+            </article>
+            ${breakStrip}
+          </div>
         `;
       }).join('');
     }
 
     function openPaddleModal(data) {
+      currentPaddleContext = {
+        block: data.block,
+        serviceDay: data.serviceDay || '',
+        variantId: data.variantId || '',
+        displayVariantLabel: data.displayVariantLabel || data.sourceLabel || '',
+      };
       paddleTitle.textContent = `Paddle ${data.block}`;
       const paddleSourceLabel = data.displayVariantLabel || data.sourceLabel || 'Paddle index';
       paddleMeta.textContent = `${data.serviceDay} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
-      const summaryCard = data.isLiveDay && data.activeTrip ? `
-        <section class="summary-card">
-          <div class="summary-title">Active Trip</div>
-          <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
-          <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
-        </section>
-      ` : '';
-
-      paddleBody.innerHTML = `
-        ${summaryCard}
-        <section class="meta-grid">
-          <article class="meta-card"><strong>Paddle ID</strong><span>${data.paddleId || 'N/A'}</span></article>
-          <article class="meta-card"><strong>Routes</strong><span>${Array.isArray(data.routes) && data.routes.length ? data.routes.join(', ') : 'N/A'}</span></article>
-          <article class="meta-card"><strong>Garage</strong><span>${data.garage || 'N/A'}</span></article>
-          <article class="meta-card"><strong>Sign-on</strong><span>${data.signOn || 'N/A'}</span></article>
-          <article class="meta-card"><strong>Bus Type</strong><span>${data.busType || 'N/A'}</span></article>
-        </section>
-        <section class="trip-list">
-          ${renderPaddleTrips(Array.isArray(data.trips) ? data.trips : [], data.garage || '', data.activeTrip || null)}
-        </section>
-      `;
+      paddleBody.innerHTML = buildPaddleDetailHtml(data);
 
       paddleOverlay.hidden = false;
       document.body.style.overflow = 'hidden';
@@ -2251,6 +3132,7 @@
         paddleBody.scrollTop = 0;
         paddleOverlay.scrollTop = 0;
       });
+      attachTodayWorkButtons(data);
     }
 
     function closePaddleModal() {
@@ -2272,6 +3154,7 @@
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'Paddle lookup failed');
         }
+        lastLookup.block = data.block || normalizeBlockValue(block);
         openPaddleModal(data);
         statusEl.textContent = previousStatus || 'Ready';
       } catch (err) {
@@ -2497,11 +3380,13 @@
           statusEl.textContent = measuredMs > 0 ? `Live result (${measuredMs}ms)` : `Live result (${clientMs}ms)`;
         }
         statusEl.classList.add('ok');
+        syncMobileMenuStatus();
       } catch (err) {
         loadingBubble.remove();
         addMessage(err.message || 'Unexpected error.', 'bot');
         statusEl.textContent = 'Error';
         statusEl.classList.add('warn');
+        syncMobileMenuStatus();
       } finally {
         sendBtn.disabled = false;
       }
@@ -2522,6 +3407,10 @@
     quickLookupActions.addEventListener('click', (event) => {
       const target = event.target.closest('button');
       if (!target) return;
+      if (target.dataset.todayBlock) {
+        openTodayWorkPage();
+        return;
+      }
       if (target.dataset.quickBlock) {
         sendMessage(target.dataset.quickBlock);
         return;
@@ -2539,9 +3428,31 @@
         }
       });
 
+    homeBtn.addEventListener('click', () => setMainView('chat'));
+    todayWorkBtn.addEventListener('click', openTodaysWork);
     myWorkBtn.addEventListener('click', openMyWorkModal);
     accountBtn.addEventListener('click', openAccountModal);
     clearChatBtn.addEventListener('click', clearChatHistory);
+    mobileMenuBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleMobileMenu();
+    });
+    mobileTodayBoardBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/today-board';
+    });
+    mobileSummerBookingBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/summer-booking';
+    });
+    mobileAccountBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      openAccountModal();
+    });
+    mobileClearChatBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      clearChatHistory();
+    });
     closePaddleBtn.addEventListener('click', closePaddleModal);
     closeShuttleBtn.addEventListener('click', closeShuttleModal);
     closeAccountBtn.addEventListener('click', closeAccountModal);
@@ -2558,7 +3469,90 @@
     mapOverlay.addEventListener('click', (event) => {
       if (event.target === mapOverlay) closeMapModal();
     });
-    chat.addEventListener('click', (event) => {
+    document.addEventListener('click', (event) => {
+      if (!mobileHeaderMenu || !mobileMenuBtn || mobileHeaderMenu.hidden) return;
+      if (mobileHeaderMenu.contains(event.target) || mobileMenuBtn.contains(event.target)) return;
+      closeMobileMenu();
+    });
+    chat.addEventListener('click', async (event) => {
+      const saveTodayWorkBtn = event.target.closest('[data-save-live-today-work]');
+      if (saveTodayWorkBtn) {
+        const expiry = {
+          serviceDate: getOttawaDateString(),
+          expiresDate: addDaysToOttawaDateString(getOttawaDateString(), 1),
+          expiresTimeSeconds: 0,
+        };
+        try {
+          const params = new URLSearchParams({ block: String(saveTodayWorkBtn.dataset.block || '') });
+          if (saveTodayWorkBtn.dataset.serviceDay) params.set('day', String(saveTodayWorkBtn.dataset.serviceDay));
+          if (saveTodayWorkBtn.dataset.variantId) params.set('variant', String(saveTodayWorkBtn.dataset.variantId));
+          const paddleResponse = await fetch(`/api/paddle?${params.toString()}`);
+          const paddleJson = await paddleResponse.json();
+          if (paddleResponse.ok && paddleJson?.ok) {
+            Object.assign(expiry, computeTodayWorkExpiry(paddleJson));
+          }
+        } catch (_) {}
+        writeTodayWork({
+          block: saveTodayWorkBtn.dataset.block,
+          serviceDay: saveTodayWorkBtn.dataset.serviceDay || getCurrentServiceDayKey(),
+          variantId: saveTodayWorkBtn.dataset.variantId || '',
+          label: `${formatServiceDayLabel(saveTodayWorkBtn.dataset.serviceDay || getCurrentServiceDayKey())}: ${normalizeBlockValue(saveTodayWorkBtn.dataset.block)}`,
+          source: 'local',
+          date: expiry.serviceDate,
+          expiresDate: expiry.expiresDate,
+          expiresTimeSeconds: expiry.expiresTimeSeconds,
+        });
+        renderQuickLookup();
+        saveTodayWorkBtn.disabled = true;
+        saveTodayWorkBtn.textContent = 'Saved to Today\'s Work';
+        return;
+      }
+      const target = event.target.closest('[data-show-map]');
+      if (!target) return;
+      openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
+    });
+    todayWorkView.addEventListener('click', async (event) => {
+      const jumpTarget = event.target.closest('[data-scroll-to]');
+      if (jumpTarget) {
+        const targetId = jumpTarget.dataset.scrollTo;
+        const targetNode = targetId ? document.getElementById(targetId) : null;
+        if (targetNode) {
+          targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
+      const saveTodayWorkBtn = event.target.closest('[data-save-live-today-work]');
+      if (saveTodayWorkBtn) {
+        const expiry = {
+          serviceDate: getOttawaDateString(),
+          expiresDate: addDaysToOttawaDateString(getOttawaDateString(), 1),
+          expiresTimeSeconds: 0,
+        };
+        try {
+          const params = new URLSearchParams({ block: String(saveTodayWorkBtn.dataset.block || '') });
+          if (saveTodayWorkBtn.dataset.serviceDay) params.set('day', String(saveTodayWorkBtn.dataset.serviceDay));
+          if (saveTodayWorkBtn.dataset.variantId) params.set('variant', String(saveTodayWorkBtn.dataset.variantId));
+          const paddleResponse = await fetch(`/api/paddle?${params.toString()}`);
+          const paddleJson = await paddleResponse.json();
+          if (paddleResponse.ok && paddleJson?.ok) {
+            Object.assign(expiry, computeTodayWorkExpiry(paddleJson));
+          }
+        } catch (_) {}
+        writeTodayWork({
+          block: saveTodayWorkBtn.dataset.block,
+          serviceDay: saveTodayWorkBtn.dataset.serviceDay || getCurrentServiceDayKey(),
+          variantId: saveTodayWorkBtn.dataset.variantId || '',
+          label: `${formatServiceDayLabel(saveTodayWorkBtn.dataset.serviceDay || getCurrentServiceDayKey())}: ${normalizeBlockValue(saveTodayWorkBtn.dataset.block)}`,
+          source: 'local',
+          date: expiry.serviceDate,
+          expiresDate: expiry.expiresDate,
+          expiresTimeSeconds: expiry.expiresTimeSeconds,
+        });
+        renderQuickLookup();
+        saveTodayWorkBtn.disabled = true;
+        saveTodayWorkBtn.textContent = 'Saved to Today\'s Work';
+        return;
+      }
       const target = event.target.closest('[data-show-map]');
       if (!target) return;
       openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
@@ -2579,6 +3573,20 @@
     });
 
     initSupabase();
+
+    async function restoreTodayWorkOnLoad() {
+      if (todayWorkOpenedForSession) return;
+      const todayWork = ensureTodayWorkRecord();
+      if (!todayWork) return;
+      todayWorkOpenedForSession = true;
+      try {
+        await openTodayWorkPage();
+        return;
+        await showPaddle(todayWork.block, todayWork.serviceDay || getCurrentServiceDayKey(), todayWork.variantId || '');
+      } catch (_) {
+        todayWorkOpenedForSession = false;
+      }
+    }
   </script>
 </body>
 </html>

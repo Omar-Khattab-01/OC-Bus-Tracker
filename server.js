@@ -16,6 +16,11 @@ const {
   lookupBusWithGtfsRt,
   warmGtfsRtCaches,
 } = require('./lib/gtfs_rt_runtime');
+const {
+  SHUTTLE_DAY_OPTIONS,
+  SHUTTLE_DEFINITIONS,
+  SHUTTLES_BY_SERVICE_DAY,
+} = require('./data/shuttles');
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
@@ -28,6 +33,7 @@ const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY |
 const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
 const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
 const APRIL19_PADDLE_SWITCH_DATE = '2026-04-19';
+const SUMMER_PADDLE_VARIANT_ID = 'june29';
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -46,232 +52,6 @@ const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
 const app = express();
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-
-const SHUTTLE_DEFINITIONS = {
-  east_end_weekday: {
-    id: 'east_end_weekday',
-    route: '898',
-    name: 'East End Shuttle',
-    sourceLabel: 'Weekday East End Shuttle (898)',
-    sourceFile: 'paddles/Shuttles/EastEndShuttle_Weekdays.jpg',
-    stops: ['Hurdman', 'Indy Depot', 'Stl Depot', 'MS/F/Belf', 'Hurdman'],
-    firstStart: '05:20',
-    lastStart: '19:00',
-    intervalMinutes: 20,
-    offsets: [0, 5, 9, 11, 14],
-  },
-  east_end_weekend: {
-    id: 'east_end_weekend',
-    route: '898',
-    name: 'East End Shuttle',
-    sourceLabel: 'East End Shuttle (Sat/Sun)',
-    sourceFile: 'paddles/Shuttles/EastEndShuttle_Sat_Sun.jpg',
-    stops: ['Hurdman', 'Indy Depot', 'Stl Depot', 'MS/F/Belf', 'Hurdman'],
-    firstStart: '05:20',
-    lastStart: '19:00',
-    intervalMinutes: 20,
-    offsets: [0, 5, 9, 11, 14],
-  },
-  pinecrest_lincoln_weekday: {
-    id: 'pinecrest_lincoln_weekday',
-    route: '899',
-    name: 'Pinecrest / Lincoln Loop Shuttle',
-    sourceLabel: 'Weekday Pinecrest / Lincoln Loop (899)',
-    sourceFile: 'paddles/Shuttles/PincrestLincolnLoopShuttle.jpg',
-    stops: ['Pinecrest Depot', 'Lincoln Station', 'Lincoln Station', 'Pinecrest Depot'],
-    firstStart: '06:55',
-    lastStart: '08:55',
-    intervalMinutes: 20,
-    offsets: [0, 5, 10, 15],
-  },
-  pinecrest_baseline_weekday: {
-    id: 'pinecrest_baseline_weekday',
-    route: '899',
-    name: 'Pinecrest to Baseline Shuttle',
-    sourceLabel: 'Pinecrest to Baseline (899)',
-    sourceFile: 'paddles/Shuttles/PinecrestToBaselineShuttle.jpg',
-    trips: [
-      ['10:00', '10:05', '10:13', '10:15', '10:23', '10:28'],
-      ['10:30', '10:35', '10:43', '10:45', '10:53', '10:58'],
-      ['11:00', '11:05', '11:13', '11:15', '11:23', '11:28'],
-      ['11:30', '11:35', '11:43', '11:45', '11:53', '11:58'],
-      ['12:00', '12:05', '12:13', '12:15', '12:23', '12:28'],
-      ['12:30', '12:35', '12:43', '12:45', '12:53', '12:58'],
-      ['12:59', '13:04', '13:12', '13:13', '13:21', '13:26'],
-      ['13:30', '13:35', '13:43', '13:45', '13:53', '13:58'],
-      ['14:01', '14:06', '14:14', '14:15', '14:23', '14:28'],
-      ['14:30', '14:35', '14:43', '14:45', '14:53', '14:58'],
-      ['15:00', '15:05', '15:13', '15:15', '15:23', '15:28'],
-      ['15:30', '15:35', '15:43', '15:45', '15:53', '15:58'],
-      ['16:00', '16:05', '16:13', '16:15', '16:23', '16:28'],
-      ['16:30', '16:35', '16:43', '16:45', '16:53', '16:58'],
-      ['17:00', '17:05', '17:13', '17:15', '17:23', '17:28'],
-      ['17:29', '17:34', '17:42', '17:43', '17:51', '17:56'],
-      ['18:00', '18:05', '18:13', '18:15', '18:23', '18:28'],
-      ['18:31', '18:36', '18:44', '18:45', '18:53', '18:58'],
-      ['19:00', '19:05', '19:13', '19:15', '19:23', '19:28'],
-    ],
-    stops: ['Pinecrest Depot', 'Lincoln Station', 'Baseline Station', 'Baseline Station', 'Lincoln Station', 'Pinecrest Depot'],
-  },
-  merivale_baseline_weekday: {
-    id: 'merivale_baseline_weekday',
-    route: '899',
-    name: 'Merivale to Baseline Shuttle',
-    sourceLabel: 'Merivale to Baseline (899) Weekdays',
-    sourceFile: 'paddles/Shuttles/MerivaleToBaselineShuttle_Weekdays.jpg',
-    trips: [
-      [null, null, '04:50', '05:01'],
-      [null, null, '05:05', '05:16'],
-      [null, null, '05:34', '05:45'],
-      [null, null, '06:04', '06:15'],
-      ['10:00', '10:13', '10:15', '10:28'],
-      ['10:30', '10:43', '10:45', '10:58'],
-      ['11:00', '11:13', '11:15', '11:28'],
-      ['11:30', '11:43', '11:45', '11:58'],
-      ['11:59', '12:12', '12:13', '12:26'],
-      ['12:30', '12:43', '12:45', '12:58'],
-      ['13:01', '13:14', '13:15', '13:28'],
-      ['13:30', '13:43', '13:45', '13:58'],
-      ['14:00', '14:13', '14:15', '14:28'],
-      ['14:30', '14:43', '14:45', '14:58'],
-      ['15:00', '15:13', '15:15', '15:28'],
-      ['15:30', '15:43', '15:45', '15:58'],
-      ['16:00', '16:13', '16:15', '16:28'],
-      ['16:29', '16:42', '16:43', '16:56'],
-      ['17:00', '17:13', '17:15', '17:28'],
-      ['17:31', '17:44', '17:45', '17:58'],
-      ['18:00', '18:13', '18:15', '18:28'],
-      ['18:30', '18:43', '18:45', '18:58'],
-      ['19:00', '19:13', '19:15', '19:28'],
-    ],
-    stops: ['Merivale Depot', 'Baseline Station', 'Baseline Station', 'Merivale Depot'],
-  },
-  merivale_baseline_weekend: {
-    id: 'merivale_baseline_weekend',
-    route: '899',
-    name: 'Merivale to Baseline Shuttle',
-    sourceLabel: 'Sat/Sun Merivale to Baseline (899)',
-    sourceFile: 'paddles/Shuttles/MerivaleToBaselineShuttle_SatSun.jpg',
-    trips: [
-      [null, null, '04:50', '05:01'],
-      [null, null, '05:05', '05:16'],
-      [null, null, '05:34', '05:45'],
-      [null, null, '06:04', '06:15'],
-      ['07:00', '07:13', '07:15', '07:28'],
-      ['07:30', '07:43', '07:45', '07:58'],
-      ['08:00', '08:13', '08:15', '08:28'],
-      ['08:30', '08:43', '08:45', '08:58'],
-      ['09:00', '09:13', '09:15', '09:28'],
-      ['09:30', '09:43', '09:45', '09:58'],
-      ['10:00', '10:13', '10:15', '10:28'],
-      ['10:30', '10:43', '10:45', '10:58'],
-      ['11:00', '11:13', '11:15', '11:28'],
-      ['11:30', '11:43', '11:45', '11:58'],
-      ['11:59', '12:12', '12:14', '12:27'],
-      ['12:30', '12:43', '12:45', '12:58'],
-      ['13:02', '13:15', '13:16', '13:29'],
-      ['13:30', '13:43', '13:45', '13:58'],
-      ['14:00', '14:13', '14:15', '14:28'],
-      ['14:30', '14:43', '14:45', '14:58'],
-      ['15:00', '15:13', '15:15', '15:28'],
-      ['15:30', '15:43', '15:45', '15:58'],
-      ['16:00', '16:13', '16:15', '16:28'],
-      ['16:29', '16:42', '16:44', '16:57'],
-      ['17:00', '17:13', '17:15', '17:28'],
-      ['17:32', '17:45', '17:46', '17:59'],
-      ['18:00', '18:13', '18:15', '18:28'],
-      ['18:30', '18:43', '18:45', '18:58'],
-      ['19:00', '19:13', '19:15', '19:28'],
-    ],
-    stops: ['Merivale Depot', 'Baseline Station', 'Baseline Station', 'Merivale Depot'],
-  },
-  merivale_billings_weekday: {
-    id: 'merivale_billings_weekday',
-    route: '899',
-    name: 'Merivale to Billings Shuttle',
-    sourceLabel: 'Merivale to Billings (899) Weekdays',
-    sourceFile: 'paddles/Shuttles/MerivaleToBillingsShuttle_Weekdays.jpg',
-    trips: [
-      ['10:00', '10:13', '10:15', '10:28'],
-      ['10:30', '10:43', '10:45', '10:58'],
-      ['11:00', '11:13', '11:15', '11:28'],
-      ['11:29', '11:42', '11:43', '11:56'],
-      ['12:00', '12:13', '12:15', '12:28'],
-      ['12:31', '12:44', '12:45', '12:58'],
-      ['13:00', '13:13', '13:15', '13:28'],
-      ['13:30', '13:43', '13:45', '13:58'],
-      ['14:00', '14:13', '14:15', '14:28'],
-      ['14:30', '14:43', '14:45', '14:58'],
-      ['15:00', '15:13', '15:15', '15:28'],
-      ['15:30', '15:43', '15:45', '15:58'],
-      ['15:59', '16:12', '16:13', '16:26'],
-      ['16:30', '16:43', '16:45', '16:58'],
-      ['17:01', '17:14', '17:15', '17:28'],
-      ['17:30', '17:43', '17:45', '17:58'],
-      ['18:00', '18:13', '18:15', '18:28'],
-      ['18:30', '18:43', '18:45', '18:58'],
-      ['19:00', '19:13', '19:15', '19:28'],
-    ],
-    stops: ['Merivale Depot', 'Billings Bridge Terminal', 'Billings Bridge Terminal', 'Merivale Depot'],
-  },
-  merivale_billings_sunday: {
-    id: 'merivale_billings_sunday',
-    route: '899',
-    name: 'Merivale to Billings Shuttle',
-    sourceLabel: 'Sunday Merivale to Billings (899)',
-    sourceFile: 'paddles/Shuttles/MerivaleToBillingsShuttle_Sun.jpg',
-    trips: [
-      ['10:00', '10:13', '10:15', '10:28'],
-      ['10:30', '10:43', '10:45', '10:58'],
-      ['11:00', '11:13', '11:15', '11:28'],
-      ['11:29', '11:42', '11:44', '11:57'],
-      ['12:00', '12:13', '12:15', '12:28'],
-      ['12:32', '12:45', '12:46', '12:59'],
-      ['13:00', '13:13', '13:15', '13:28'],
-      ['13:30', '13:43', '13:45', '13:58'],
-      ['14:00', '14:13', '14:15', '14:28'],
-      ['14:30', '14:43', '14:45', '14:58'],
-      ['15:00', '15:13', '15:15', '15:28'],
-      ['15:30', '15:43', '15:45', '15:58'],
-      ['15:59', '16:12', '16:14', '16:27'],
-      ['16:30', '16:43', '16:45', '16:58'],
-      ['17:02', '17:15', '17:16', '17:29'],
-      ['17:30', '17:43', '17:45', '17:58'],
-      ['18:00', '18:13', '18:15', '18:28'],
-      ['18:30', '18:43', '18:45', '18:58'],
-      ['19:00', '19:13', '19:15', '19:28'],
-    ],
-    stops: ['Merivale Depot', 'Billings Bridge Terminal', 'Billings Bridge Terminal', 'Merivale Depot'],
-  },
-};
-
-const SHUTTLES_BY_SERVICE_DAY = {
-  weekday: [
-    'east_end_weekday',
-    'pinecrest_lincoln_weekday',
-    'pinecrest_baseline_weekday',
-    'merivale_baseline_weekday',
-    'merivale_billings_weekday',
-  ],
-  easter_monday: [
-    'east_end_weekday',
-    'pinecrest_lincoln_weekday',
-    'pinecrest_baseline_weekday',
-    'merivale_baseline_weekday',
-    'merivale_billings_weekday',
-  ],
-  saturday: [
-    'east_end_weekend',
-    'merivale_baseline_weekend',
-  ],
-  sunday: [
-    'east_end_weekend',
-    'merivale_baseline_weekend',
-    'merivale_billings_sunday',
-  ],
-};
-
-const SHUTTLE_DAY_OPTIONS = ['weekday', 'saturday', 'sunday'];
 
 function normalizeBlock(input) {
   return String(input || '').trim().toUpperCase();
@@ -671,22 +451,29 @@ function buildExplicitTrips(definition) {
   }).filter((trip) => trip.stops.length > 0);
 }
 
-function getShuttleForToday(id) {
+function getShuttleForToday(id, serviceDay = getOttawaServiceDayKey()) {
   const definition = SHUTTLE_DEFINITIONS[id];
   if (!definition) return null;
 
+  const resolvedDefinition = definition.tripsByServiceDay
+    ? {
+        ...definition,
+        trips: definition.tripsByServiceDay[serviceDay] || definition.tripsByServiceDay.weekday || definition.trips,
+      }
+    : definition;
+
   return {
-    ...definition,
-    trips: Array.isArray(definition.trips)
-      ? buildExplicitTrips(definition)
-      : buildPatternTrips(definition),
+    ...resolvedDefinition,
+    trips: Array.isArray(resolvedDefinition.trips)
+      ? buildExplicitTrips(resolvedDefinition)
+      : buildPatternTrips(resolvedDefinition),
   };
 }
 
 function getAvailableShuttlesForDay(serviceDay = getOttawaServiceDayKey()) {
   const ids = SHUTTLES_BY_SERVICE_DAY[serviceDay] || [];
   return ids
-    .map((id) => getShuttleForToday(id))
+    .map((id) => getShuttleForToday(id, serviceDay))
     .filter(Boolean);
 }
 
@@ -762,7 +549,7 @@ function getOttawaNowSeconds() {
 }
 
 function buildRunTimeline(run) {
-  const trips = Array.isArray(run?.trips) ? run.trips : [];
+  const trips = Array.isArray(run?.trips) ? run.trips.filter(isUsablePaddleTrip) : [];
   const timeline = [];
   let dayOffset = 0;
   let previousStart = null;
@@ -795,6 +582,89 @@ function buildRunTimeline(run) {
   }
 
   return timeline;
+}
+
+function buildBreakAwareRunTrips(run) {
+  const trips = Array.isArray(run?.trips) ? run.trips.filter(isUsablePaddleTrip) : [];
+  const enriched = [];
+  let dayOffset = 0;
+  let previousStart = null;
+
+  for (const trip of trips) {
+    const rawStart = timeToSeconds(trip.start_time);
+    const rawEnd = timeToSeconds(trip.end_time);
+    if (rawStart === null) continue;
+
+    if (previousStart !== null && rawStart < previousStart) {
+      dayOffset += 24 * 3600;
+    }
+
+    const startSeconds = rawStart + dayOffset;
+    let endSeconds = (rawEnd === null ? rawStart : rawEnd) + dayOffset;
+    if (endSeconds < startSeconds) {
+      endSeconds += 24 * 3600;
+    }
+
+    enriched.push({
+      ...trip,
+      trip_number: Number(trip.trip_number ?? trip.tripNumber ?? 0) || null,
+      timelineStartSeconds: startSeconds,
+      timelineEndSeconds: endSeconds,
+      breakAfterMinutes: null,
+      nextTripNumber: null,
+      nextTripRoute: '',
+      nextTripHeadsign: '',
+      nextTripStartTime: '',
+      nextTripStartStop: '',
+      splitBreak: false,
+    });
+
+    previousStart = rawStart;
+  }
+
+  for (let index = 0; index < enriched.length; index += 1) {
+    const current = enriched[index];
+    const next = enriched[index + 1] || null;
+    if (!next) continue;
+    const breakAfterMinutes = Math.max(0, Math.round((next.timelineStartSeconds - current.timelineEndSeconds) / 60));
+    current.breakAfterMinutes = breakAfterMinutes;
+    current.nextTripNumber = next.trip_number ?? null;
+    current.nextTripRoute = String(next.route || '');
+    current.nextTripHeadsign = String(next.headsign || '');
+    current.nextTripStartTime = String(next.start_time || '');
+    current.nextTripStartStop = String(next.start_stop || '');
+    current.splitBreak = breakAfterMinutes >= 90;
+  }
+
+  return enriched;
+}
+
+function findActiveBreakInRun(run, compareSeconds) {
+  const trips = buildBreakAwareRunTrips(run);
+  for (const trip of trips) {
+    const breakAfterMinutes = Number(trip.breakAfterMinutes);
+    if (!Number.isFinite(breakAfterMinutes) || breakAfterMinutes <= 0) continue;
+    const breakStart = Number(trip.timelineEndSeconds);
+    const breakEnd = breakStart + breakAfterMinutes * 60;
+    if (breakStart <= compareSeconds && compareSeconds < breakEnd) {
+      return {
+        afterTripNumber: trip.trip_number,
+        breakAfterMinutes,
+        splitBreak: Boolean(trip.splitBreak),
+        startedAt: String(trip.end_time || ''),
+        endsAt: String(trip.nextTripStartTime || ''),
+        breakStartSeconds: breakStart,
+        breakEndSeconds: breakEnd,
+        remainingMinutes: Math.max(0, Math.ceil((breakEnd - compareSeconds) / 60)),
+        nextTripNumber: trip.nextTripNumber,
+        nextTripRoute: trip.nextTripRoute,
+        nextTripHeadsign: trip.nextTripHeadsign,
+        nextTripStartTime: trip.nextTripStartTime,
+        nextTripStartStop: trip.nextTripStartStop,
+      };
+    }
+  }
+  return null;
 }
 
 function findActiveTripInRun(run, compareSeconds) {
@@ -842,6 +712,214 @@ function getActivePaddlesForNow() {
     a.route.localeCompare(b.route, undefined, { numeric: true }) ||
     a.block.localeCompare(b.block, undefined, { numeric: true })
   );
+}
+
+function getTodayBoardPaddlesForNow() {
+  const index = loadPaddleIndex();
+  const now = new Date();
+  const currentSeconds = getOttawaNowSeconds();
+  const currentDayKey = getServiceDayKeyForDate(now);
+  const previousDate = new Date(now.getTime() - 24 * 3600 * 1000);
+  const previousDayKey = getServiceDayKeyForDate(previousDate);
+  const paddleIds = new Set([
+    ...Object.keys(index?.service_days?.[currentDayKey] || {}),
+    ...Object.keys(index?.service_days?.[previousDayKey] || {}),
+  ]);
+  const results = [];
+
+  for (const paddleId of paddleIds) {
+    const resolved = resolvePaddleRunForCurrentContext(paddleId);
+    if (!resolved?.run) continue;
+
+    const compareSeconds = resolved.carryover ? currentSeconds + 24 * 3600 : currentSeconds;
+    const activeTrip = resolved.activeTrip || null;
+    const activeBreak = activeTrip ? null : findActiveBreakInRun(resolved.run, compareSeconds);
+    if (!activeTrip && !activeBreak) continue;
+
+    results.push({
+      block: paddleIdToBlockLabel(paddleId),
+      paddleId,
+      serviceDay: resolved.serviceDay,
+      variantId: resolved.variantId || resolved.run.variant_id || null,
+      variantLabel: resolved.variantLabel || resolved.run.variant_label || null,
+      displayVariantLabel: getPaddleDisplayVariantLabel(
+        now,
+        resolved.variantId || resolved.run.variant_id || null,
+        resolved.serviceDay
+      ),
+      carryover: Boolean(resolved.carryover),
+      sourceId: resolved.run.source_id || null,
+      sourceLabel: resolved.run.source_label || null,
+      effective: resolved.run.effective || null,
+      garage: resolved.run.garage || null,
+      signOn: resolved.run.sign_on || null,
+      routes: Array.isArray(resolved.run.routes) ? resolved.run.routes : [],
+      busType: resolved.run.bus_type || null,
+      activeTrip,
+      activeBreak,
+    });
+  }
+
+  return results.sort((a, b) => {
+    const aRemaining = a.activeBreak?.remainingMinutes ?? (a.activeTrip ? Math.max(0, Math.ceil((a.activeTrip.end - (a.carryover ? currentSeconds + 24 * 3600 : currentSeconds)) / 60)) : Number.MAX_SAFE_INTEGER);
+    const bRemaining = b.activeBreak?.remainingMinutes ?? (b.activeTrip ? Math.max(0, Math.ceil((b.activeTrip.end - (b.carryover ? currentSeconds + 24 * 3600 : currentSeconds)) / 60)) : Number.MAX_SAFE_INTEGER);
+    return aRemaining - bRemaining ||
+      a.block.localeCompare(b.block, undefined, { numeric: true });
+  });
+}
+
+function addLiveBusMappingToBoardIndex(indexByBlock, busNumber, value) {
+  const normalizedBus = String(busNumber || '').trim();
+  if (!normalizedBus || !value?.block || !isLiveBusMappingFresh(value)) return;
+
+  const block = String(value.block || '').trim();
+  if (!block) return;
+
+  const existing = indexByBlock.get(block) || new Map();
+  existing.set(normalizedBus, {
+    busNumber: normalizedBus,
+    block,
+    paddleId: String(value.paddleId || '').trim(),
+    serviceDay: String(value.serviceDay || '').trim(),
+    route: String(value.route || '').trim(),
+    headsign: String(value.headsign || '').trim(),
+    tripNumber: value.tripNumber == null ? null : Number(value.tripNumber) || null,
+    startTime: String(value.startTime || '').trim(),
+    endTime: String(value.endTime || '').trim(),
+    verifiedAt: String(value.verifiedAt || '').trim(),
+  });
+  indexByBlock.set(block, existing);
+}
+
+async function getLiveBusMappingsByBlock() {
+  const indexByBlock = new Map();
+
+  for (const [busNumber, value] of liveBusPaddleCache.entries()) {
+    addLiveBusMappingToBoardIndex(indexByBlock, busNumber, value);
+  }
+
+  if (adminSupabase) {
+    const cutoffIso = new Date(Date.now() - LIVE_BUS_MAPPING_TTL_MS).toISOString();
+    const { data, error } = await adminSupabase
+      .from('live_bus_paddles')
+      .select('bus_number, block, paddle_id, service_day, route, trip_number, headsign, start_time, end_time, verified_at')
+      .gte('verified_at', cutoffIso);
+
+    if (error) {
+      throw error;
+    }
+
+    for (const row of data || []) {
+      addLiveBusMappingToBoardIndex(indexByBlock, row.bus_number, {
+        block: row.block,
+        paddleId: row.paddle_id,
+        serviceDay: row.service_day,
+        route: row.route,
+        tripNumber: row.trip_number,
+        headsign: row.headsign,
+        startTime: row.start_time,
+        endTime: row.end_time,
+        verifiedAt: row.verified_at,
+      });
+    }
+  }
+
+  return new Map(
+    Array.from(indexByBlock.entries()).map(([block, buses]) => [block, Array.from(buses.values())])
+  );
+}
+
+async function buildTodayBoardPayload() {
+  const now = new Date();
+  const nowSeconds = getOttawaNowSeconds();
+  const liveMappingsByBlock = await getLiveBusMappingsByBlock().catch(() => new Map());
+  const items = getTodayBoardPaddlesForNow().map((entry) => {
+    const compareSeconds = entry.carryover ? nowSeconds + 24 * 3600 : nowSeconds;
+    const buses = liveMappingsByBlock.get(entry.block) || [];
+    const activeTrip = entry.activeTrip || null;
+    const activeBreak = entry.activeBreak || null;
+    const kind = activeTrip ? 'trip' : 'break';
+    const minutesRemaining = activeBreak
+      ? activeBreak.remainingMinutes
+      : Math.max(0, Math.ceil((activeTrip.end - compareSeconds) / 60));
+    const title = activeTrip
+      ? `Trip ${activeTrip.tripNumber || '?'} on route ${activeTrip.route || 'N/A'}`
+      : `${activeBreak.splitBreak ? 'Split break' : 'Break'} after Trip ${activeBreak.afterTripNumber || '?'}`;
+    const detail = activeTrip
+      ? `${activeTrip.headsign || 'No headsign'} | ${activeTrip.startTime || '--:--'}-${activeTrip.endTime || '--:--'}`
+      : `Back at ${activeBreak.endsAt || '--:--'} for Trip ${activeBreak.nextTripNumber || '?'}${activeBreak.nextTripRoute ? ` | Route ${activeBreak.nextTripRoute}` : ''}`;
+
+    return {
+      block: entry.block,
+      paddleId: entry.paddleId,
+      serviceDay: entry.serviceDay,
+      variantId: entry.variantId || '',
+      variantLabel: entry.variantLabel || '',
+      displayVariantLabel: entry.displayVariantLabel || entry.sourceLabel || '',
+      carryover: entry.carryover,
+      sourceId: entry.sourceId || '',
+      sourceLabel: entry.sourceLabel || '',
+      effective: entry.effective || '',
+      garage: entry.garage || '',
+      signOn: entry.signOn || '',
+      routes: entry.routes || [],
+      busType: entry.busType || '',
+      buses,
+      liveBusCount: buses.length,
+      activeState: {
+        kind,
+        title,
+        detail,
+        minutesRemaining,
+        targetTime: activeTrip ? activeTrip.endTime : activeBreak.endsAt,
+      },
+      activeTrip: activeTrip ? {
+        tripNumber: activeTrip.tripNumber ?? null,
+        route: activeTrip.route || '',
+        headsign: activeTrip.headsign || '',
+        startTime: activeTrip.startTime || '',
+        endTime: activeTrip.endTime || '',
+      } : null,
+      activeBreak: activeBreak ? {
+        afterTripNumber: activeBreak.afterTripNumber ?? null,
+        breakAfterMinutes: activeBreak.breakAfterMinutes ?? null,
+        splitBreak: Boolean(activeBreak.splitBreak),
+        startedAt: activeBreak.startedAt || '',
+        endsAt: activeBreak.endsAt || '',
+        remainingMinutes: activeBreak.remainingMinutes ?? null,
+        nextTripNumber: activeBreak.nextTripNumber ?? null,
+        nextTripRoute: activeBreak.nextTripRoute || '',
+        nextTripHeadsign: activeBreak.nextTripHeadsign || '',
+        nextTripStartTime: activeBreak.nextTripStartTime || '',
+        nextTripStartStop: activeBreak.nextTripStartStop || '',
+      } : null,
+    };
+  });
+
+  const activeTrips = items
+    .filter((item) => item.activeState.kind === 'trip')
+    .sort((a, b) => (a.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER) - (b.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER));
+  const activeBreaks = items
+    .filter((item) => item.activeState.kind === 'break')
+    .sort((a, b) => (a.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER) - (b.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER));
+  const trackedBuses = new Set(items.flatMap((item) => item.buses.map((bus) => bus.busNumber)));
+
+  return {
+    ok: true,
+    mode: 'today-board',
+    generatedAt: now.toISOString(),
+    serviceDay: getOttawaServiceDayKey(),
+    serviceLabel: formatServiceDayLabel(getOttawaServiceDayKey()),
+    counts: {
+      activeNow: items.length,
+      activeTrips: activeTrips.length,
+      activeBreaks: activeBreaks.length,
+      trackedBuses: trackedBuses.size,
+    },
+    activeTrips,
+    activeBreaks,
+    items,
+  };
 }
 
 async function buildLiveBusPaddleMappings() {
@@ -1100,7 +1178,7 @@ function buildShuttleResponse(id, requestedDay) {
   const availableIds = SHUTTLES_BY_SERVICE_DAY[serviceDay] || [];
   if (!availableIds.includes(id)) return null;
 
-  const shuttle = getShuttleForToday(id);
+  const shuttle = getShuttleForToday(id, serviceDay);
   if (!shuttle) return null;
   const currentServiceDay = getOttawaServiceDayKey();
   const isLiveDay = serviceDay === currentServiceDay;
@@ -1248,6 +1326,21 @@ function getPaddleRunForVariant(variantId, serviceDay, paddleId) {
   if (!variantId || !serviceDay || !paddleId) return null;
   const variant = getPaddleVariantMeta(variantId);
   return variant?.service_days?.[serviceDay]?.[paddleId] || null;
+}
+
+function getPinnedPaddleRunForDay(serviceDay, paddleId, variantId) {
+  if (!serviceDay || !paddleId || !variantId) return null;
+  return getPaddleRunForVariant(variantId, serviceDay, paddleId);
+}
+
+function getPinnedVariantServiceDaysForPaddle(paddleId, variantId) {
+  if (!paddleId || !variantId) return [];
+
+  const currentServiceDay = getOttawaServiceDayKey();
+  const orderedDays = [currentServiceDay, 'weekday', 'saturday', 'sunday']
+    .filter((value, index, list) => ['weekday', 'saturday', 'sunday'].includes(value) && list.indexOf(value) === index);
+
+  return orderedDays.filter((serviceDay) => getPinnedPaddleRunForDay(serviceDay, paddleId, variantId));
 }
 
 async function fetchPaddleTripsForBlock(block) {
@@ -1480,6 +1573,13 @@ function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
     : resolvePaddleRunForCurrentContext(paddleId);
   if (!resolved || !resolved.run) return null;
   const { serviceDay, variantId, variantLabel, run, carryover } = resolved;
+  const breakAwareTrips = buildBreakAwareRunTrips(run);
+  const isLiveContext = !explicitDay || (
+    currentResolved?.serviceDay === serviceDay &&
+    currentResolved?.variantId === (variantId || run.variant_id || null)
+  );
+  const compareSeconds = carryover ? getOttawaNowSeconds() + 24 * 3600 : getOttawaNowSeconds();
+  const activeBreak = isLiveContext && !resolved.activeTrip ? findActiveBreakInRun(run, compareSeconds) : null;
 
   return {
     block: String(block),
@@ -1497,10 +1597,99 @@ function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
     routes: Array.isArray(run.routes) ? run.routes : [],
     busType: run.bus_type || null,
     activeTrip: resolved.activeTrip || null,
+    activeBreak,
     currentServiceDay: currentResolved?.serviceDay || null,
-    isLiveDay: Boolean(resolved.activeTrip),
-    trips: Array.isArray(run.trips) ? run.trips : [],
+    isLiveDay: Boolean(isLiveContext && (resolved.activeTrip || activeBreak)),
+    trips: breakAwareTrips,
   };
+}
+
+function buildPinnedVariantPaddleResponse(block, variantId, requestedDay = '') {
+  const paddleId = blockToPaddleId(block);
+  if (!paddleId || !variantId) return null;
+
+  const explicitServiceDay = normalizeServiceDay(requestedDay);
+  const availableServiceDays = getPinnedVariantServiceDaysForPaddle(paddleId, variantId);
+  const serviceDay = explicitServiceDay || availableServiceDays[0] || '';
+  if (!serviceDay || !['weekday', 'saturday', 'sunday'].includes(serviceDay)) {
+    return null;
+  }
+
+  const run = getPinnedPaddleRunForDay(serviceDay, paddleId, variantId);
+  if (!run) return null;
+
+  const compareSeconds = serviceDay === getOttawaServiceDayKey() ? getOttawaNowSeconds() : null;
+  const activeTrip = compareSeconds === null ? null : findActiveTripInRun(run, compareSeconds);
+  const activeBreak = compareSeconds === null || activeTrip ? null : findActiveBreakInRun(run, compareSeconds);
+
+  return {
+    block: String(block),
+    paddleId,
+    serviceDay,
+    variantId,
+    variantLabel: run.variant_label || getPaddleVariantMeta(variantId)?.label || null,
+    displayVariantLabel: run.variant_label || getPaddleVariantMeta(variantId)?.label || null,
+    carryover: false,
+    sourceId: run.source_id || null,
+    sourceLabel: run.source_label || null,
+    effective: run.effective || null,
+    garage: run.garage || null,
+    signOn: run.sign_on || null,
+    routes: Array.isArray(run.routes) ? run.routes : [],
+    busType: run.bus_type || null,
+    activeTrip,
+    activeBreak,
+    currentServiceDay: getOttawaServiceDayKey(),
+    isLiveDay: Boolean(serviceDay === getOttawaServiceDayKey() && (activeTrip || activeBreak)),
+    trips: buildBreakAwareRunTrips(run),
+  };
+}
+
+function getPinnedVariantPaddleOptionsForBlock(block, variantId) {
+  const paddleId = blockToPaddleId(block);
+  if (!paddleId || !variantId) return [];
+
+  const options = getPinnedVariantServiceDaysForPaddle(paddleId, variantId)
+    .map((serviceDay) => {
+      const run = getPinnedPaddleRunForDay(serviceDay, paddleId, variantId);
+      if (!run) return null;
+      return {
+        serviceDay,
+        sourceId: run.source_id || null,
+        sourceLabel: run.source_label || null,
+        effective: run.effective || null,
+        variantId,
+        variantLabel: run.variant_label || getPaddleVariantMeta(variantId)?.label || null,
+        displayVariantLabel: run.variant_label || getPaddleVariantMeta(variantId)?.label || null,
+        buttonLabel: `${formatServiceDayLabel(serviceDay)} Paddle`,
+      };
+    })
+    .filter(Boolean);
+
+  const currentServiceDay = getOttawaServiceDayKey();
+  const baseOrder = new Map([
+    ['weekday', 0],
+    ['saturday', 1],
+    ['sunday', 2],
+  ]);
+
+  return options.sort((a, b) => {
+    if (a.serviceDay === currentServiceDay && b.serviceDay !== currentServiceDay) return -1;
+    if (b.serviceDay === currentServiceDay && a.serviceDay !== currentServiceDay) return 1;
+    return (baseOrder.get(a.serviceDay) ?? 99) - (baseOrder.get(b.serviceDay) ?? 99);
+  });
+}
+
+function formatSummerBookingReply(paddle) {
+  if (!paddle) {
+    return 'No June 29 summer paddle was found for that block.';
+  }
+
+  const blockMatch = String(paddle.block || '').match(/^(\d{1,3})-(\d{1,3})$/);
+  const displayBlock = blockMatch
+    ? `${Number(blockMatch[1])}-${Number(blockMatch[2])}`
+    : String(paddle.block || '').trim();
+  return `Here are the paddles for ${displayBlock} for the summer.`;
 }
 
 function getBestPaddleTripCandidates(trips) {
@@ -2593,6 +2782,44 @@ async function handlePaddle(req, res) {
   }
 }
 
+async function handleSummerBooking(req, res) {
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+
+  try {
+    const requestedDay = normalizeServiceDay(req.query.day || parseRequestedShuttleDay(parseMessageText(req)));
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock).catch(() => null);
+    const block = canonicalBlock || rawBlock;
+    const paddleOptions = getPinnedVariantPaddleOptionsForBlock(block, SUMMER_PADDLE_VARIANT_ID);
+    const selectedDay = requestedDay || paddleOptions[0]?.serviceDay || '';
+    const paddle = buildPinnedVariantPaddleResponse(block, SUMMER_PADDLE_VARIANT_ID, selectedDay);
+    if (!paddle) {
+      res.status(404).json({
+        ok: false,
+        error: `Summer paddle not found for ${rawBlock}.`,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      mode: 'summer-booking',
+      block: paddle.block,
+      reply: formatSummerBookingReply(paddle),
+      paddleOptions,
+      paddle,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleShuttle(req, res) {
   const shuttleId = normalizeMessage(req.query.id || req.query.shuttle);
   const requestedDay = normalizeServiceDay(req.query.day);
@@ -2726,6 +2953,8 @@ async function handleGtfsDebug(req, res) {
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
+app.get('/api/summer-booking', handleSummerBooking);
+app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/shuttle', handleShuttle);
 app.get('/api/gtfs-lookup', handleGtfsLookup);
 app.get('/api/gtfs-debug', handleGtfsDebug);
@@ -2748,8 +2977,24 @@ app.get('/api/account-options', (_req, res) => {
     shuttles: getAccountShuttleOptions(),
   });
 });
+app.get('/api/today-board', async (_req, res) => {
+  try {
+    res.json(await buildTodayBoardPayload());
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: String(error?.message || 'Today Board failed to load.').slice(0, 500),
+    });
+  }
+});
 app.get('/vendor/supabase.js', (_req, res) => {
   res.sendFile(path.join(__dirname, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'));
+});
+app.get('/summer-booking', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'summer-booking.html'));
+});
+app.get('/today-board', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'today-board.html'));
 });
 
 app.get('/healthz', (_req, res) => {
