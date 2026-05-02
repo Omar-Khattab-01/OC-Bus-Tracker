@@ -547,71 +547,6 @@
       background: rgba(255, 179, 72, 0.12);
     }
 
-    .schedule-mobile-list {
-      display: none;
-      gap: 10px;
-    }
-
-    .schedule-mobile-card {
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 12px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .schedule-mobile-card.highlight {
-      border-color: rgba(255, 179, 72, 0.38);
-      background: rgba(255, 179, 72, 0.12);
-    }
-
-    .schedule-mobile-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .schedule-mobile-trip {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 28px;
-      line-height: 1;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .schedule-mobile-stops {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .schedule-mobile-stop {
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(14, 18, 24, 0.72);
-      min-width: 0;
-    }
-
-    .schedule-mobile-stop strong {
-      display: block;
-      color: var(--oc-mist);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 4px;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
-    .schedule-mobile-stop span {
-      display: block;
-      font-size: 18px;
-      line-height: 1.2;
-    }
-
     .shuttle-jump-col {
       width: 1%;
       white-space: nowrap;
@@ -664,6 +599,46 @@
       .meta-strip { grid-template-columns: 1fr 1fr 1fr; }
       .trip-top { grid-template-columns: 1fr; }
       .trip-title-main { text-align: left; }
+      .modal {
+        width: min(100%, calc(100vw - 24px));
+      }
+      .modal-body {
+        padding: 12px;
+      }
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .meta-card {
+        min-width: 0;
+      }
+      .meta-card span {
+        font-size: 14px;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+      .schedule-table th,
+      .schedule-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+      }
+      .schedule-table th {
+        font-size: 9px;
+        line-height: 1.25;
+      }
+      .schedule-table th:first-child,
+      .schedule-table td:first-child {
+        width: 64px;
+        white-space: nowrap;
+      }
+      .schedule-table td:first-child {
+        font-size: 13px;
+      }
+      .jump-btn {
+        min-width: 30px;
+        min-height: 30px;
+        font-size: 16px;
+        padding: 0 8px;
+      }
     }
   </style>
 </head>
@@ -843,38 +818,8 @@
       const nextStopName = shouldHighlight ? (data.nextStop?.nextStopName || '') : '';
       const nextStopTime = shouldHighlight ? (data.nextStop?.nextStopTime || '') : '';
       const topAnchorId = String(options.topAnchorId || 'shuttleTopAnchor');
-      const isMobile = window.innerWidth <= 640;
-
       if (!trips.length) {
         return '<div class="empty">No shuttle times are available for this service day.</div>';
-      }
-
-      if (isMobile) {
-        const cards = trips.map((trip) => {
-          const stops = headers.map((stopName, index) => {
-            const stop = Array.isArray(trip.stops) ? trip.stops[index] : null;
-            return `
-              <div class="schedule-mobile-stop">
-                <strong>${escapeHtml(stopName)}</strong>
-                <span>${escapeHtml(stop?.time || '--:--')}</span>
-              </div>
-            `;
-          }).join('');
-          const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
-            stop.name === nextStopName && stop.time === nextStopTime
-          );
-          return `
-            <article class="schedule-mobile-card${isHighlighted ? ' highlight' : ''}" ${isHighlighted ? 'id="currentShuttleTarget"' : ''}>
-              <div class="schedule-mobile-top">
-                <div class="schedule-mobile-trip">Trip ${escapeHtml(trip.tripNumber)}</div>
-                ${isHighlighted ? `<button class="jump-btn" type="button" aria-label="Back to top of shuttle" data-scroll-to="${escapeAttribute(topAnchorId)}">&#8593;</button>` : ''}
-              </div>
-              <div class="schedule-mobile-stops">${stops}</div>
-            </article>
-          `;
-        }).join('');
-
-        return `<div class="schedule-mobile-list" style="display:grid">${cards}</div>`;
       }
 
       const rows = trips.map((trip) => {
