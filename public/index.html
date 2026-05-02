@@ -797,6 +797,13 @@
       gap: 6px;
     }
 
+    .summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
     .summary-title {
       font-size: 11px;
       color: var(--oc-mist);
@@ -1129,6 +1136,12 @@
       background: rgba(218, 41, 28, 0.14);
     }
 
+    .shuttle-jump-col {
+      width: 1%;
+      white-space: nowrap;
+      text-align: right;
+    }
+
     @media (max-width: 700px) {
       body {
         padding: 8px;
@@ -1203,7 +1216,6 @@
       .header-actions > .status,
       .header-actions > #clearChatBtn,
       .header-actions > #accountBtn,
-      .header-actions > #todayBoardBtn,
       .header-actions > #summerBookingBtn {
         display: none;
       }
@@ -1333,15 +1345,15 @@
         <button id="todayWorkBtn" class="header-btn" type="button" hidden>Today's Work</button>
         <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
-        <button id="todayBoardBtn" class="header-btn" type="button" onclick="window.location.href='/today-board'">Today Board</button>
         <button id="summerBookingBtn" class="header-btn" type="button" onclick="window.location.href='/summer-booking'">Summer Booking</button>
+        <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <button id="mobileMenuBtn" class="header-btn mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileHeaderMenu">Menu</button>
         <div id="mobileHeaderMenu" class="mobile-menu" hidden>
           <div class="menu-section-label">Navigation</div>
-          <button id="mobileTodayBoardBtn" class="header-btn" type="button">Today Board</button>
           <button id="mobileSummerBookingBtn" class="header-btn" type="button">Summer Booking</button>
+          <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
           <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
           <div class="menu-section-label">Status</div>
@@ -1439,6 +1451,28 @@
     </section>
   </div>
 
+  <div id="confirmOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="confirmTitle">Confirm Action</h2>
+          <p id="confirmMeta" class="modal-meta">Please confirm before continuing.</p>
+        </div>
+        <button id="closeConfirmBtn" class="close-btn" type="button" aria-label="Close confirmation">x</button>
+      </header>
+      <div class="modal-body">
+        <section class="section-card">
+          <div id="confirmMessage" class="subtle-text">Are you sure?</div>
+          <div class="section-actions">
+            <button id="confirmCancelBtn" class="link-btn" type="button">Cancel</button>
+            <button id="confirmOkBtn" class="btn" type="button">Continue</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script src="/oc-header.js"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     (() => {
@@ -1462,8 +1496,8 @@
     const todayWorkBtn = document.getElementById('todayWorkBtn');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileHeaderMenu = document.getElementById('mobileHeaderMenu');
-    const mobileTodayBoardBtn = document.getElementById('mobileTodayBoardBtn');
     const mobileSummerBookingBtn = document.getElementById('mobileSummerBookingBtn');
+    const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
     const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
     const mobileMenuStatus = document.getElementById('mobileMenuStatus');
@@ -1494,6 +1528,12 @@
     const mapMeta = document.getElementById('mapMeta');
     const mapBody = document.getElementById('mapBody');
     const closeMapBtn = document.getElementById('closeMapBtn');
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const confirmMeta = document.getElementById('confirmMeta');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+    const closeConfirmBtn = document.getElementById('closeConfirmBtn');
     let supabaseClient = null;
     let supabaseEnabled = false;
     let currentUser = null;
@@ -1521,6 +1561,7 @@
     let currentPaddleContext = null;
     let todayWorkOpenedForSession = false;
     let currentMainView = 'chat';
+    let pendingConfirmResolver = null;
     const TODAY_WORK_STORAGE_KEY = 'oc-bus-tracker:today-work:v1';
     const defaultChatMarkup = `
       <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
@@ -2311,9 +2352,7 @@
               return `<span class="saved-chip">${escapeHtml(label)} <button class="chip-remove" type="button" data-remove-shuttle="${escapeAttribute(shuttleId)}">×</button></span>`;
             }).join('')}</div>
           </section>
-          <div class="section-actions">
-            <button id="saveProfileBtn" class="btn" type="button">Save Work</button>
-          </div>
+          <div class="subtle-text">Changes here save automatically to your work schedule.</div>
         </section>
       `;
       wireAccountModalEvents();
@@ -2329,7 +2368,6 @@
       const setNewPasswordBtn = document.getElementById('setNewPasswordBtn');
       const saveSettingsBtn = document.getElementById('saveSettingsBtn');
       const requestPasswordResetBtn = document.getElementById('requestPasswordResetBtn');
-      const saveProfileBtn = document.getElementById('saveProfileBtn');
       const signOutBtn = document.getElementById('signOutBtn');
       const addWeekdayBlockBtn = document.getElementById('addWeekdayBlockBtn');
       const addSaturdayBlockBtn = document.getElementById('addSaturdayBlockBtn');
@@ -2348,7 +2386,6 @@
       if (setNewPasswordBtn) setNewPasswordBtn.addEventListener('click', setNewPassword);
       if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
       if (requestPasswordResetBtn) requestPasswordResetBtn.addEventListener('click', sendSignedInPasswordResetEmail);
-      if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
       if (signOutBtn) signOutBtn.addEventListener('click', signOutUser);
       if (addWeekdayBlockBtn) addWeekdayBlockBtn.addEventListener('click', () => addBlockToProfile('weekday'));
       if (addSaturdayBlockBtn) addSaturdayBlockBtn.addEventListener('click', () => addBlockToProfile('saturday'));
@@ -2387,48 +2424,77 @@
       });
     }
 
-    function addBlockToProfile(day) {
+    async function syncProfileWorkChanges(errorMessage = 'Could not save your work schedule.') {
+      if (!supabaseClient || !currentUser) return false;
+      const saved = await persistProfilePayload({
+        user_id: currentUser.id,
+        display_name: currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || null,
+        weekday_blocks: getSavedBlocksForDay('weekday'),
+        saturday_blocks: getSavedBlocksForDay('saturday'),
+        sunday_blocks: getSavedBlocksForDay('sunday'),
+        saved_shuttles: getSavedShuttles(),
+      }, errorMessage);
+      if (!saved) return false;
+      setAccountNotice('Saved to your work schedule.', 'ok');
+      await loadProfile();
+      return true;
+    }
+
+    async function addBlockToProfile(day) {
       const input = document.getElementById(`${day}BlockInput`);
       const value = normalizeBlockValue(input?.value);
       if (!value) return;
 
       const key = `${day}_blocks`;
       const existing = getSavedBlocksForDay(day);
+      if (existing.includes(value)) {
+        setAccountNotice(`${value} is already saved for ${formatServiceDayLabel(day)}.`, 'warn');
+        return;
+      }
       if (!currentProfile) currentProfile = {};
       currentProfile[key] = [...new Set([...existing, value])];
       if (input) input.value = '';
       renderQuickLookup();
       renderAccountModal();
+      await syncProfileWorkChanges();
     }
 
-    function removeBlockFromProfile(day, block) {
+    async function removeBlockFromProfile(day, block) {
       const key = `${day}_blocks`;
       const existing = getSavedBlocksForDay(day);
       if (!currentProfile) currentProfile = {};
       currentProfile[key] = existing.filter((item) => item !== block);
       renderQuickLookup();
       renderAccountModal();
+      await syncProfileWorkChanges();
     }
 
-    function addShuttleToProfile() {
+    async function addShuttleToProfile() {
       const select = document.getElementById('savedShuttleSelect');
       const value = String(select?.value || '').trim();
       if (!value) return;
 
       const existing = getSavedShuttles();
+      if (existing.includes(value)) {
+        const shuttle = getShuttleOptionById(value);
+        setAccountNotice(`${shuttle?.label || value} is already saved.`, 'warn');
+        return;
+      }
       if (!currentProfile) currentProfile = {};
       currentProfile.saved_shuttles = [...new Set([...existing, value])];
       if (select) select.value = '';
       renderQuickLookup();
       renderAccountModal();
+      await syncProfileWorkChanges();
     }
 
-    function removeShuttleFromProfile(shuttleId) {
+    async function removeShuttleFromProfile(shuttleId) {
       const existing = getSavedShuttles();
       if (!currentProfile) currentProfile = {};
       currentProfile.saved_shuttles = existing.filter((item) => item !== shuttleId);
       renderQuickLookup();
       renderAccountModal();
+      await syncProfileWorkChanges();
     }
 
     async function signInWithPassword() {
@@ -2595,18 +2661,64 @@
         saved_shuttles: getSavedShuttles(),
       };
 
+      const saved = await persistProfilePayload(payload, 'Could not save your work.');
+      if (!saved) return;
+
+      setAccountNotice('', '');
+      await loadProfile();
+      closeAccountModal();
+    }
+
+    async function persistProfilePayload(payload, errorMessage) {
       const { error } = await supabaseClient
         .from('user_profiles')
         .upsert(payload, { onConflict: 'user_id' });
 
       if (error) {
-        setAccountNotice(error.message || 'Could not save your work.', 'warn');
-        return;
+        setAccountNotice(error.message || errorMessage || 'Could not save your work.', 'warn');
+        return false;
       }
+
+      return true;
+    }
+
+    async function removeTodayWorkFromAccountSchedule(entry) {
+      if (!supabaseClient || !currentUser || !entry) return false;
+      const serviceDay = String(entry.serviceDay || getCurrentServiceDayKey()).trim().toLowerCase();
+      const block = normalizeBlockValue(entry.block);
+      if (!serviceDay || !block) return false;
+
+      const confirmed = await openConfirmModal(
+        'Removing this will remove it from your work schedule. Do you want to continue?',
+        'Today’s Work is linked to your saved account schedule.'
+      );
+      if (!confirmed) {
+        return false;
+      }
+
+      const key = `${serviceDay}_blocks`;
+      const existing = getSavedBlocksForDay(serviceDay);
+      if (!existing.includes(block)) {
+        return true;
+      }
+
+      if (!currentProfile) currentProfile = {};
+      currentProfile[key] = existing.filter((item) => normalizeBlockValue(item) !== block);
+
+      const saved = await persistProfilePayload({
+        user_id: currentUser.id,
+        display_name: currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || null,
+        weekday_blocks: getSavedBlocksForDay('weekday'),
+        saturday_blocks: getSavedBlocksForDay('saturday'),
+        sunday_blocks: getSavedBlocksForDay('sunday'),
+        saved_shuttles: getSavedShuttles(),
+      }, 'Could not update your work schedule.');
+
+      if (!saved) return false;
 
       setAccountNotice('', '');
       await loadProfile();
-      closeAccountModal();
+      return true;
     }
 
     async function saveSettings() {
@@ -2723,7 +2835,7 @@
           <div class="row">
             <div class="bus">#${bus.busNumber}</div>
             <div class="card-actions">
-              ${jumpTargetId ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">↓</button>` : ''}
+              ${jumpTargetId ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">&#8595;</button>` : ''}
               <span class="pill">live</span>
             </div>
           </div>
@@ -2774,6 +2886,26 @@
       mapOverlay.hidden = true;
       mapBody.innerHTML = '';
       document.body.style.overflow = '';
+    }
+
+    function openConfirmModal(message, meta = 'Please confirm before continuing.') {
+      return new Promise((resolve) => {
+        pendingConfirmResolver = resolve;
+        confirmMeta.textContent = String(meta || 'Please confirm before continuing.');
+        confirmMessage.textContent = String(message || 'Are you sure?');
+        confirmOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+      });
+    }
+
+    function closeConfirmModal(result = false) {
+      confirmOverlay.hidden = true;
+      const resolver = pendingConfirmResolver;
+      pendingConfirmResolver = null;
+      document.body.style.overflow = '';
+      if (typeof resolver === 'function') {
+        resolver(Boolean(result));
+      }
     }
 
     function escapeHtml(value) {
@@ -2832,11 +2964,18 @@
       `;
     }
 
-    function buildPaddleSummaryCard(data) {
+    function buildPaddleSummaryCard(data, options = {}) {
+      const jumpTargetId = String(options.jumpTargetId || '').trim();
+      const jumpButton = jumpTargetId
+        ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">&#8595;</button>`
+        : '';
       if (data.isLiveDay && data.activeTrip) {
         return `
           <section class="summary-card">
-            <div class="summary-title">Active Trip</div>
+            <div class="summary-head">
+              <div class="summary-title">Active Trip</div>
+              ${jumpButton}
+            </div>
             <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
             <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
           </section>
@@ -2845,7 +2984,10 @@
       if (data.isLiveDay && data.activeBreak) {
         return `
           <section class="summary-card">
-            <div class="summary-title">${data.activeBreak.splitBreak ? 'On Split Break' : 'On Break'}</div>
+            <div class="summary-head">
+              <div class="summary-title">${data.activeBreak.splitBreak ? 'On Split Break' : 'On Break'}</div>
+              ${jumpButton}
+            </div>
             <div class="summary-main">${escapeHtml(data.activeBreak.remainingMinutes || 0)} min remaining</div>
             <div class="summary-sub">Until Trip ${escapeHtml(data.activeBreak.nextTripNumber || '?')}${data.activeBreak.nextTripRoute ? ` · Route ${escapeHtml(data.activeBreak.nextTripRoute)}` : ''}${data.activeBreak.nextTripHeadsign ? ` · ${escapeHtml(data.activeBreak.nextTripHeadsign)}` : ''}</div>
             <div class="summary-sub">Back at ${escapeHtml(data.activeBreak.nextTripStartTime || '--:--')}${data.activeBreak.nextTripStartStop ? ` from ${escapeHtml(data.activeBreak.nextTripStartStop)}` : ''}</div>
@@ -2877,7 +3019,7 @@
         </section>
       `;
       return `
-        ${buildPaddleSummaryCard(data)}
+        ${buildPaddleSummaryCard(data, { jumpTargetId: options.jumpTargetId })}
         ${todayWorkActions}
         <section class="meta-grid">
           <article class="meta-card"><strong>Paddle ID</strong><span>${data.paddleId || 'N/A'}</span></article>
@@ -2956,7 +3098,7 @@
             </div>
             <div class="page-meta">
               <div class="page-actions">
-                <button id="todayWorkBackToChatBtn" class="link-btn" type="button">Back to Lookup</button>
+                <button class="link-btn" type="button" data-today-work-nav="lookup">Back to Lookup</button>
               </div>
             </div>
           </div>
@@ -3012,7 +3154,7 @@
             </div>
             <div class="page-actions">
               <button id="todayWorkRemoveBtn" class="link-btn" type="button">Remove from Today's Work</button>
-              <button id="todayWorkBackToChatBtn" class="link-btn" type="button">Back to Lookup</button>
+              <button class="link-btn" type="button" data-today-work-nav="lookup">Back to Lookup</button>
             </div>
           </div>
           <div class="card-body">
@@ -3022,13 +3164,15 @@
         </section>
       `;
 
-      const backBtn = document.getElementById('todayWorkBackToChatBtn');
-      if (backBtn) {
-        backBtn.addEventListener('click', () => setMainView('chat'));
-      }
       const removeBtn = document.getElementById('todayWorkRemoveBtn');
       if (removeBtn) {
         removeBtn.addEventListener('click', async () => {
+          if (currentUser && String(todayWork.source || '').toLowerCase() === 'account') {
+            const removed = await removeTodayWorkFromAccountSchedule(todayWork);
+            if (!removed) return;
+            await openTodayWorkPage();
+            return;
+          }
           clearTodayWork();
           renderQuickLookup();
           await openTodayWorkPage();
@@ -3085,7 +3229,7 @@
         const breakStrip = Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
           <div class="trip-break ${trip.splitBreak ? 'split' : ''}" ${isLiveBreak ? 'id="currentPaddleTarget"' : ''}>
             ${isLiveBreak
-              ? `<div class="break-strip-head"><span class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">↑</button></div>`
+              ? `<div class="break-strip-head"><span class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">&#8593;</button></div>`
               : `<div class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</div>`
             }
             <div class="trip-break-duration">${escapeHtml(breakMinutes)} min</div>
@@ -3099,7 +3243,7 @@
                 <div class="trip-title trip-title-main">${escapeHtml(trip.route || 'N/A')} ${escapeHtml(trip.headsign || 'No headsign')}</div>
                 <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
               </div>
-              ${isActive ? `<div class="trip-live-actions"><span></span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">↑</button></div>` : ''}
+              ${isActive ? `<div class="trip-live-actions"><span></span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">&#8593;</button></div>` : ''}
               <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
               <div class="trip-row">${startRow}</div>
               ${reliefRow}
@@ -3124,7 +3268,7 @@
       paddleTitle.textContent = `Paddle ${data.block}`;
       const paddleSourceLabel = data.displayVariantLabel || data.sourceLabel || 'Paddle index';
       paddleMeta.textContent = `${data.serviceDay} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
-      paddleBody.innerHTML = buildPaddleDetailHtml(data);
+      paddleBody.innerHTML = `<div id="paddleTopAnchor">${buildPaddleDetailHtml(data, { jumpTargetId: 'currentPaddleTarget' })}</div>`;
 
       paddleOverlay.hidden = false;
       document.body.style.overflow = 'hidden';
@@ -3216,12 +3360,13 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function renderShuttleSchedule(data) {
+    function renderShuttleSchedule(data, options = {}) {
       const headers = Array.isArray(data.stops) ? data.stops : [];
       const trips = Array.isArray(data.trips) ? data.trips : [];
       const shouldHighlight = Boolean(data.isLiveDay);
       const nextStopName = shouldHighlight ? (data.nextStop?.nextStopName || '') : '';
       const nextStopTime = shouldHighlight ? (data.nextStop?.nextStopTime || '') : '';
+      const topAnchorId = String(options.topAnchorId || 'shuttleTopAnchor');
 
       const rows = trips.map((trip) => {
         const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
@@ -3233,9 +3378,10 @@
         }).join('');
 
         return `
-          <tr class="${isHighlighted ? 'highlight' : ''}">
+          <tr class="${isHighlighted ? 'highlight' : ''}" ${isHighlighted ? 'id="currentShuttleTarget"' : ''}>
             <td>Trip ${escapeHtml(trip.tripNumber)}</td>
             ${cells}
+            <td class="shuttle-jump-col">${isHighlighted ? `<button class="jump-btn" type="button" aria-label="Back to top of shuttle" data-scroll-to="${escapeAttribute(topAnchorId)}">&#8593;</button>` : ''}</td>
           </tr>
         `;
       }).join('');
@@ -3246,6 +3392,7 @@
             <tr>
               <th>Trip</th>
               ${headers.map((stop) => `<th>${escapeHtml(stop)}</th>`).join('')}
+              <th class="shuttle-jump-col" aria-hidden="true"></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -3256,6 +3403,9 @@
     function openShuttleModal(data) {
       shuttleTitle.textContent = `${data.route} ${data.name}`;
       shuttleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Shuttle schedule'}`;
+      const jumpButton = data.isLiveDay && data.nextStop?.nextStopName && data.nextStop?.nextStopTime
+        ? `<button class="jump-btn" type="button" aria-label="Jump to current shuttle trip" data-scroll-to="currentShuttleTarget">&#8595;</button>`
+        : '';
       const referenceCard = !data.isLiveDay ? `
         <section class="summary-card">
           <div class="summary-title">Reference Schedule</div>
@@ -3264,20 +3414,25 @@
         </section>
       ` : `
         <section class="summary-card">
-          <div class="summary-title">Next Stop</div>
+          <div class="summary-head">
+            <div class="summary-title">Next Stop</div>
+            ${jumpButton}
+          </div>
           <div class="summary-main">${escapeHtml(data.nextStop?.summary || 'No next stop available.')}</div>
           ${data.nextStop?.currentSegment ? `<div class="summary-sub">${escapeHtml(data.nextStop.currentSegment)}</div>` : ''}
         </section>
       `;
       shuttleBody.innerHTML = `
-        ${referenceCard}
-        <section class="meta-grid">
-          <article class="meta-card"><strong>Route</strong><span>${escapeHtml(data.route || 'N/A')}</span></article>
-          <article class="meta-card"><strong>Shuttle</strong><span>${escapeHtml(data.name || 'N/A')}</span></article>
-          <article class="meta-card"><strong>Source</strong><span>${escapeHtml(data.sourceLabel || 'N/A')}</span></article>
-          <article class="meta-card"><strong>Trips</strong><span>${escapeHtml((data.trips || []).length)}</span></article>
-        </section>
-        ${renderShuttleSchedule(data)}
+        <div id="shuttleTopAnchor">
+          ${referenceCard}
+          <section class="meta-grid">
+            <article class="meta-card"><strong>Route</strong><span>${escapeHtml(data.route || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Shuttle</strong><span>${escapeHtml(data.name || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Source</strong><span>${escapeHtml(data.sourceLabel || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Trips</strong><span>${escapeHtml((data.trips || []).length)}</span></article>
+          </section>
+          ${renderShuttleSchedule(data, { topAnchorId: 'shuttleTopAnchor' })}
+        </div>
       `;
       const suggestedLiveShuttleBtn = document.getElementById('suggestedLiveShuttleBtn');
       if (suggestedLiveShuttleBtn && data.suggestedLiveShuttle) {
@@ -3437,13 +3592,13 @@
       event.stopPropagation();
       toggleMobileMenu();
     });
-    mobileTodayBoardBtn.addEventListener('click', () => {
-      closeMobileMenu();
-      window.location.href = '/today-board';
-    });
     mobileSummerBookingBtn.addEventListener('click', () => {
       closeMobileMenu();
       window.location.href = '/summer-booking';
+    });
+    mobileShuttlesPageBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/shuttles';
     });
     mobileAccountBtn.addEventListener('click', () => {
       closeMobileMenu();
@@ -3457,6 +3612,9 @@
     closeShuttleBtn.addEventListener('click', closeShuttleModal);
     closeAccountBtn.addEventListener('click', closeAccountModal);
     closeMapBtn.addEventListener('click', closeMapModal);
+    closeConfirmBtn.addEventListener('click', () => closeConfirmModal(false));
+    confirmCancelBtn.addEventListener('click', () => closeConfirmModal(false));
+    confirmOkBtn.addEventListener('click', () => closeConfirmModal(true));
     paddleOverlay.addEventListener('click', (event) => {
       if (event.target === paddleOverlay) closePaddleModal();
     });
@@ -3468,6 +3626,27 @@
     });
     mapOverlay.addEventListener('click', (event) => {
       if (event.target === mapOverlay) closeMapModal();
+    });
+    confirmOverlay.addEventListener('click', (event) => {
+      if (event.target === confirmOverlay) closeConfirmModal(false);
+    });
+    paddleBody.addEventListener('click', (event) => {
+      const jumpTarget = event.target.closest('[data-scroll-to]');
+      if (!jumpTarget) return;
+      const targetId = jumpTarget.dataset.scrollTo;
+      const targetNode = targetId ? paddleBody.querySelector(`#${CSS.escape(targetId)}`) : null;
+      if (targetNode) {
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    shuttleBody.addEventListener('click', (event) => {
+      const jumpTarget = event.target.closest('[data-scroll-to]');
+      if (!jumpTarget) return;
+      const targetId = jumpTarget.dataset.scrollTo;
+      const targetNode = targetId ? shuttleBody.querySelector(`#${CSS.escape(targetId)}`) : null;
+      if (targetNode) {
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
     document.addEventListener('click', (event) => {
       if (!mobileHeaderMenu || !mobileMenuBtn || mobileHeaderMenu.hidden) return;
@@ -3512,10 +3691,15 @@
       openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
     });
     todayWorkView.addEventListener('click', async (event) => {
+      const navTarget = event.target.closest('[data-today-work-nav="lookup"]');
+      if (navTarget) {
+        setMainView('chat');
+        return;
+      }
       const jumpTarget = event.target.closest('[data-scroll-to]');
       if (jumpTarget) {
         const targetId = jumpTarget.dataset.scrollTo;
-        const targetNode = targetId ? document.getElementById(targetId) : null;
+        const targetNode = targetId ? todayWorkView.querySelector(`#${CSS.escape(targetId)}`) : null;
         if (targetNode) {
           targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -3569,6 +3753,8 @@
       }
       if (event.key === 'Escape' && !mapOverlay.hidden) {
         closeMapModal();
+      } else if (event.key === 'Escape' && !confirmOverlay.hidden) {
+        closeConfirmModal(false);
       }
     });
 

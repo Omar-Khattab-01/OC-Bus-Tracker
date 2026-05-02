@@ -5,22 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Today Board</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
     :root {
       --oc-red: #da291c;
-      --oc-red-dark: #b82015;
-      --oc-black: #0f1115;
-      --oc-charcoal: #1d232b;
-      --oc-steel: #2f3844;
-      --oc-white: #f8fafc;
-      --oc-mist: #d7dde6;
-      --ok: #39b66c;
-      --warn: #ffb348;
-      --card: rgba(20, 25, 31, 0.84);
-      --card-strong: rgba(29, 35, 43, 0.94);
-      --border: rgba(255, 255, 255, 0.14);
-      --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      --oc-red-dark: #a81e15;
+      --panel: rgba(18, 24, 31, 0.94);
+      --panel-soft: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f7fafc;
+      --muted: #c8d1dc;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
     }
 
     * { box-sizing: border-box; }
@@ -28,46 +23,23 @@
     body {
       margin: 0;
       min-height: 100vh;
-      color: var(--oc-white);
+      color: var(--text);
       font-family: 'IBM Plex Sans', sans-serif;
       background:
-        radial-gradient(circle at 10% -10%, rgba(218, 41, 28, 0.28) 0%, transparent 38%),
-        radial-gradient(circle at 90% 15%, rgba(57, 182, 108, 0.14) 0%, transparent 28%),
-        linear-gradient(180deg, #141920 0%, #0f1318 100%);
-      padding: 20px;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: -20vh -20vw;
-      background-image: repeating-linear-gradient(
-        120deg,
-        transparent 0,
-        transparent 58px,
-        rgba(255, 255, 255, 0.03) 58px,
-        rgba(255, 255, 255, 0.03) 59px
-      );
-      pointer-events: none;
-      animation: drift 16s linear infinite;
-    }
-
-    @keyframes drift {
-      from { transform: translateX(0); }
-      to { transform: translateX(50px); }
+        radial-gradient(circle at top left, rgba(218, 41, 28, 0.28), transparent 34%),
+        linear-gradient(180deg, #12161c 0%, #0a0d11 100%);
+      padding: 16px;
     }
 
     .app {
-      position: relative;
-      z-index: 1;
-      width: min(1240px, 100%);
+      width: min(1040px, 100%);
       margin: 0 auto;
       border: 1px solid var(--border);
       border-radius: 24px;
-      background: var(--card);
+      background: var(--panel);
+      overflow: hidden;
       box-shadow: var(--shadow);
       backdrop-filter: blur(12px);
-      overflow: hidden;
     }
 
     .header {
@@ -77,13 +49,13 @@
       gap: 16px;
       padding: 18px 20px;
       border-bottom: 1px solid var(--border);
-      background: linear-gradient(110deg, rgba(218, 41, 28, 0.16), rgba(15, 17, 21, 0.35));
+      background: linear-gradient(115deg, rgba(218, 41, 28, 0.16), rgba(255, 255, 255, 0.02));
     }
 
     .brand {
       display: flex;
-      gap: 12px;
       align-items: center;
+      gap: 12px;
     }
 
     .badge {
@@ -94,23 +66,41 @@
       place-items: center;
       background: linear-gradient(145deg, var(--oc-red), var(--oc-red-dark));
       font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
       font-weight: 700;
-      font-size: 20px;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.04em;
     }
 
-    .title h1 {
+    .title h1,
+    .panel-head h2,
+    .row-main h3,
+    .detail-head h2 {
       margin: 0;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 32px;
-      line-height: 1;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
+    .title h1 {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .title p,
+    .panel-head p,
+    .summary-line,
+    .summary-card span,
+    .row-note,
+    .modal-meta,
+    .trip-line,
+    .empty,
+    .error {
+      margin: 0;
+      color: var(--muted);
+    }
+
     .title p {
-      margin: 5px 0 0;
-      color: var(--oc-mist);
+      margin-top: 4px;
       font-size: 13px;
     }
 
@@ -121,273 +111,329 @@
       flex-wrap: wrap;
     }
 
-    .header-link,
-    .header-btn {
+    .button,
+    .link {
+      appearance: none;
       border: 1px solid var(--border);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.06);
-      color: var(--oc-white);
-      text-decoration: none;
+      color: var(--text);
       font: inherit;
+      text-decoration: none;
       padding: 10px 14px;
       cursor: pointer;
-      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
-      white-space: nowrap;
+      transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
     }
 
-    .header-link:hover,
-    .header-btn:hover {
-      border-color: rgba(255, 255, 255, 0.32);
+    .button:hover,
+    .link:hover {
       background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
     }
 
     .status {
-      font-size: 12px;
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 6px 10px;
-      color: var(--oc-mist);
-      white-space: nowrap;
+      font-size: 12px;
+      color: var(--muted);
     }
 
     .status.ok {
       color: #dff6e6;
-      border-color: rgba(57, 182, 108, 0.55);
+      border-color: rgba(76, 196, 123, 0.45);
     }
 
     .status.warn {
       color: #ffe5bc;
-      border-color: rgba(255, 179, 72, 0.55);
+      border-color: rgba(255, 178, 77, 0.5);
     }
 
     .main {
-      padding: 22px;
       display: grid;
-      gap: 20px;
-    }
-
-    .page-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
       gap: 18px;
-      flex-wrap: wrap;
+      padding: 20px;
     }
 
-    .page-head h2 {
-      margin: 0;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 34px;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-    }
-
-    .page-head p {
-      margin: 8px 0 0;
-      color: var(--oc-mist);
-      max-width: 760px;
-      line-height: 1.5;
-    }
-
-    .meta-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(120px, 1fr));
-      gap: 12px;
-      min-width: min(100%, 520px);
-    }
-
-    .stat-card {
+    .panel {
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .stat-card .k {
-      display: block;
-      color: var(--oc-mist);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .stat-card .v {
-      display: block;
-      margin-top: 6px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 32px;
-      line-height: 1;
-    }
-
-    .section-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-      align-items: start;
-    }
-
-    .section-card {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
       overflow: hidden;
     }
 
-    .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(0, 0, 0, 0.12);
-    }
-
-    .section-head h3 {
-      margin: 0;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 24px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .section-head span {
-      color: var(--oc-mist);
-      font-size: 13px;
-    }
-
-    .section-body {
-      display: grid;
-      gap: 12px;
-      padding: 14px;
-    }
-
-    .board-item {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      background: var(--card-strong);
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .board-top {
+    .panel-head {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .board-top h4 {
-      margin: 0;
+    .panel-head h2 {
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .panel-head p {
+      margin-top: 6px;
+      line-height: 1.45;
+      max-width: 640px;
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      min-width: 320px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-soft);
+      padding: 12px;
+    }
+
+    .summary-card strong {
+      display: block;
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 28px;
       line-height: 1;
-      letter-spacing: 0.04em;
     }
 
-    .board-top p,
-    .board-copy,
-    .board-copy-line {
-      margin: 0;
-      color: var(--oc-mist);
-      line-height: 1.45;
+    .summary-card span {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .pill {
+    .board-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .board-row {
+      display: grid;
+      grid-template-columns: minmax(0, 170px) minmax(0, 150px) minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+    }
+
+    .row-main h3 {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .row-note,
+    .trip-line {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .row-cell strong,
+    .meta-card strong,
+    .paddle-summary strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .row-value {
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .tag {
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      margin-top: 8px;
+      padding: 6px 10px;
       border-radius: 999px;
-      padding: 8px 10px;
-      font-size: 12px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       background: rgba(255, 255, 255, 0.06);
-      white-space: nowrap;
+      font-size: 12px;
     }
 
-    .pill.trip {
-      border-color: rgba(57, 182, 108, 0.45);
-      color: #dff6e6;
-    }
-
-    .pill.break {
-      border-color: rgba(255, 179, 72, 0.45);
+    .tag.break {
       color: #ffe5bc;
+      border-color: rgba(255, 178, 77, 0.35);
     }
 
-    .details-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    .tag.trip {
+      color: #dff6e6;
+      border-color: rgba(76, 196, 123, 0.35);
     }
 
-    .detail-card {
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .detail-card strong {
-      display: block;
-      color: var(--oc-mist);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 5px;
-    }
-
-    .detail-card span {
-      display: block;
-      line-height: 1.45;
-    }
-
-    .bus-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .bus-chip {
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--oc-white);
-    }
-
-    .empty {
-      padding: 20px 18px;
-      color: var(--oc-mist);
+    .empty,
+    .error {
+      padding: 18px;
       line-height: 1.5;
     }
 
     .error {
-      border: 1px solid rgba(255, 179, 72, 0.35);
+      border: 1px solid rgba(255, 178, 77, 0.35);
       border-radius: 18px;
-      padding: 16px 18px;
-      background: rgba(255, 179, 72, 0.08);
+      background: rgba(255, 178, 77, 0.08);
       color: #ffe5bc;
     }
 
-    @media (max-width: 980px) {
-      .section-grid,
-      .details-grid {
+    .detail-panel {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .detail-head h2 {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .detail-meta {
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .close-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .detail-body {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .paddle-summary {
+      border: 1px solid rgba(255, 178, 77, 0.24);
+      border-radius: 16px;
+      background: rgba(64, 36, 12, 0.34);
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .paddle-summary .main-line {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .meta-card {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+    }
+
+    .meta-card span {
+      display: block;
+      line-height: 1.45;
+    }
+
+    .trip-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .trip-card {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .trip-card strong {
+      font-size: 16px;
+    }
+
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+    }
+
+    .loading::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      border-top-color: var(--oc-red);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 860px) {
+      .panel-head,
+      .board-row {
         grid-template-columns: 1fr;
       }
 
-      .meta-strip {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      .summary-strip {
         min-width: 0;
         width: 100%;
+      }
+
+      .row-actions {
+        justify-content: flex-start;
       }
     }
 
     @media (max-width: 640px) {
       body {
-        padding: 12px;
+        padding: 10px;
       }
 
       .header,
@@ -395,12 +441,8 @@
         padding: 16px;
       }
 
-      .board-top {
-        flex-direction: column;
-      }
-
-      .meta-strip {
-        grid-template-columns: 1fr 1fr;
+      .summary-strip {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -412,60 +454,43 @@
         <div class="badge">OC</div>
         <div class="title">
           <h1>Today Board</h1>
-          <p>Active paddles, active breaks, and live bus matches in one view</p>
+          <p>Compact view of active paddles and live bus matches</p>
         </div>
       </div>
       <div class="header-actions">
-        <a class="header-link" href="/">Back to Lookup</a>
-        <button id="refreshBtn" class="header-btn" type="button">Refresh</button>
+        <a class="link" href="/">Back to Lookup</a>
+        <button id="refreshBtn" class="button" type="button">Refresh</button>
         <div id="status" class="status">Loading</div>
       </div>
     </header>
 
     <section class="main">
-      <section class="page-head">
-        <div>
-          <h2>Dispatch View</h2>
-          <p id="boardSummary">Checking the current active paddles for today.</p>
-        </div>
-        <div id="metaStrip" class="meta-strip" aria-label="Board totals"></div>
-      </section>
-
       <div id="errorBox" class="error" hidden></div>
 
-      <section class="section-grid">
-        <article class="section-card">
-          <div class="section-head">
-            <h3>Active Trips</h3>
-            <span id="tripCount">0 paddles</span>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Active Paddles</h2>
+            <p id="boardSummary" class="summary-line">Checking the current active paddles for today.</p>
           </div>
-          <div id="tripSection" class="section-body"></div>
-        </article>
-
-        <article class="section-card">
-          <div class="section-head">
-            <h3>Active Breaks</h3>
-            <span id="breakCount">0 paddles</span>
-          </div>
-          <div id="breakSection" class="section-body"></div>
-        </article>
+          <div id="summaryStrip" class="summary-strip" aria-label="Board summary"></div>
+        </div>
+        <div id="boardList" class="board-list"></div>
       </section>
     </section>
   </main>
 
+  <script src="/oc-header.js"></script>
   <script>
     const statusEl = document.getElementById('status');
     const refreshBtn = document.getElementById('refreshBtn');
     const boardSummary = document.getElementById('boardSummary');
-    const metaStrip = document.getElementById('metaStrip');
-    const tripCount = document.getElementById('tripCount');
-    const breakCount = document.getElementById('breakCount');
-    const tripSection = document.getElementById('tripSection');
-    const breakSection = document.getElementById('breakSection');
+    const summaryStrip = document.getElementById('summaryStrip');
+    const boardList = document.getElementById('boardList');
     const errorBox = document.getElementById('errorBox');
-
     let refreshTimer = null;
     let refreshInFlight = false;
+    let paddleInFlight = false;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -474,6 +499,10 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/`/g, '&#96;');
     }
 
     function setStatus(text, tone = '') {
@@ -494,102 +523,219 @@
       }).format(new Date(timestamp));
     }
 
-    function renderMetaStats(counts) {
-      const stats = [
-        ['Active', counts?.activeNow || 0],
-        ['Trips', counts?.activeTrips || 0],
-        ['Breaks', counts?.activeBreaks || 0],
-        ['Buses', counts?.trackedBuses || 0],
+    function renderSummary(summary) {
+      const cards = [
+        ['Active', summary?.activePaddles || 0],
+        ['Live Match', summary?.liveMatched || 0],
+        ['No Live Match', summary?.noLiveMatch || 0],
       ];
-      metaStrip.innerHTML = stats.map(([label, value]) => `
-        <div class="stat-card">
-          <span class="k">${escapeHtml(label)}</span>
-          <span class="v">${escapeHtml(value)}</span>
+      summaryStrip.innerHTML = cards.map(([label, value]) => `
+        <div class="summary-card">
+          <strong>${escapeHtml(value)}</strong>
+          <span>${escapeHtml(label)}</span>
         </div>
       `).join('');
     }
 
-    function renderBusList(buses) {
-      if (!Array.isArray(buses) || !buses.length) {
-        return '<div class="board-copy">No live bus is mapped to this paddle right now.</div>';
-      }
-      return `<div class="bus-list">${buses.map((bus) => {
-        const routeBits = [];
-        if (bus.route) routeBits.push(`Route ${bus.route}`);
-        if (bus.tripNumber) routeBits.push(`Trip ${bus.tripNumber}`);
-        return `<span class="bus-chip">Bus ${escapeHtml(bus.busNumber)}${routeBits.length ? ` | ${escapeHtml(routeBits.join(' | '))}` : ''}</span>`;
-      }).join('')}</div>`;
-    }
-
-    function renderDetail(label, value) {
+    function renderBoardRow(item) {
+      const busText = item.primaryBusNumber
+        ? `Bus ${item.primaryBusNumber}${Array.isArray(item.busNumbers) && item.busNumbers.length > 1 ? ` +${item.busNumbers.length - 1}` : ''}`
+        : 'No live bus';
+      const tripLineBits = [];
+      if (item.route) tripLineBits.push(`Route ${item.route}`);
+      if (item.tripNumber) tripLineBits.push(`Trip ${item.tripNumber}`);
       return `
-        <div class="detail-card">
-          <strong>${escapeHtml(label)}</strong>
-          <span>${escapeHtml(value || 'N/A')}</span>
-        </div>
-      `;
-    }
-
-    function renderBoardItem(item) {
-      const state = item.activeState || {};
-      const buses = item.buses || [];
-      const routeText = Array.isArray(item.routes) && item.routes.length ? item.routes.join(', ') : '';
-      return `
-        <article class="board-item">
-          <div class="board-top">
-            <div>
-              <h4>${escapeHtml(item.block || item.paddleId || 'Unknown')}</h4>
-              <p>${escapeHtml(state.title || 'Active paddle')}</p>
-              <p class="board-copy-line">${escapeHtml(state.detail || '')}</p>
-            </div>
-            <div class="pill ${escapeHtml(state.kind || 'trip')}">
-              <span>${escapeHtml(state.kind === 'break' ? 'Break' : 'Trip')}</span>
-              <span>${escapeHtml(state.minutesRemaining ?? 0)} min left</span>
-            </div>
+        <article class="board-row">
+          <div class="row-main">
+            <h3>${escapeHtml(item.block || item.paddleId || 'Unknown')}</h3>
+            <p class="row-note">Paddle ${escapeHtml(item.paddleId || 'N/A')}</p>
+            <div class="tag ${escapeHtml(item.status || 'trip')}">${escapeHtml(item.statusLabel || 'Active paddle')}</div>
           </div>
-
-          ${renderBusList(buses)}
-
-          <div class="details-grid">
-            ${renderDetail('Paddle', item.paddleId)}
-            ${renderDetail('Service', item.serviceDay)}
-            ${renderDetail('Variant', item.displayVariantLabel || item.variantLabel)}
-            ${renderDetail('Live Until', state.targetTime)}
-            ${renderDetail('Routes', routeText)}
-            ${renderDetail('Garage', item.garage)}
-            ${renderDetail('Sign-on', item.signOn)}
-            ${renderDetail('Bus Type', item.busType)}
+          <div class="row-cell">
+            <strong>Bus Number</strong>
+            <div class="row-value">${escapeHtml(busText)}</div>
+            <p class="trip-line">${escapeHtml(tripLineBits.join(' | ') || 'No trip details')}</p>
           </div>
-
-          <div class="board-copy">
-            ${escapeHtml(item.carryover ? 'Overnight carryover from the previous service day.' : (item.sourceLabel || 'Current paddle data'))}
-            ${item.effective ? ` Effective ${escapeHtml(item.effective)}.` : ''}
-            ${buses[0]?.verifiedAt ? ` Live match verified ${escapeHtml(formatIsoTime(buses[0].verifiedAt))}.` : ''}
+          <div class="row-cell">
+            <strong>Location</strong>
+            <div class="row-value">${escapeHtml(item.location || 'No location available')}</div>
+            <p class="trip-line">${item.verifiedAt ? `Verified ${escapeHtml(formatIsoTime(item.verifiedAt))}` : 'Using paddle context'}</p>
+          </div>
+          <div class="row-actions">
+            <button
+              class="button"
+              type="button"
+              data-open-paddle="1"
+              data-block="${escapeAttribute(item.open?.block || item.block || '')}"
+              data-day="${escapeAttribute(item.open?.serviceDay || item.serviceDay || '')}"
+              data-variant="${escapeAttribute(item.open?.variantId || item.variantId || '')}"
+            >Open Paddle</button>
           </div>
         </article>
       `;
     }
 
-    function renderSection(root, items, emptyText) {
-      root.innerHTML = Array.isArray(items) && items.length
-        ? items.map(renderBoardItem).join('')
-        : `<div class="empty">${escapeHtml(emptyText)}</div>`;
-    }
-
     function renderBoard(data) {
       errorBox.hidden = true;
+      renderSummary(data.summary || {});
       boardSummary.textContent = `${data.serviceLabel || 'Today'} service. Updated ${formatIsoTime(data.generatedAt) || 'just now'}.`;
-      renderMetaStats(data.counts || {});
-      tripCount.textContent = `${(data.activeTrips || []).length} paddles`;
-      breakCount.textContent = `${(data.activeBreaks || []).length} paddles`;
-      renderSection(tripSection, data.activeTrips || [], 'No active trips are running right now.');
-      renderSection(breakSection, data.activeBreaks || [], 'No active breaks are running right now.');
+      const items = Array.isArray(data.activePaddles) ? data.activePaddles : [];
+      boardList.innerHTML = items.length
+        ? items.map(renderBoardRow).join('')
+        : '<div class="empty">No paddles look active right now.</div>';
+    }
+
+    function normalizeTripRow(trip) {
+      return {
+        route: String(trip?.route || trip?.routeId || '').trim(),
+        tripNumber: String(trip?.trip_number ?? trip?.tripNumber ?? '').trim(),
+        headsign: String(trip?.headsign || trip?.headSign || '').trim(),
+        startTime: String(trip?.start_time || trip?.startTime || '').trim(),
+        endTime: String(trip?.end_time || trip?.endTime || '').trim(),
+        startStop: String(trip?.start_stop || trip?.startStop || '').trim(),
+        endStop: String(trip?.end_stop || trip?.endStop || '').trim(),
+      };
+    }
+
+    function buildPaddleSummary(data) {
+      if (data?.isLiveDay && data?.activeTrip) {
+        return `
+          <section class="paddle-summary">
+            <strong>Active Trip</strong>
+            <div class="main-line">Trip ${escapeHtml(data.activeTrip.tripNumber || '?')}</div>
+            <div class="trip-line">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
+            <div class="trip-line">${escapeHtml(data.activeTrip.startTime || '--:--')} - ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
+          </section>
+        `;
+      }
+      if (data?.isLiveDay && data?.activeBreak) {
+        return `
+          <section class="paddle-summary">
+            <strong>${data.activeBreak.splitBreak ? 'Split Break' : 'Break'}</strong>
+            <div class="main-line">${escapeHtml(data.activeBreak.remainingMinutes || 0)} min left</div>
+            <div class="trip-line">Back for trip ${escapeHtml(data.activeBreak.nextTripNumber || '?')}${data.activeBreak.nextTripRoute ? ` on route ${escapeHtml(data.activeBreak.nextTripRoute)}` : ''}</div>
+            <div class="trip-line">${escapeHtml(data.activeBreak.nextTripStartTime || '--:--')}${data.activeBreak.nextTripStartStop ? ` from ${escapeHtml(data.activeBreak.nextTripStartStop)}` : ''}</div>
+          </section>
+        `;
+      }
+      return `
+        <section class="paddle-summary">
+          <strong>Schedule View</strong>
+          <div class="main-line">${escapeHtml(data?.block || 'Paddle')}</div>
+          <div class="trip-line">${escapeHtml(data?.serviceDay || '')} service${data?.displayVariantLabel || data?.sourceLabel ? ` | ${escapeHtml(data.displayVariantLabel || data.sourceLabel)}` : ''}</div>
+        </section>
+      `;
+    }
+
+    function buildPaddleMeta(data) {
+      return `
+        <section class="meta-grid">
+          <article class="meta-card"><strong>Paddle ID</strong><span>${escapeHtml(data?.paddleId || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Routes</strong><span>${Array.isArray(data?.routes) && data.routes.length ? escapeHtml(data.routes.join(', ')) : 'N/A'}</span></article>
+          <article class="meta-card"><strong>Garage</strong><span>${escapeHtml(data?.garage || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Sign-on</strong><span>${escapeHtml(data?.signOn || 'N/A')}</span></article>
+          <article class="meta-card"><strong>Bus Type</strong><span>${escapeHtml(data?.busType || 'N/A')}</span></article>
+        </section>
+      `;
+    }
+
+    function renderPaddleTrips(trips) {
+      if (!Array.isArray(trips) || !trips.length) {
+        return '<div class="empty">No trip rows were returned for this paddle.</div>';
+      }
+      return trips.map((rawTrip) => {
+        const trip = normalizeTripRow(rawTrip);
+        return `
+          <article class="trip-card">
+            <strong>Route ${escapeHtml(trip.route || 'N/A')} | Trip ${escapeHtml(trip.tripNumber || 'N/A')}</strong>
+            <div class="trip-line">${escapeHtml(trip.headsign || 'No headsign')}</div>
+            <div class="trip-line">${escapeHtml(trip.startTime || '--:--')} - ${escapeHtml(trip.endTime || '--:--')}</div>
+            <div class="trip-line">Start: ${escapeHtml(trip.startStop || 'N/A')}</div>
+            <div class="trip-line">End: ${escapeHtml(trip.endStop || 'N/A')}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function buildPaddleDetailHtml(data) {
+      return `
+        ${buildPaddleSummary(data)}
+        ${buildPaddleMeta(data)}
+        <section class="trip-list">
+          ${renderPaddleTrips(Array.isArray(data?.trips) ? data.trips : [])}
+        </section>
+      `;
+    }
+
+    function ensurePaddlePanel() {
+      let panel = document.getElementById('paddlePanel');
+      if (panel) return panel;
+
+      panel = document.createElement('section');
+      panel.id = 'paddlePanel';
+      panel.className = 'detail-panel';
+      panel.hidden = true;
+      panel.innerHTML = `
+        <header class="detail-head">
+          <div>
+            <h2 id="paddleTitle">Paddle</h2>
+            <p id="paddleMeta" class="detail-meta"></p>
+          </div>
+          <button id="closePaddleBtn" class="close-btn" type="button" aria-label="Close paddle viewer">x</button>
+        </header>
+        <div id="paddleBody" class="detail-body"></div>
+      `;
+      document.querySelector('.main').appendChild(panel);
+      panel.querySelector('#closePaddleBtn').addEventListener('click', closePaddlePanel);
+      return panel;
+    }
+
+    function closePaddlePanel() {
+      const panel = document.getElementById('paddlePanel');
+      if (!panel) return;
+      panel.hidden = true;
+      const body = panel.querySelector('#paddleBody');
+      if (body) body.innerHTML = '';
+      paddleInFlight = false;
+    }
+
+    async function openPaddle(block, day, variant) {
+      if (paddleInFlight) return;
+      paddleInFlight = true;
+      const panel = ensurePaddlePanel();
+      const paddleTitle = panel.querySelector('#paddleTitle');
+      const paddleMeta = panel.querySelector('#paddleMeta');
+      const paddleBody = panel.querySelector('#paddleBody');
+      panel.hidden = false;
+      paddleTitle.textContent = `Paddle ${block || ''}`.trim();
+      paddleMeta.textContent = 'Loading paddle details...';
+      paddleBody.innerHTML = '<div class="loading">Loading paddle details</div>';
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        const params = new URLSearchParams({ block: String(block || '') });
+        if (day) params.set('day', String(day));
+        if (variant) params.set('variant', String(variant));
+        const response = await fetch(`/api/paddle?${params.toString()}`, { cache: 'no-store' });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Paddle lookup failed.');
+        }
+        paddleTitle.textContent = `Paddle ${data.block || block || ''}`.trim();
+        paddleMeta.textContent = `${data.serviceDay || day || ''} service${data.displayVariantLabel || data.sourceLabel ? ` | ${data.displayVariantLabel || data.sourceLabel}` : ''}${data.effective ? ` | effective ${data.effective}` : ''}`;
+        paddleBody.innerHTML = buildPaddleDetailHtml(data);
+      } catch (error) {
+        paddleMeta.textContent = '';
+        paddleBody.innerHTML = `<div class="error">${escapeHtml(String(error.message || 'Paddle lookup failed.'))}</div>`;
+      } finally {
+        paddleInFlight = false;
+      }
     }
 
     async function loadBoard() {
       if (refreshInFlight) return;
       refreshInFlight = true;
-      setStatus('Refreshing', '');
+      setStatus('Refreshing');
       refreshBtn.disabled = true;
 
       try {
@@ -603,6 +749,8 @@
       } catch (error) {
         errorBox.hidden = false;
         errorBox.textContent = String(error.message || 'Today Board failed to load.');
+        boardList.innerHTML = '';
+        summaryStrip.innerHTML = '';
         setStatus('Board Error', 'warn');
       } finally {
         refreshBtn.disabled = false;
@@ -612,6 +760,12 @@
 
     refreshBtn.addEventListener('click', () => {
       loadBoard();
+    });
+
+    boardList.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-open-paddle]');
+      if (!trigger) return;
+      openPaddle(trigger.dataset.block || '', trigger.dataset.day || '', trigger.dataset.variant || '');
     });
 
     loadBoard();

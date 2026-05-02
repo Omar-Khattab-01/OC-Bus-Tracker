@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shuttles</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+    :root {
+      --oc-red: #da291c;
+      --oc-red-dark: #b82015;
+      --oc-white: #f8fafc;
+      --oc-mist: #d7dde6;
+      --warn: #ffb348;
+      --ok: #39b66c;
+      --card: rgba(20, 25, 31, 0.84);
+      --card-strong: rgba(29, 35, 43, 0.94);
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--oc-white);
+      font-family: 'IBM Plex Sans', sans-serif;
+      background:
+        radial-gradient(circle at 10% -10%, rgba(218, 41, 28, 0.28) 0%, transparent 38%),
+        radial-gradient(circle at 90% 15%, rgba(255, 179, 72, 0.14) 0%, transparent 28%),
+        linear-gradient(180deg, #141920 0%, #0f1318 100%);
+      padding: 20px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: -20vh -20vw;
+      background-image: repeating-linear-gradient(
+        120deg,
+        transparent 0,
+        transparent 58px,
+        rgba(255, 255, 255, 0.03) 58px,
+        rgba(255, 255, 255, 0.03) 59px
+      );
+      pointer-events: none;
+      animation: drift 16s linear infinite;
+    }
+
+    @keyframes drift {
+      from { transform: translateX(0); }
+      to { transform: translateX(50px); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(110deg, rgba(218, 41, 28, 0.16), rgba(15, 17, 21, 0.35));
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, var(--oc-red), var(--oc-red-dark));
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .title p {
+      margin: 5px 0 0;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .header-link,
+    .header-btn,
+    .link-btn,
+    .day-btn,
+    .card-btn,
+    .close-btn {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--oc-white);
+      text-decoration: none;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .header-link,
+    .header-btn,
+    .link-btn {
+      padding: 10px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .header-link:hover,
+    .header-btn:hover,
+    .link-btn:hover,
+    .day-btn:hover,
+    .card-btn:hover,
+    .close-btn:hover {
+      border-color: rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .status {
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--oc-mist);
+      white-space: nowrap;
+    }
+
+    .status.ok {
+      color: #dff6e6;
+      border-color: rgba(57, 182, 108, 0.55);
+    }
+
+    .status.warn {
+      color: #ffe5bc;
+      border-color: rgba(255, 179, 72, 0.55);
+    }
+
+    .main {
+      padding: 22px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .page-head h2 {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 34px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .page-head p {
+      margin: 8px 0 0;
+      color: var(--oc-mist);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .meta-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 12px;
+      min-width: min(100%, 420px);
+    }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .stat-card .k {
+      display: block;
+      color: var(--oc-mist);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-card .v {
+      display: block;
+      margin-top: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .day-switcher {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .day-btn {
+      padding: 10px 16px;
+      font-size: 14px;
+      text-transform: capitalize;
+    }
+
+    .day-btn.active {
+      border-color: rgba(218, 41, 28, 0.65);
+      background: rgba(218, 41, 28, 0.16);
+    }
+
+    .error {
+      border: 1px solid rgba(255, 179, 72, 0.35);
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: rgba(255, 179, 72, 0.08);
+      color: #ffe5bc;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .shuttle-card {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      background: var(--card-strong);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .shuttle-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .shuttle-top h3 {
+      margin: 0 0 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .shuttle-copy {
+      margin: 0;
+      color: var(--oc-mist);
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+    }
+
+    .pill.live {
+      border-color: rgba(57, 182, 108, 0.55);
+      color: #dff6e6;
+    }
+
+    .pill.static {
+      border-color: rgba(255, 179, 72, 0.45);
+      color: #ffe5bc;
+    }
+
+    .summary {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      display: grid;
+      gap: 6px;
+    }
+
+    .summary strong {
+      color: var(--oc-mist);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary span {
+      line-height: 1.45;
+    }
+
+    .card-btn {
+      padding: 10px 14px;
+      font-size: 13px;
+      justify-self: start;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 12, 0.72);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      z-index: 20;
+    }
+
+    .overlay[hidden] { display: none; }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: min(86vh, 900px);
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(24, 31, 39, 0.98), rgba(15, 19, 24, 0.98));
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(110deg, rgba(218, 41, 28, 0.14), rgba(15, 17, 21, 0.2));
+    }
+
+    .modal-head h2 {
+      margin: 0 0 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .modal-meta {
+      margin: 0;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .close-btn {
+      min-width: 38px;
+      min-height: 38px;
+      font-size: 18px;
+      background: rgba(10, 14, 18, 0.82);
+    }
+
+    .modal-body {
+      overflow: auto;
+      padding: 16px 18px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .summary-card {
+      border: 1px solid rgba(255, 179, 72, 0.24);
+      background: rgba(42, 30, 12, 0.45);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summary-title {
+      font-size: 11px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-main {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .summary-sub {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .meta-card {
+      border: 1px solid var(--border);
+      background: rgba(12, 16, 21, 0.74);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .meta-card strong {
+      display: block;
+      font-size: 11px;
+      color: var(--oc-mist);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .meta-card span {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .trip-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .trip-item {
+      border: 1px solid var(--border);
+      background: rgba(14, 18, 24, 0.8);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .trip-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .trip-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0.4px;
+    }
+
+    .trip-title-main {
+      justify-self: center;
+      text-align: center;
+      width: 100%;
+    }
+
+    .trip-route {
+      color: var(--warn);
+      font-size: 12px;
+      border: 1px solid rgba(255, 179, 72, 0.28);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .trip-row {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .schedule-table th {
+      color: var(--oc-mist);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .schedule-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .schedule-table tr.highlight td {
+      background: rgba(255, 179, 72, 0.12);
+    }
+
+    .shuttle-jump-col {
+      width: 1%;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .jump-btn {
+      appearance: none;
+      border: 1px solid rgba(255, 179, 72, 0.28);
+      background: rgba(44, 30, 14, 0.72);
+      color: #ffe0b8;
+      border-radius: 999px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0 10px;
+      font: inherit;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .empty {
+      padding: 20px 18px;
+      color: var(--oc-mist);
+      line-height: 1.5;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    @media (max-width: 980px) {
+      .grid,
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meta-strip {
+        grid-template-columns: repeat(3, minmax(90px, 1fr));
+        min-width: 0;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      .header, .main { padding: 16px; }
+      .page-head, .shuttle-top, .modal-head { flex-direction: column; }
+      .meta-strip { grid-template-columns: 1fr 1fr 1fr; }
+      .trip-top { grid-template-columns: 1fr; }
+      .trip-title-main { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="badge">OC</div>
+        <div class="title">
+          <h1>Shuttles</h1>
+          <p>Current shuttle activity and schedule access for every service day.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="header-link" href="/">Back to Lookup</a>
+        <button id="refreshBtn" class="header-btn" type="button">Refresh</button>
+        <div id="status" class="status">Loading</div>
+      </div>
+    </header>
+
+    <section class="main">
+      <section class="page-head">
+        <div>
+          <h2>Shuttle Access</h2>
+          <p id="pageSummary">Loading shuttle schedules and current-day activity.</p>
+        </div>
+        <div id="metaStrip" class="meta-strip" aria-label="Shuttle totals"></div>
+      </section>
+
+      <section id="daySwitcher" class="day-switcher" aria-label="Choose shuttle service day"></section>
+
+      <div id="errorBox" class="error" hidden></div>
+
+      <section id="shuttleGrid" class="grid"></section>
+    </section>
+  </main>
+
+  <div id="shuttleOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="shuttleTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="shuttleTitle">Shuttle</h2>
+          <p id="shuttleMeta" class="modal-meta"></p>
+        </div>
+        <button id="closeShuttleBtn" class="close-btn" type="button" aria-label="Close shuttle viewer">x</button>
+      </header>
+      <div id="shuttleBody" class="modal-body"></div>
+    </section>
+  </div>
+
+  <script src="/oc-header.js"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const pageSummary = document.getElementById('pageSummary');
+    const metaStrip = document.getElementById('metaStrip');
+    const daySwitcher = document.getElementById('daySwitcher');
+    const shuttleGrid = document.getElementById('shuttleGrid');
+    const errorBox = document.getElementById('errorBox');
+    const shuttleOverlay = document.getElementById('shuttleOverlay');
+    const shuttleTitle = document.getElementById('shuttleTitle');
+    const shuttleMeta = document.getElementById('shuttleMeta');
+    const shuttleBody = document.getElementById('shuttleBody');
+    const closeShuttleBtn = document.getElementById('closeShuttleBtn');
+
+    let selectedDay = 'today';
+    let serviceDayOptions = ['today', 'weekday', 'saturday', 'sunday'];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    function titleCase(value) {
+      const text = String(value || '').replace(/_/g, ' ').trim();
+      return text.replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function formatServiceDayLabel(value) {
+      const text = String(value || '').trim();
+      if (!text) return 'Today';
+      return titleCase(text);
+    }
+
+    function setStatus(text, tone = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'status' + (tone ? ` ${tone}` : '');
+    }
+
+    function setError(message = '') {
+      if (!message) {
+        errorBox.hidden = true;
+        errorBox.textContent = '';
+        return;
+      }
+      errorBox.hidden = false;
+      errorBox.textContent = message;
+    }
+
+    function buildStat(label, value) {
+      return `<article class="stat-card"><span class="k">${escapeHtml(label)}</span><span class="v">${escapeHtml(value)}</span></article>`;
+    }
+
+    function renderMetaStrip(data) {
+      const liveCount = data.shuttles.filter((item) => item.isLiveDay).length;
+      metaStrip.innerHTML = [
+        buildStat('Service', titleCase(data.serviceDay)),
+        buildStat('Shuttles', data.shuttles.length),
+        buildStat('Live Today', liveCount),
+      ].join('');
+    }
+
+    function renderDaySwitcher() {
+      daySwitcher.innerHTML = serviceDayOptions.map((day) => `
+        <button class="day-btn${day === selectedDay ? ' active' : ''}" type="button" data-day="${escapeHtml(day)}">${escapeHtml(day === 'today' ? 'Today' : titleCase(day))}</button>
+      `).join('');
+      daySwitcher.querySelectorAll('[data-day]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const nextDay = button.dataset.day || 'today';
+          if (nextDay === selectedDay) return;
+          selectedDay = nextDay;
+          loadCatalog();
+        });
+      });
+    }
+
+    function renderCards(data) {
+      if (!Array.isArray(data.shuttles) || !data.shuttles.length) {
+        shuttleGrid.innerHTML = '<div class="empty">No shuttles are listed for this service day.</div>';
+        return;
+      }
+
+      shuttleGrid.innerHTML = data.shuttles.map((shuttle) => `
+        <article class="shuttle-card">
+          <div class="shuttle-top">
+            <div>
+              <h3>${escapeHtml(shuttle.route)} ${escapeHtml(shuttle.name)}</h3>
+              <p class="shuttle-copy">${escapeHtml(shuttle.sourceLabel || 'Shuttle schedule')}</p>
+            </div>
+            <span class="pill ${shuttle.isLiveDay ? 'live' : 'static'}">${escapeHtml(shuttle.isLiveDay ? 'Live Today' : titleCase(shuttle.serviceDay))}</span>
+          </div>
+          <div class="summary">
+            <strong>${escapeHtml(shuttle.isLiveDay ? 'Current activity' : 'Schedule view')}</strong>
+            <span>${escapeHtml(shuttle.isLiveDay ? (shuttle.liveSummary || 'Schedule loaded for today.') : 'Saved schedule only for this service day.')}</span>
+          </div>
+          <div class="summary">
+            <strong>Trips</strong>
+            <span>${escapeHtml(`${shuttle.tripCount} scheduled trips`)}</span>
+          </div>
+          <button class="card-btn" type="button" data-open-shuttle="${escapeHtml(shuttle.id)}" data-shuttle-day="${escapeHtml(shuttle.serviceDay)}">Open Schedule</button>
+        </article>
+      `).join('');
+
+      shuttleGrid.querySelectorAll('[data-open-shuttle]').forEach((button) => {
+        button.addEventListener('click', () => showShuttle(button.dataset.openShuttle, button.dataset.shuttleDay));
+      });
+    }
+
+    function renderShuttleSchedule(data, options = {}) {
+      const headers = Array.isArray(data.stops) ? data.stops : [];
+      const trips = Array.isArray(data.trips) ? data.trips : [];
+      const shouldHighlight = Boolean(data.isLiveDay);
+      const nextStopName = shouldHighlight ? (data.nextStop?.nextStopName || '') : '';
+      const nextStopTime = shouldHighlight ? (data.nextStop?.nextStopTime || '') : '';
+      const topAnchorId = String(options.topAnchorId || 'shuttleTopAnchor');
+
+      if (!trips.length) {
+        return '<div class="empty">No shuttle times are available for this service day.</div>';
+      }
+
+      const rows = trips.map((trip) => {
+        const isHighlighted = Array.isArray(trip.stops) && trip.stops.some((stop) =>
+          stop.name === nextStopName && stop.time === nextStopTime
+        );
+        const cells = headers.map((stopName, index) => {
+          const stop = Array.isArray(trip.stops) ? trip.stops[index] : null;
+          return `<td>${escapeHtml(stop?.time || '--:--')}</td>`;
+        }).join('');
+
+        return `
+          <tr class="${isHighlighted ? 'highlight' : ''}" ${isHighlighted ? 'id="currentShuttleTarget"' : ''}>
+            <td>Trip ${escapeHtml(trip.tripNumber)}</td>
+            ${cells}
+            <td class="shuttle-jump-col">${isHighlighted ? `<button class="jump-btn" type="button" aria-label="Back to top of shuttle" data-scroll-to="${escapeAttribute(topAnchorId)}">&#8593;</button>` : ''}</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Trip</th>
+              ${headers.map((stop) => `<th>${escapeHtml(stop)}</th>`).join('')}
+              <th class="shuttle-jump-col" aria-hidden="true"></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function openShuttleModal(data) {
+      shuttleTitle.textContent = `${data.route} ${data.name}`;
+      shuttleMeta.textContent = `${data.serviceDay} service | ${data.sourceLabel || 'Shuttle schedule'}`;
+      const jumpButton = data.isLiveDay && data.nextStop?.nextStopName && data.nextStop?.nextStopTime
+        ? `<button class="jump-btn" type="button" aria-label="Jump to current shuttle trip" data-scroll-to="currentShuttleTarget">&#8595;</button>`
+        : '';
+      const referenceCard = !data.isLiveDay ? `
+        <section class="summary-card">
+          <div class="summary-title">Reference Schedule</div>
+          <div class="summary-main">This shuttle is not live for ${escapeHtml(data.currentServiceDay || data.serviceDay)}. Showing the saved schedule only.</div>
+          ${data.suggestedLiveShuttle ? `<div class="summary-sub"><button id="suggestedLiveShuttleBtn" class="link-btn" type="button">Open ${escapeHtml(data.suggestedLiveShuttle.serviceDay)} shuttle instead</button></div>` : ''}
+        </section>
+      ` : `
+        <section class="summary-card">
+          <div class="summary-head">
+            <div class="summary-title">Next Stop</div>
+            ${jumpButton}
+          </div>
+          <div class="summary-main">${escapeHtml(data.nextStop?.summary || 'No next stop available.')}</div>
+          ${data.nextStop?.currentSegment ? `<div class="summary-sub">${escapeHtml(data.nextStop.currentSegment)}</div>` : ''}
+        </section>
+      `;
+      shuttleBody.innerHTML = `
+        <div id="shuttleTopAnchor">
+          ${referenceCard}
+          <section class="meta-grid">
+            <article class="meta-card"><strong>Route</strong><span>${escapeHtml(data.route || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Shuttle</strong><span>${escapeHtml(data.name || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Source</strong><span>${escapeHtml(data.sourceLabel || 'N/A')}</span></article>
+            <article class="meta-card"><strong>Trips</strong><span>${escapeHtml((data.trips || []).length)}</span></article>
+          </section>
+          ${renderShuttleSchedule(data, { topAnchorId: 'shuttleTopAnchor' })}
+        </div>
+      `;
+      const suggestedLiveShuttleBtn = document.getElementById('suggestedLiveShuttleBtn');
+      if (suggestedLiveShuttleBtn && data.suggestedLiveShuttle) {
+        suggestedLiveShuttleBtn.addEventListener('click', () => showShuttle(data.suggestedLiveShuttle.id, data.suggestedLiveShuttle.serviceDay));
+      }
+      shuttleOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeShuttleModal() {
+      shuttleOverlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    async function showShuttle(id, day) {
+      const previousStatus = statusEl.textContent;
+      setStatus('Loading shuttle...', 'warn');
+      try {
+        const response = await fetch(`/api/shuttle?id=${encodeURIComponent(id)}&day=${encodeURIComponent(day || '')}`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Shuttle lookup failed');
+        }
+        openShuttleModal(data);
+        setStatus(previousStatus || 'Ready', 'ok');
+      } catch (error) {
+        setStatus('Shuttle error', 'warn');
+        setError(error.message || 'Shuttle lookup failed.');
+      }
+    }
+
+    async function loadCatalog() {
+      setStatus('Loading shuttles...', 'warn');
+      setError('');
+      try {
+        const response = await fetch(`/api/shuttles?day=${encodeURIComponent(selectedDay)}`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Shuttle catalog failed to load.');
+        }
+        serviceDayOptions = Array.isArray(data.serviceDayOptions) && data.serviceDayOptions.length
+          ? data.serviceDayOptions
+          : serviceDayOptions;
+        renderDaySwitcher();
+        renderMetaStrip(data);
+        renderCards(data);
+        pageSummary.textContent = data.serviceDay === data.currentServiceDay
+          ? `Showing the current ${titleCase(data.serviceDay)} shuttles with live next-stop guidance where available.`
+          : `Showing the saved ${titleCase(data.serviceDay)} shuttle schedules. Switch back to Today for the live current set.`;
+        setStatus(`Shuttles ready (${data.shuttles.length})`, 'ok');
+      } catch (error) {
+        shuttleGrid.innerHTML = '<div class="empty">Shuttles could not be loaded right now.</div>';
+        setError(error.message || 'Shuttles could not be loaded right now.');
+        setStatus('Shuttle error', 'warn');
+      }
+    }
+
+    refreshBtn.addEventListener('click', () => loadCatalog());
+    closeShuttleBtn.addEventListener('click', closeShuttleModal);
+    shuttleOverlay.addEventListener('click', (event) => {
+      if (event.target === shuttleOverlay) closeShuttleModal();
+    });
+    shuttleBody.addEventListener('click', (event) => {
+      const jumpTarget = event.target.closest('[data-scroll-to]');
+      if (!jumpTarget) return;
+      const targetId = jumpTarget.dataset.scrollTo;
+      const targetNode = targetId ? shuttleBody.querySelector(`#${CSS.escape(targetId)}`) : null;
+      if (targetNode) {
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !shuttleOverlay.hidden) {
+        closeShuttleModal();
+      }
+    });
+
+    renderDaySwitcher();
+    loadCatalog();
+  </script>
+</body>
+</html>

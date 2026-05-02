@@ -829,80 +829,82 @@ async function getLiveBusMappingsByBlock() {
   );
 }
 
+function countLiveBusesInBoardMap(liveMappingsByBlock) {
+  return Array.from(liveMappingsByBlock.values()).reduce((total, buses) => total + (Array.isArray(buses) ? buses.length : 0), 0);
+}
+
+function buildBoardMapFromLiveMappings(mappings) {
+  const indexByBlock = new Map();
+  for (const [busNumber, value] of mappings.entries()) {
+    addLiveBusMappingToBoardIndex(indexByBlock, busNumber, value);
+  }
+  return new Map(
+    Array.from(indexByBlock.entries()).map(([block, buses]) => [block, Array.from(buses.values())])
+  );
+}
+
 async function buildTodayBoardPayload() {
   const now = new Date();
   const nowSeconds = getOttawaNowSeconds();
-  const liveMappingsByBlock = await getLiveBusMappingsByBlock().catch(() => new Map());
-  const items = getTodayBoardPaddlesForNow().map((entry) => {
+  let liveMappingsByBlock = await getLiveBusMappingsByBlock().catch(() => new Map());
+  if (countLiveBusesInBoardMap(liveMappingsByBlock) === 0 && isGtfsRtConfigured()) {
+    const rebuiltMappings = await buildLiveBusPaddleMappings().catch(() => null);
+    if (rebuiltMappings instanceof Map && rebuiltMappings.size) {
+      liveMappingsByBlock = buildBoardMapFromLiveMappings(rebuiltMappings);
+      if (adminSupabase) {
+        await persistLiveBusPaddleMappings(rebuiltMappings).catch(() => null);
+      }
+    }
+  }
+  const activePaddles = getTodayBoardPaddlesForNow().map((entry) => {
     const compareSeconds = entry.carryover ? nowSeconds + 24 * 3600 : nowSeconds;
     const buses = liveMappingsByBlock.get(entry.block) || [];
     const activeTrip = entry.activeTrip || null;
     const activeBreak = entry.activeBreak || null;
+    const primaryBus = buses[0] || null;
     const kind = activeTrip ? 'trip' : 'break';
     const minutesRemaining = activeBreak
       ? activeBreak.remainingMinutes
       : Math.max(0, Math.ceil((activeTrip.end - compareSeconds) / 60));
-    const title = activeTrip
-      ? `Trip ${activeTrip.tripNumber || '?'} on route ${activeTrip.route || 'N/A'}`
-      : `${activeBreak.splitBreak ? 'Split break' : 'Break'} after Trip ${activeBreak.afterTripNumber || '?'}`;
-    const detail = activeTrip
-      ? `${activeTrip.headsign || 'No headsign'} | ${activeTrip.startTime || '--:--'}-${activeTrip.endTime || '--:--'}`
-      : `Back at ${activeBreak.endsAt || '--:--'} for Trip ${activeBreak.nextTripNumber || '?'}${activeBreak.nextTripRoute ? ` | Route ${activeBreak.nextTripRoute}` : ''}`;
+    const busNumbers = buses
+      .map((bus) => String(bus?.busNumber || '').trim())
+      .filter(Boolean);
+    const route = String(activeTrip?.route || activeBreak?.nextTripRoute || '').trim();
+    const tripNumber = activeTrip?.tripNumber ?? activeBreak?.nextTripNumber ?? null;
+    const location = String(primaryBus?.locationText || '').trim()
+      || (activeBreak
+        ? `Break until ${activeBreak.endsAt || '--:--'}`
+        : String(activeTrip?.headsign || '').trim()
+          || 'Live location unavailable');
+    const statusLabel = activeTrip
+      ? `Trip ${activeTrip.tripNumber || '?'}${route ? ` on route ${route}` : ''}`
+      : `${activeBreak.splitBreak ? 'Split break' : 'Break'} until ${activeBreak.endsAt || '--:--'}`;
 
     return {
       block: entry.block,
       paddleId: entry.paddleId,
       serviceDay: entry.serviceDay,
       variantId: entry.variantId || '',
-      variantLabel: entry.variantLabel || '',
-      displayVariantLabel: entry.displayVariantLabel || entry.sourceLabel || '',
-      carryover: entry.carryover,
-      sourceId: entry.sourceId || '',
-      sourceLabel: entry.sourceLabel || '',
-      effective: entry.effective || '',
-      garage: entry.garage || '',
-      signOn: entry.signOn || '',
-      routes: entry.routes || [],
-      busType: entry.busType || '',
-      buses,
-      liveBusCount: buses.length,
-      activeState: {
-        kind,
-        title,
-        detail,
-        minutesRemaining,
-        targetTime: activeTrip ? activeTrip.endTime : activeBreak.endsAt,
+      status: kind,
+      statusLabel,
+      minutesRemaining,
+      route,
+      tripNumber,
+      busNumbers,
+      primaryBusNumber: busNumbers[0] || '',
+      hasLiveBus: busNumbers.length > 0,
+      location,
+      verifiedAt: String(primaryBus?.verifiedAt || '').trim(),
+      open: {
+        block: entry.block,
+        serviceDay: entry.serviceDay,
+        variantId: entry.variantId || '',
       },
-      activeTrip: activeTrip ? {
-        tripNumber: activeTrip.tripNumber ?? null,
-        route: activeTrip.route || '',
-        headsign: activeTrip.headsign || '',
-        startTime: activeTrip.startTime || '',
-        endTime: activeTrip.endTime || '',
-      } : null,
-      activeBreak: activeBreak ? {
-        afterTripNumber: activeBreak.afterTripNumber ?? null,
-        breakAfterMinutes: activeBreak.breakAfterMinutes ?? null,
-        splitBreak: Boolean(activeBreak.splitBreak),
-        startedAt: activeBreak.startedAt || '',
-        endsAt: activeBreak.endsAt || '',
-        remainingMinutes: activeBreak.remainingMinutes ?? null,
-        nextTripNumber: activeBreak.nextTripNumber ?? null,
-        nextTripRoute: activeBreak.nextTripRoute || '',
-        nextTripHeadsign: activeBreak.nextTripHeadsign || '',
-        nextTripStartTime: activeBreak.nextTripStartTime || '',
-        nextTripStartStop: activeBreak.nextTripStartStop || '',
-      } : null,
     };
   });
-
-  const activeTrips = items
-    .filter((item) => item.activeState.kind === 'trip')
-    .sort((a, b) => (a.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER) - (b.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER));
-  const activeBreaks = items
-    .filter((item) => item.activeState.kind === 'break')
-    .sort((a, b) => (a.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER) - (b.activeState.minutesRemaining ?? Number.MAX_SAFE_INTEGER));
-  const trackedBuses = new Set(items.flatMap((item) => item.buses.map((bus) => bus.busNumber)));
+  const trackedBuses = new Set(activePaddles.flatMap((item) => item.busNumbers));
+  const liveMatchedCount = activePaddles.filter((item) => item.hasLiveBus).length;
+  const breakCount = activePaddles.filter((item) => item.status === 'break').length;
 
   return {
     ok: true,
@@ -910,15 +912,14 @@ async function buildTodayBoardPayload() {
     generatedAt: now.toISOString(),
     serviceDay: getOttawaServiceDayKey(),
     serviceLabel: formatServiceDayLabel(getOttawaServiceDayKey()),
-    counts: {
-      activeNow: items.length,
-      activeTrips: activeTrips.length,
-      activeBreaks: activeBreaks.length,
+    summary: {
+      activePaddles: activePaddles.length,
+      liveMatched: liveMatchedCount,
+      noLiveMatch: Math.max(0, activePaddles.length - liveMatchedCount),
       trackedBuses: trackedBuses.size,
+      activeBreaks: breakCount,
     },
-    activeTrips,
-    activeBreaks,
-    items,
+    activePaddles,
   };
 }
 
@@ -1243,6 +1244,43 @@ function sanitizeRunTrips(run) {
   return {
     ...run,
     trips,
+  };
+}
+
+function resolveShuttleCatalogDay(requestedDay) {
+  const text = String(requestedDay || '').trim().toLowerCase();
+  if (!text || text === 'today' || text === 'current') {
+    return getOttawaServiceDayKey();
+  }
+  return normalizeServiceDay(text) || getOttawaServiceDayKey();
+}
+
+function buildShuttleCatalogResponse(requestedDay) {
+  const serviceDay = resolveShuttleCatalogDay(requestedDay);
+  const currentServiceDay = getOttawaServiceDayKey();
+  const shuttles = getAvailableShuttlesForDay(serviceDay).map((shuttle) => {
+    const details = buildShuttleResponse(shuttle.id, serviceDay);
+    return {
+      id: shuttle.id,
+      route: shuttle.route,
+      name: shuttle.name,
+      serviceDay,
+      isLiveDay: Boolean(details?.isLiveDay),
+      sourceLabel: shuttle.sourceLabel,
+      tripCount: Array.isArray(details?.trips) ? details.trips.length : 0,
+      nextStop: details?.nextStop || null,
+      liveSummary: details?.nextStop?.summary || '',
+    };
+  });
+
+  return {
+    ok: true,
+    mode: 'shuttle-catalog',
+    serviceDay,
+    currentServiceDay,
+    serviceDayOptions: ['today', ...SHUTTLE_DAY_OPTIONS],
+    shuttles,
+    generatedAt: new Date().toISOString(),
   };
 }
 
@@ -2843,6 +2881,17 @@ async function handleShuttle(req, res) {
   res.json(shuttle);
 }
 
+async function handleShuttlesCatalog(req, res) {
+  try {
+    res.json(buildShuttleCatalogResponse(req.query.day));
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleRefreshLiveBusPaddles(req, res) {
   if (!isAuthorizedCronRequest(req)) {
     res.status(401).json({
@@ -2956,6 +3005,7 @@ app.get('/api/paddle', handlePaddle);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/shuttle', handleShuttle);
+app.get('/api/shuttles', handleShuttlesCatalog);
 app.get('/api/gtfs-lookup', handleGtfsLookup);
 app.get('/api/gtfs-debug', handleGtfsDebug);
 app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
@@ -2977,15 +3027,11 @@ app.get('/api/account-options', (_req, res) => {
     shuttles: getAccountShuttleOptions(),
   });
 });
-app.get('/api/today-board', async (_req, res) => {
-  try {
-    res.json(await buildTodayBoardPayload());
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      error: String(error?.message || 'Today Board failed to load.').slice(0, 500),
-    });
-  }
+app.get('/api/today-board', (_req, res) => {
+  res.status(404).json({
+    ok: false,
+    error: 'Today Board is temporarily unavailable.',
+  });
 });
 app.get('/vendor/supabase.js', (_req, res) => {
   res.sendFile(path.join(__dirname, 'node_modules', '@supabase', 'supabase-js', 'dist', 'umd', 'supabase.js'));
@@ -3000,8 +3046,11 @@ function sendHtmlNoCache(res, filePath) {
 app.get('/summer-booking', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
+app.get('/shuttles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'shuttles.html'));
+});
 app.get('/today-board', (_req, res) => {
-  sendHtmlNoCache(res, path.join(__dirname, 'public', 'today-board.html'));
+  sendHtmlNoCache(res.status(404), path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/healthz', (_req, res) => {

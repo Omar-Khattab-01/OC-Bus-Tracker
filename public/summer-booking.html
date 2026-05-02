@@ -336,7 +336,8 @@
     .overlay[hidden] { display: none; }
 
     .modal {
-      width: min(920px, 100%);
+      width: min(920px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
       max-height: min(86vh, 900px);
       overflow: hidden;
       border-radius: 22px;
@@ -352,9 +353,15 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
+      min-width: 0;
       padding: 16px 18px;
       border-bottom: 1px solid var(--border);
       background: linear-gradient(110deg, rgba(218, 41, 28, 0.14), rgba(15, 17, 21, 0.2));
+    }
+
+    .modal-head > div {
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .modal-head h2 {
@@ -385,10 +392,12 @@
     }
 
     .modal-body {
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 16px 18px 20px;
       display: grid;
       gap: 14px;
+      min-width: 0;
     }
 
     .summary-card {
@@ -423,6 +432,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
+      min-width: 0;
     }
 
     .meta-card {
@@ -456,6 +466,7 @@
       background: rgba(14, 18, 24, 0.8);
       border-radius: 14px;
       padding: 12px;
+      min-width: 0;
     }
 
     .trip-item.active {
@@ -501,10 +512,11 @@
 
     .trip-top {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
       align-items: center;
       gap: 12px;
       margin-bottom: 8px;
+      min-width: 0;
     }
 
     .trip-title {
@@ -517,12 +529,15 @@
     .trip-title-prefix {
       justify-self: start;
       white-space: nowrap;
+      min-width: 0;
     }
 
     .trip-title-main {
       justify-self: center;
       text-align: center;
       width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .trip-route {
@@ -531,12 +546,19 @@
       border: 1px solid rgba(255, 179, 72, 0.28);
       border-radius: 999px;
       padding: 3px 8px;
+      justify-self: end;
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: center;
     }
 
     .trip-row {
       color: var(--oc-mist);
       font-size: 13px;
       line-height: 1.5;
+      overflow-wrap: anywhere;
     }
 
     .trip-relief {
@@ -613,6 +635,24 @@
         flex-direction: column;
         gap: 6px;
       }
+
+      .modal {
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
+      }
+
+      .trip-top {
+        grid-template-columns: 1fr;
+      }
+
+      .trip-title-prefix,
+      .trip-title-main {
+        text-align: left;
+      }
+
+      .trip-route {
+        justify-self: start;
+      }
     }
   </style>
 </head>
@@ -664,6 +704,7 @@
     </section>
   </div>
 
+  <script src="/oc-header.js"></script>
   <script>
     const form = document.getElementById('chatForm');
     const input = document.getElementById('messageInput');
@@ -771,24 +812,6 @@
     }
 
     function buildPaddleSummaryCard(data) {
-      if (data.isLiveDay && data.activeTrip) {
-        return `
-          <section class="summary-card">
-            <div class="summary-title">Current Scheduled Trip</div>
-            <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
-            <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
-          </section>
-        `;
-      }
-      if (data.isLiveDay && data.activeBreak) {
-        return `
-          <section class="summary-card">
-            <div class="summary-title">${data.activeBreak.splitBreak ? 'Scheduled Split Break' : 'Scheduled Break'}</div>
-            <div class="summary-main">${escapeHtml(data.activeBreak.remainingMinutes || 0)} min remaining</div>
-            <div class="summary-sub">Until Trip ${escapeHtml(data.activeBreak.nextTripNumber || '?')}${data.activeBreak.nextTripRoute ? ` | Route ${escapeHtml(data.activeBreak.nextTripRoute)}` : ''}${data.activeBreak.nextTripHeadsign ? ` | ${escapeHtml(data.activeBreak.nextTripHeadsign)}` : ''}</div>
-          </section>
-        `;
-      }
       return `
         <section class="summary-card">
           <div class="summary-title">Schedule View</div>
