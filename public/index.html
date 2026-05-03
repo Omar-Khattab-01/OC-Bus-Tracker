@@ -1110,6 +1110,7 @@
       border-radius: 14px;
       overflow: hidden;
       background: rgba(12, 16, 21, 0.74);
+      table-layout: fixed;
     }
 
     .schedule-table th,
@@ -1301,6 +1302,61 @@
       .hint {
         flex-direction: column;
         gap: 6px;
+      }
+
+      .modal {
+        width: min(100%, calc(100vw - 24px));
+      }
+
+      .modal-body {
+        padding: 12px;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .meta-card {
+        min-width: 0;
+      }
+
+      .meta-card span {
+        font-size: 14px;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+
+      .schedule-table th,
+      .schedule-table td {
+        padding: 6px 4px;
+        font-size: 10px;
+      }
+
+      .schedule-table th {
+        font-size: 8px;
+        line-height: 1.15;
+        word-break: break-word;
+      }
+
+      .schedule-table th:first-child,
+      .schedule-table td:first-child {
+        width: 52px;
+        white-space: nowrap;
+      }
+
+      .schedule-table td:first-child {
+        font-size: 11px;
+      }
+
+      .jump-btn {
+        min-width: 30px;
+        min-height: 30px;
+        font-size: 16px;
+        padding: 0 8px;
+      }
+
+      .shuttle-jump-col {
+        width: 28px;
       }
     }
 
