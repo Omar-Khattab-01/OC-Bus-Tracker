@@ -65,20 +65,16 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
     label: 'Daily Work',
     filename: '2026 Summer daily bords.pdf',
   },
-  saturday: {
-    label: 'Saturday Work',
-    filename: '2026 Summer Saturday Boards .pdf',
-  },
-  sunday: {
-    label: 'Sunday Work',
-    filename: '2026 Summer Sunday Boards .pdf',
-  },
   spares: {
     label: 'Spare Boards',
     filename: '2026 Summer Spare,s Boards.pdf',
   },
+  weekend: {
+    label: 'Weekend Work',
+    filename: '2026 Bus Summer Weekend boards.pdf',
+  },
   general_spare_weekend: {
-    label: 'General Spare Weekend',
+    label: 'Weekend Work',
     filename: '2026 Bus Summer Weekend boards.pdf',
   },
   days_off_counter: {

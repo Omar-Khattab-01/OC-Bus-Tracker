@@ -628,8 +628,8 @@ def parse_bus_summer_weekend_board(pdf_path: Path):
 
     flush_current()
     return {
-        "id": "general_spare_weekend",
-        "title": "General Spare Weekend",
+        "id": "weekend_boards",
+        "title": "Weekend Work",
         "serviceDay": "weekend",
         "sourcePdf": pdf_path.name,
         "entries": [entry for entry in entries if entry.get("pieces")],
@@ -877,8 +877,6 @@ def parse_spares_board(pdf_path: Path):
 def main():
     boards = []
     boards.append(parse_daily_board(SOURCE_DIR / "2026 Summer daily bords.pdf"))
-    boards.append(parse_weekend_board(SOURCE_DIR / "2026 Summer Saturday Boards .pdf", "saturday_boards", "saturday", "Saturday Work"))
-    boards.append(parse_weekend_board(SOURCE_DIR / "2026 Summer Sunday Boards .pdf", "sunday_boards", "sunday", "Sunday Work"))
     boards.append(parse_bus_summer_weekend_board(SOURCE_DIR / "2026 Bus Summer Weekend boards.pdf"))
     boards.append(parse_days_off_counter(SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"))
     boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"))

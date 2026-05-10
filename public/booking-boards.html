@@ -1530,10 +1530,10 @@
       `;
     }
 
-    function renderGeneralSpareWeekendBoard(board) {
+    function renderWeekendBoard(board) {
       const entries = Array.isArray(board?.entries) ? board.entries : [];
       if (!entries.length) {
-        boardList.innerHTML = '<div class="empty">No parsed general spare weekend entries are available yet.</div>';
+        boardList.innerHTML = '<div class="empty">No parsed weekend entries are available yet.</div>';
         return;
       }
 
@@ -1589,8 +1589,8 @@
           </div>
           <div class="spare-group-head">
             <div>
-              <h3 class="spare-group-title">General Spare ${escapeHtml(activeDay?.title || 'Weekend')}</h3>
-              <div class="spare-group-sub">General spare weekend board split by Saturday and Sunday, with odd and relief work separated.</div>
+              <h3 class="spare-group-title">Weekend ${escapeHtml(activeDay?.title || 'Work')}</h3>
+              <div class="spare-group-sub">Weekend work split by Saturday and Sunday, with odd and relief work separated.</div>
             </div>
             <div class="board-totals">
               <div class="board-total-pill"><strong>Entries</strong><span>${escapeHtml(filteredEntries.length)}</span></div>
@@ -1670,9 +1670,7 @@
       const displayTitleForBoard = (board) => {
         const id = String(board?.id || '');
         if (id === 'daily_open_work') return 'Daily Work';
-        if (id === 'saturday_boards') return 'Saturday Work';
-        if (id === 'sunday_boards') return 'Sunday Work';
-        if (id === 'general_spare_weekend') return 'General Spare';
+        if (id === 'weekend_boards' || id === 'general_spare_weekend') return 'Weekend Work';
         if (id === 'days_off_counter') return 'Days Off Counter';
         if (id === 'stat_work') return 'Stat Work';
         if (id === 'spares') return 'Spare Boards';
@@ -1698,8 +1696,8 @@
         renderDailyWorkBoard(board);
         return;
       }
-      if (board?.id === 'general_spare_weekend') {
-        renderGeneralSpareWeekendBoard(board);
+      if (board?.id === 'weekend_boards' || board?.id === 'general_spare_weekend') {
+        renderWeekendBoard(board);
         return;
       }
       if (board?.id === 'days_off_counter') {
