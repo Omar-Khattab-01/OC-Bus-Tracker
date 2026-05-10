@@ -3,6 +3,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const https = require('https');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
@@ -31,6 +32,7 @@ const PYTHON_BIN = String(process.env.PYTHON_BIN || 'python').trim() || 'python'
 const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN || '').trim();
 let bookingBoardsDataCache = null;
 let bookingBoardsDataMtimeMs = 0;
+let bookingBoardsRuntimeUpdatedAt = '';
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
@@ -1900,6 +1902,9 @@ function buildDaysOffCounterSummary(counter = {}) {
 
 function loadBookingBoardsData() {
   const stat = fs.statSync(BOOKING_BOARDS_DATA_FILE);
+  if (bookingBoardsDataCache && bookingBoardsDataMtimeMs === -1) {
+    return bookingBoardsDataCache;
+  }
   if (bookingBoardsDataCache && bookingBoardsDataMtimeMs === stat.mtimeMs) {
     return bookingBoardsDataCache;
   }
@@ -3277,6 +3282,17 @@ function isAdminBookingBoardRequest(req) {
   ) && providedToken.length === BOOKING_BOARD_ADMIN_TOKEN.length;
 }
 
+function copyBookingBoardSourcesToTemp(tempSourceDir) {
+  fs.mkdirSync(tempSourceDir, { recursive: true });
+  for (const target of Object.values(BOOKING_BOARD_UPLOAD_TARGETS)) {
+    const sourcePath = path.join(BOOKING_BOARDS_SOURCE_DIR, target.filename);
+    const tempPath = path.join(tempSourceDir, target.filename);
+    if (fs.existsSync(sourcePath) && !fs.existsSync(tempPath)) {
+      fs.copyFileSync(sourcePath, tempPath);
+    }
+  }
+}
+
 async function handleBookingBoardUpload(req, res) {
   if (!BOOKING_BOARD_ADMIN_TOKEN) {
     res.status(501).json({
@@ -3312,54 +3328,50 @@ async function handleBookingBoardUpload(req, res) {
     return;
   }
 
-  fs.mkdirSync(BOOKING_BOARDS_SOURCE_DIR, { recursive: true });
-  const targetPath = path.join(BOOKING_BOARDS_SOURCE_DIR, target.filename);
-  const tempPath = path.join(BOOKING_BOARDS_SOURCE_DIR, `.upload-${boardKey}-${Date.now()}.pdf`);
-  const backupPath = `${targetPath}.bak-${Date.now()}`;
-  let hadExistingFile = false;
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-boards-'));
+  const tempSourceDir = path.join(tempRoot, 'Booking_Boards');
+  const tempOutputFile = path.join(tempRoot, 'booking_boards.json');
+  const targetPath = path.join(tempSourceDir, target.filename);
 
   try {
-    fs.writeFileSync(tempPath, pdfBuffer);
-    hadExistingFile = fs.existsSync(targetPath);
-    if (hadExistingFile) fs.copyFileSync(targetPath, backupPath);
-    fs.renameSync(tempPath, targetPath);
+    copyBookingBoardSourcesToTemp(tempSourceDir);
+    fs.writeFileSync(targetPath, pdfBuffer);
 
     await execFileAsync(PYTHON_BIN, [BOOKING_BOARDS_BUILD_SCRIPT], {
       cwd: __dirname,
       timeout: 180000,
       maxBuffer: 4 * 1024 * 1024,
+      env: {
+        ...process.env,
+        BOOKING_BOARDS_SOURCE_DIR: tempSourceDir,
+        BOOKING_BOARDS_OUTPUT_FILE: tempOutputFile,
+      },
     });
 
-    bookingBoardsDataCache = null;
-    bookingBoardsDataMtimeMs = 0;
-    if (hadExistingFile && fs.existsSync(backupPath)) fs.rmSync(backupPath, { force: true });
+    const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
+    bookingBoardsDataCache = rebuiltData;
+    bookingBoardsDataMtimeMs = -1;
+    bookingBoardsRuntimeUpdatedAt = new Date().toISOString();
 
-    const data = loadBookingBoardsData();
-    const boardCount = Array.isArray(data?.boards) ? data.boards.length : 0;
+    const boardCount = Array.isArray(rebuiltData?.boards) ? rebuiltData.boards.length : 0;
     res.json({
       ok: true,
       board: boardKey,
       label: target.label,
       filename: target.filename,
       boardCount,
-      updatedAt: new Date().toISOString(),
+      updatedAt: bookingBoardsRuntimeUpdatedAt,
+      storage: 'runtime-memory',
+      note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
     });
   } catch (err) {
-    try {
-      if (hadExistingFile && fs.existsSync(backupPath)) {
-        fs.copyFileSync(backupPath, targetPath);
-      }
-      if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
-    } catch {}
-    bookingBoardsDataCache = null;
-    bookingBoardsDataMtimeMs = 0;
     res.status(500).json({
       ok: false,
       error: `Failed while rebuilding ${target.label} from ${target.filename}: ${String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 900)}`,
     });
   } finally {
     try {
-      if (fs.existsSync(backupPath)) fs.rmSync(backupPath, { force: true });
+      fs.rmSync(tempRoot, { recursive: true, force: true });
     } catch {}
   }
 }

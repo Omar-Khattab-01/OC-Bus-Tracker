@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -8,8 +9,8 @@ from pathlib import Path
 from pypdf import PdfReader
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_DIR = ROOT / "Booking_Boards"
-OUTPUT_FILE = ROOT / "data" / "booking_boards.json"
+SOURCE_DIR = Path(os.environ.get("BOOKING_BOARDS_SOURCE_DIR") or ROOT / "Booking_Boards")
+OUTPUT_FILE = Path(os.environ.get("BOOKING_BOARDS_OUTPUT_FILE") or ROOT / "data" / "booking_boards.json")
 
 TIME_RE = re.compile(r"\b\d{2}:\d{2}\b")
 BLOCK_RE = re.compile(r"\b\d{1,3}-\d{2}\b")
