@@ -860,19 +860,34 @@
     }
 
     @media (max-width: 640px) {
-      body { padding: 12px; }
-      .header, .main { padding: 16px; }
+      body { padding: 6px; }
+      .app { border-radius: 16px; }
+      .header, .main { padding: 10px; }
       .page-head, .board-card-head, .modal-head { flex-direction: column; }
+      .board-card-head { padding: 12px; }
       .meta-strip { grid-template-columns: 1fr 1fr 1fr; }
       .meta-grid { grid-template-columns: 1fr 1fr; }
+      .pieces {
+        padding: 8px;
+      }
+      .piece {
+        padding: 10px;
+      }
+      .piece-main {
+        min-width: 0;
+      }
+      .piece-copy {
+        overflow-wrap: break-word;
+      }
       .piece-meta {
         display: grid;
-        grid-template-columns: 42px minmax(86px, 1.35fr) 48px 48px minmax(86px, 1.35fr) 48px minmax(58px, 0.85fr);
+        grid-template-columns: 0.72fr 1.35fr 0.78fr 0.78fr 1.35fr 0.72fr 0.9fr;
         gap: 3px;
+        width: 100%;
       }
       .piece-meta-card {
         min-width: 0;
-        padding: 6px 5px;
+        padding: 6px 4px;
         overflow-wrap: normal;
       }
       .piece-meta-card strong {
