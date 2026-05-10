@@ -215,6 +215,14 @@
     const uploadBtn = document.getElementById('uploadBtn');
     const statusEl = document.getElementById('status');
 
+    const expectedFilenames = {
+      daily: '2026 Summer daily bords.pdf',
+      weekend: '2026 Bus Summer Weekend boards.pdf',
+      spares: '2026 Summer Spare,s Boards.pdf',
+      days_off_counter: '2026 Summer Days off Counter (3).pdf',
+      stat: '2026 Summer stat work.pdf',
+    };
+
     const savedToken = sessionStorage.getItem('bookingBoardAdminToken');
     if (savedToken) adminToken.value = savedToken;
 
@@ -233,7 +241,9 @@
 
       uploadBtn.disabled = true;
       sessionStorage.setItem('bookingBoardAdminToken', adminToken.value);
-      setStatus('Uploading PDF and rebuilding booking boards. This can take a minute...');
+      const expectedFilename = expectedFilenames[boardType.value] || file.name || 'booking-board.pdf';
+      const renamedFile = new File([file], expectedFilename, { type: 'application/pdf' });
+      setStatus(`Renaming upload to ${expectedFilename}.\nUploading PDF and rebuilding booking boards. This can take a minute...`);
 
       try {
         const response = await fetch(`/api/admin/booking-boards/${encodeURIComponent(boardType.value)}`, {
@@ -241,8 +251,9 @@
           headers: {
             'content-type': 'application/pdf',
             'x-admin-token': adminToken.value,
+            'x-upload-filename': expectedFilename,
           },
-          body: await file.arrayBuffer(),
+          body: await renamedFile.arrayBuffer(),
         });
         const data = await response.json();
         if (!response.ok || !data.ok) {

@@ -3298,7 +3298,7 @@ async function handleBookingBoardUpload(req, res) {
   if (!target) {
     res.status(400).json({
       ok: false,
-      error: 'Unknown booking board type.',
+      error: 'Unknown booking board type. Choose one of the listed admin board options.',
     });
     return;
   }
@@ -3307,7 +3307,7 @@ async function handleBookingBoardUpload(req, res) {
   if (!pdfBuffer || pdfBuffer.length < 5 || pdfBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
     res.status(400).json({
       ok: false,
-      error: 'Upload a valid PDF file.',
+      error: `Upload a valid PDF file for ${target.label}. It will be saved as ${target.filename}.`,
     });
     return;
   }
@@ -3355,7 +3355,7 @@ async function handleBookingBoardUpload(req, res) {
     bookingBoardsDataMtimeMs = 0;
     res.status(500).json({
       ok: false,
-      error: String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 1000),
+      error: `Failed while rebuilding ${target.label} from ${target.filename}: ${String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 900)}`,
     });
   } finally {
     try {
