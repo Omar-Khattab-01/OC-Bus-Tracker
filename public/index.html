@@ -1407,7 +1407,7 @@
         <button id="todayWorkBtn" class="header-btn" type="button" hidden>Today's Work</button>
         <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
-        <button id="summerBookingBtn" class="header-btn" type="button" onclick="window.location.href='/summer-booking'">Summer Booking</button>
+        <button id="summerBookingBtn" class="header-btn" type="button" onclick="window.location.href='/summer-paddles'">Summer Paddles</button>
         <button id="bookingBoardsBtn" class="header-btn" type="button" onclick="window.location.href='/booking-boards'">Booking Boards</button>
         <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
@@ -1415,7 +1415,7 @@
         <button id="mobileMenuBtn" class="header-btn mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileHeaderMenu">Menu</button>
         <div id="mobileHeaderMenu" class="mobile-menu" hidden>
           <div class="menu-section-label">Navigation</div>
-          <button id="mobileSummerBookingBtn" class="header-btn" type="button">Summer Booking</button>
+          <button id="mobileSummerBookingBtn" class="header-btn" type="button">Summer Paddles</button>
           <button id="mobileBookingBoardsBtn" class="header-btn" type="button">Booking Boards</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
@@ -3659,7 +3659,7 @@
     });
     mobileSummerBookingBtn.addEventListener('click', () => {
       closeMobileMenu();
-      window.location.href = '/summer-booking';
+      window.location.href = '/summer-paddles';
     });
     mobileBookingBoardsBtn.addEventListener('click', () => {
       closeMobileMenu();

@@ -3466,6 +3466,9 @@ function sendHtmlNoCache(res, filePath) {
 app.get('/summer-booking', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
+app.get('/summer-paddles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
 app.get('/booking-boards', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
 });
