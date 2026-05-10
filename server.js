@@ -102,6 +102,9 @@ const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
+app.get('/', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
+});
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
