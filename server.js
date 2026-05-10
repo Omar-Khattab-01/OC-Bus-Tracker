@@ -28,7 +28,8 @@ const execFileAsync = promisify(execFile);
 const BOOKING_BOARDS_DATA_FILE = path.join(__dirname, 'data', 'booking_boards.json');
 const BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Booking_Boards');
 const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking_boards.py');
-const PYTHON_BIN = String(process.env.PYTHON_BIN || 'python').trim() || 'python';
+const PYTHON_BIN = String(process.env.PYTHON_BIN || '').trim();
+const PYTHON_VENDOR_DIR = path.join(__dirname, 'vendor', 'python');
 const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN || '').trim();
 let bookingBoardsDataCache = null;
 let bookingBoardsDataMtimeMs = 0;
@@ -3293,6 +3294,37 @@ function copyBookingBoardSourcesToTemp(tempSourceDir) {
   }
 }
 
+async function rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile) {
+  const pythonBins = [PYTHON_BIN, 'python3', 'python'].filter(Boolean);
+  const candidates = [...new Set(pythonBins)];
+  const errors = [];
+
+  for (const pythonBin of candidates) {
+    try {
+      await execFileAsync(pythonBin, [BOOKING_BOARDS_BUILD_SCRIPT], {
+        cwd: __dirname,
+        timeout: 180000,
+        maxBuffer: 4 * 1024 * 1024,
+        env: {
+          ...process.env,
+          BOOKING_BOARDS_SOURCE_DIR: tempSourceDir,
+          BOOKING_BOARDS_OUTPUT_FILE: tempOutputFile,
+          PYTHONPATH: [PYTHON_VENDOR_DIR, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+        },
+      });
+      return pythonBin;
+    } catch (err) {
+      errors.push(`${pythonBin}: ${String(err.stderr || err.message || err).slice(0, 500)}`);
+      if (err.code !== 'ENOENT') {
+        break;
+      }
+    }
+  }
+
+  const message = errors.length ? errors.join('\n') : 'No Python executable was available.';
+  throw new Error(message);
+}
+
 async function handleBookingBoardUpload(req, res) {
   if (!BOOKING_BOARD_ADMIN_TOKEN) {
     res.status(501).json({
@@ -3337,16 +3369,7 @@ async function handleBookingBoardUpload(req, res) {
     copyBookingBoardSourcesToTemp(tempSourceDir);
     fs.writeFileSync(targetPath, pdfBuffer);
 
-    await execFileAsync(PYTHON_BIN, [BOOKING_BOARDS_BUILD_SCRIPT], {
-      cwd: __dirname,
-      timeout: 180000,
-      maxBuffer: 4 * 1024 * 1024,
-      env: {
-        ...process.env,
-        BOOKING_BOARDS_SOURCE_DIR: tempSourceDir,
-        BOOKING_BOARDS_OUTPUT_FILE: tempOutputFile,
-      },
-    });
+    const pythonBin = await rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile);
 
     const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
     bookingBoardsDataCache = rebuiltData;
@@ -3362,6 +3385,7 @@ async function handleBookingBoardUpload(req, res) {
       boardCount,
       updatedAt: bookingBoardsRuntimeUpdatedAt,
       storage: 'runtime-memory',
+      runtime: pythonBin,
       note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
     });
   } catch (err) {
