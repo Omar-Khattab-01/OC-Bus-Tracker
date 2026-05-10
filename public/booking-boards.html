@@ -1440,7 +1440,7 @@
     }
 
     function buildMetaStats(board) {
-      if (board?.id === 'spares') {
+      if (Array.isArray(board?.sections) && board.sections.length) {
         const sections = Array.isArray(board?.sections) ? board.sections : [];
         const garageCount = sections.reduce((sum, section) => sum + ((Array.isArray(section.garages) ? section.garages.length : 0)), 0);
         const availableTotal = sections.reduce((sum, section) => sum + (section.availableTotal || 0), 0);
@@ -1470,7 +1470,9 @@
         return;
       }
 
+      const isFloatingBoard = board?.id === 'floating_spares';
       const categorizeSpareSection = (section) => {
+        if (isFloatingBoard) return 'floating';
         const title = String(section?.title || '').toLowerCase();
         const page = Number(section?.page || 0) || 0;
         if (title.includes('canada day') || title.includes('august civic') || title.includes('stat')) return 'stat';
@@ -1484,6 +1486,7 @@
         saturday: [],
         sunday: [],
         stat: [],
+        floating: [],
       };
 
       for (const section of sections) {
@@ -1495,6 +1498,7 @@
         { key: 'saturday', title: 'Saturday Spare', subtitle: 'Saturday spare availability, including week 1 and week 2 coverage.' },
         { key: 'sunday', title: 'Sunday Spare', subtitle: 'Sunday spare availability, including week 1 and week 2 coverage.' },
         { key: 'stat', title: 'Stat Spare', subtitle: 'Holiday spare availability and stat board coverage.' },
+        { key: 'floating', title: 'Floating Spares', subtitle: 'Daily and weekly floating spare availability.' },
       ];
 
       const categorizeStatSection = (section) => {
@@ -1594,13 +1598,13 @@
 
       boardList.innerHTML = `
         <section class="spare-group">
-          <div class="spare-group-switcher">
+          ${availableGroups.length > 1 ? `<div class="spare-group-switcher">
             ${availableGroups.map((group) => `
               <button class="board-btn spare-group-btn ${group.key === activeGroup.key ? 'active' : ''}" type="button" data-spare-group="${escapeHtml(group.key)}">
                 ${escapeHtml(group.title)}
               </button>
             `).join('')}
-          </div>
+          </div>` : ''}
           ${activeGroup?.key === 'stat' && statDefinitions.length ? `
             <div class="spare-sub-switcher">
               ${statDefinitions.map((item) => `
@@ -1779,6 +1783,26 @@
       const filters = getBoardFilters(filterKey);
       const filteredEntries = sectionEntries.filter((entry) => entryMatchesFilters(entry, filters));
       const pieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
+      const spareSummary = Array.isArray(board?.spareSummary) ? board.spareSummary : [];
+      const spareSummaryHtml = spareSummary.length ? `
+        <div class="spare-grid daily-summary-grid">
+          ${spareSummary.map((row) => `
+            <section class="spare-garage daily-summary-card">
+              <div class="spare-garage-head">
+                <div>
+                  <div class="spare-garage-title">${escapeHtml(row.title)}</div>
+                  <div class="spare-garage-sub">${escapeHtml(row.available || 0)} available</div>
+                </div>
+                <div class="spare-counts">
+                  <div class="pill open">Available ${escapeHtml(row.available || 0)}</div>
+                  <div class="pill">Booked ${escapeHtml(row.booked || 0)}</div>
+                  <div class="pill">Limit ${escapeHtml(row.limit || 0)}</div>
+                </div>
+              </div>
+            </section>
+          `).join('')}
+        </div>
+      ` : '';
 
       metaStrip.innerHTML = `
         <article class="stat-card"><span class="k">Section</span><span class="v">${escapeHtml(selectedDailyWorkSection)}</span></article>
@@ -1806,6 +1830,7 @@
               <div class="board-total-pill"><strong>Pieces</strong><span>${escapeHtml(pieceCount)}</span></div>
             </div>
           </div>
+          ${spareSummaryHtml}
           ${filteredEntries.length
             ? filteredEntries.map((entry) => renderWorkEntryCard(entry, board)).join('')
             : '<div class="empty">No daily work matches these filters.</div>'}
@@ -1966,6 +1991,7 @@
         if (id === 'days_off_counter') return 'Days Off Counter';
         if (id === 'stat_work') return 'Stat Work';
         if (id === 'spares') return 'Spare Boards';
+        if (id === 'floating_spares') return 'Floating Spares';
         return board?.title || 'Board';
       };
       boardSwitcher.innerHTML = boardState.boards.map((board) => `
@@ -1976,7 +2002,7 @@
     }
 
     function renderBoardEntries(board) {
-      if (board?.id === 'spares') {
+      if (Array.isArray(board?.sections) && board.sections.length) {
         renderSpareBoard(board);
         return;
       }

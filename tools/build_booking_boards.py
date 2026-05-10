@@ -281,11 +281,25 @@ WEEKEND_SUN_LINE_RE = re.compile(
 def parse_daily_board(pdf_path: Path):
     pages = extract_lines(pdf_path)
     entries = []
+    spare_summary = []
     current = None
     pending_route = ""
     reached_daily_booked_work = False
     current_section = "Daily Open Work"
     daily_section_headers = {"Daily Open Work", "Mixed Odd Work", "Mixed Relief Work"}
+
+    def parse_spare_summary(line: str):
+        match = re.fullmatch(r"(General Spare|Holiday Spares|Vacation Spares)\s+(\d+)\s+(\d+)\s+(\d+)", line)
+        if not match:
+            return None
+        title, available, booked, limit = match.groups()
+        return {
+            "id": re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-"),
+            "title": "Vacation Spares" if title == "Holiday Spares" else title,
+            "limit": int(limit),
+            "booked": int(booked),
+            "available": int(available),
+        }
 
     def flush_current():
         nonlocal current, pending_route
@@ -325,7 +339,12 @@ def parse_daily_board(pdf_path: Path):
                 continue
             if page["page"] >= 99:
                 continue
-            if line in {"AM Biddable Trippers", "PM Biddable Trippers"} or line.startswith("General Booking") or line in {"On Location On Time Off LocationOff Time PlatRun PayShift", "Shift On Location On Time Off LocationOff Time Plat", "Pay", "AvailableBookedLimit", "General Spare 391 2 393", "Holiday Spares 115 0 115"}:
+            parsed_spare_summary = parse_spare_summary(line)
+            if parsed_spare_summary:
+                if not any(row["id"] == parsed_spare_summary["id"] for row in spare_summary):
+                    spare_summary.append(parsed_spare_summary)
+                continue
+            if line in {"AM Biddable Trippers", "PM Biddable Trippers"} or line.startswith("General Booking") or line in {"On Location On Time Off LocationOff Time PlatRun PayShift", "Shift On Location On Time Off LocationOff Time Plat", "Pay", "AvailableBookedLimit"}:
                 continue
             match_daily_id = re.fullmatch(r"Daily(\d{1,4})", line)
             if match_daily_id:
@@ -391,6 +410,7 @@ def parse_daily_board(pdf_path: Path):
                     "title": "Daily Open Work",
                     "serviceDay": "weekday",
                     "sourcePdf": pdf_path.name,
+                    "spareSummary": spare_summary,
                     "entries": [entry for entry in entries if entry.get("pieces")],
                 }
             if any("AM Biddable Trippers" in text for text in texts):
@@ -491,6 +511,7 @@ def parse_daily_board(pdf_path: Path):
         "title": "Daily Open Work",
         "serviceDay": "weekday",
         "sourcePdf": pdf_path.name,
+        "spareSummary": spare_summary,
         "entries": [entry for entry in entries if entry.get("pieces")],
     }
 
@@ -785,7 +806,7 @@ def parse_stat_board(pdf_path: Path):
     }
 
 
-def parse_spares_board(pdf_path: Path):
+def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "Spare Boards"):
     pages = extract_lines(pdf_path)
     sections = []
     current_section = None
@@ -866,8 +887,8 @@ def parse_spares_board(pdf_path: Path):
         # keep current section open across page breaks for continued rows
     flush_section()
     return {
-        "id": "spares",
-        "title": "Spare Boards",
+        "id": board_id,
+        "title": title,
         "serviceDay": "mixed",
         "sourcePdf": pdf_path.name,
         "entries": [],
@@ -881,6 +902,7 @@ def main():
     boards.append(parse_bus_summer_weekend_board(SOURCE_DIR / "2026 Bus Summer Weekend boards.pdf"))
     boards.append(parse_days_off_counter(SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"))
     boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"))
+    boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf", "floating_spares", "Daily and Weekly Floating Spares"))
     boards.append(parse_stat_board(SOURCE_DIR / "2026 Summer stat work.pdf"))
     payload = {"generatedFrom": "Booking_Boards PDFs", "boards": boards}
     OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")

@@ -6,6 +6,22 @@
       "title": "Daily Open Work",
       "serviceDay": "weekday",
       "sourcePdf": "2026 Summer daily bords.pdf",
+      "spareSummary": [
+        {
+          "id": "general-spare",
+          "title": "General Spare",
+          "limit": 393,
+          "booked": 37,
+          "available": 356
+        },
+        {
+          "id": "holiday-spares",
+          "title": "Vacation Spares",
+          "limit": 115,
+          "booked": 21,
+          "available": 94
+        }
+      ],
       "entries": [
         {
           "id": "daily-2-495",
@@ -66091,6 +66107,87 @@
                   "limit": 6,
                   "booked": 1,
                   "available": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "floating_spares",
+      "title": "Daily and Weekly Floating Spares",
+      "serviceDay": "mixed",
+      "sourcePdf": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
+      "entries": [],
+      "sections": [
+        {
+          "id": "weekly-floating-spare",
+          "title": "Weekly Floating Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "00:00",
+                  "limit": 40,
+                  "booked": 20,
+                  "available": 20
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "weekly-pm-floating-spare",
+          "title": "Weekly PM Floating Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "00:00",
+                  "limit": 8,
+                  "booked": 3,
+                  "available": 5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "daily-early-early-floating-spare",
+          "title": "Daily Early Early Floating Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "00:00",
+                  "limit": 15,
+                  "booked": 8,
+                  "available": 7
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "daily-early-floating-spare",
+          "title": "Daily Early Floating Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "00:00",
+                  "limit": 20,
+                  "booked": 8,
+                  "available": 12
                 }
               ]
             }

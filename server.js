@@ -72,6 +72,10 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
     label: 'Spare Boards',
     filename: '2026 Summer Spare,s Boards.pdf',
   },
+  floating_spares: {
+    label: 'Daily and Weekly Floating Spares',
+    filename: '2026 Summer Daily and weekly floating spares  (4) (1).pdf',
+  },
   weekend: {
     label: 'Weekend Work',
     filename: '2026 Bus Summer Weekend boards.pdf',
@@ -1883,6 +1887,16 @@ function buildSpareBoardSectionSummary(section = {}) {
   };
 }
 
+function buildDailySpareSummaryRow(row = {}) {
+  return {
+    id: String(row.id || '').trim(),
+    title: String(row.title || '').trim() || 'Spare summary',
+    limit: Number(row.limit || 0) || 0,
+    booked: Number(row.booked || 0) || 0,
+    available: Number(row.available || 0) || 0,
+  };
+}
+
 function buildDaysOffCounterSummary(counter = {}) {
   const rows = Array.isArray(counter.rows) ? counter.rows.map((row) => ({
     day: String(row.day || '').trim(),
@@ -1937,13 +1951,13 @@ function getBookingBoardSummaries() {
         sourcePdf: String(board.sourcePdf || '').trim(),
         entryCount: counters.length
           ? counters.reduce((sum, counter) => sum + counter.rows.length, 0)
-          : board.id === 'spares'
+          : spareSections.length
           ? spareSections.reduce((sum, section) => sum + section.garages.length, 0)
           : entries.length,
         takenCount: entries.filter((entry) => entry.taken).length,
         pieceCount: counters.length
           ? counters.reduce((sum, counter) => sum + counter.remaining, 0)
-          : board.id === 'spares'
+          : spareSections.length
           ? spareSections.reduce((sum, section) => sum + section.openSlotCount, 0)
           : entries.reduce((sum, entry) => sum + entry.pieceCount, 0),
       };
@@ -1975,6 +1989,8 @@ function buildBookingBoardResponse(requestedBoardId = '') {
     .map((section) => buildSpareBoardSectionSummary(section));
   const counters = (Array.isArray(board.counters) ? board.counters : [])
     .map((counter) => buildDaysOffCounterSummary(counter));
+  const spareSummary = (Array.isArray(board.spareSummary) ? board.spareSummary : [])
+    .map((row) => buildDailySpareSummaryRow(row));
 
   return {
     ok: true,
@@ -1988,6 +2004,7 @@ function buildBookingBoardResponse(requestedBoardId = '') {
       entries,
       sections,
       counters,
+      spareSummary,
     },
     dayOptions: BOOKING_BOARD_DAY_OPTIONS,
   };

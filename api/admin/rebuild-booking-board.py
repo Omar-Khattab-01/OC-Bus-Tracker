@@ -30,6 +30,10 @@ TARGETS = {
         "label": "Spare Boards",
         "filename": "2026 Summer Spare,s Boards.pdf",
     },
+    "floating_spares": {
+        "label": "Daily and Weekly Floating Spares",
+        "filename": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
+    },
     "days_off_counter": {
         "label": "Days Off Counter",
         "filename": "2026 Summer Days off Counter (3).pdf",
@@ -84,6 +88,11 @@ def build_payload(temp_source_dir: Path) -> dict:
         builder.parse_bus_summer_weekend_board(temp_source_dir / "2026 Bus Summer Weekend boards.pdf"),
         builder.parse_days_off_counter(temp_source_dir / "2026 Summer Days off Counter (3).pdf"),
         builder.parse_spares_board(temp_source_dir / "2026 Summer Spare,s Boards.pdf"),
+        builder.parse_spares_board(
+            temp_source_dir / "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
+            "floating_spares",
+            "Daily and Weekly Floating Spares",
+        ),
         builder.parse_stat_board(temp_source_dir / "2026 Summer stat work.pdf"),
     ]
     return {"generatedFrom": "Booking_Boards PDFs", "boards": boards}
