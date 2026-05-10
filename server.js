@@ -1839,6 +1839,12 @@ function buildBookingBoardEntrySummary(entry = {}, board = {}) {
   };
 }
 
+function isFullyTakenWeekendEntry(entry = {}) {
+  if (entry.serviceDay === 'saturday') return Boolean(entry.sat1Taken && entry.sat2Taken);
+  if (entry.serviceDay === 'sunday') return Boolean(entry.sun1Taken && entry.sun2Taken);
+  return false;
+}
+
 function buildSpareBoardSectionSummary(section = {}) {
   const garages = Array.isArray(section.garages) ? section.garages : [];
   const garageSummaries = garages.map((garage) => {
@@ -1913,7 +1919,9 @@ function getBookingBoardSummaries() {
       return entryCount > 0 || sectionCount > 0 || counterCount > 0;
     })
     .map((board) => {
-      const entries = (Array.isArray(board.entries) ? board.entries : []).map((entry) => buildBookingBoardEntrySummary(entry, board));
+      const entries = (Array.isArray(board.entries) ? board.entries : [])
+        .map((entry) => buildBookingBoardEntrySummary(entry, board))
+        .filter((entry) => board.id !== 'weekend_boards' || !isFullyTakenWeekendEntry(entry));
       const spareSections = (Array.isArray(board.sections) ? board.sections : []).map((section) => buildSpareBoardSectionSummary(section));
       const counters = (Array.isArray(board.counters) ? board.counters : []).map((counter) => buildDaysOffCounterSummary(counter));
       return {
@@ -1955,6 +1963,7 @@ function buildBookingBoardResponse(requestedBoardId = '') {
 
   const entries = (Array.isArray(board.entries) ? board.entries : [])
     .map((entry) => buildBookingBoardEntrySummary(entry, board))
+    .filter((entry) => board.id !== 'weekend_boards' || !isFullyTakenWeekendEntry(entry))
     .filter((entry) => entry.pieceCount > 0 || entry.taken);
   const sections = (Array.isArray(board.sections) ? board.sections : [])
     .map((section) => buildSpareBoardSectionSummary(section));

@@ -246,6 +246,65 @@
       gap: 16px;
     }
 
+    .filter-panel {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.035);
+      display: grid;
+      gap: 12px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .filter-field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .filter-field label {
+      color: var(--oc-mist);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .filter-field input,
+    .filter-field select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(8, 11, 15, 0.72);
+      color: var(--oc-white);
+      font: inherit;
+      font-size: 13px;
+      padding: 10px 11px;
+    }
+
+    .filter-field input::placeholder {
+      color: rgba(215, 221, 230, 0.58);
+    }
+
+    .filter-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-summary {
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
     .board-card {
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
@@ -990,6 +1049,45 @@
     let selectedSpareGroup = 'daily';
     let selectedStatBoard = 'canada-day';
     let selectedStatWorkBoard = 'canada-day';
+    const boardFilters = {};
+    let filterRenderTimer = null;
+
+    function defaultBoardFilters() {
+      return {
+        shift: '',
+        route: '',
+        run: '',
+        from: '',
+        to: '',
+        status: 'open',
+        onAfter: '',
+        onBefore: '',
+      };
+    }
+
+    function getBoardFilters(key) {
+      if (!boardFilters[key]) boardFilters[key] = defaultBoardFilters();
+      return boardFilters[key];
+    }
+
+    function clearBoardFilters(key) {
+      boardFilters[key] = defaultBoardFilters();
+    }
+
+    function renderBoardEntriesAndRefocus(filterKey = '', filterField = '') {
+      renderBoardEntries(boardState.board);
+      if (!filterKey || !filterField) return;
+      const panel = [...boardList.querySelectorAll('[data-filter-key]')]
+        .find((item) => item.dataset.filterKey === filterKey);
+      const field = panel?.querySelector(`[data-filter-field="${filterField}"]`);
+      if (field) {
+        field.focus();
+        if (typeof field.setSelectionRange === 'function') {
+          const length = String(field.value || '').length;
+          field.setSelectionRange(length, length);
+        }
+      }
+    }
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -1024,6 +1122,167 @@
         if (start === null || end === null) return false;
         return tripStart < end && tripEnd > start;
       });
+    }
+
+    function uniqueSorted(values) {
+      return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+    }
+
+    function splitRouteLabels(routeLabel) {
+      return String(routeLabel || '')
+        .split(',')
+        .map((route) => route.trim())
+        .filter(Boolean);
+    }
+
+    function isWeekendFullyTaken(entry) {
+      if (entry?.serviceDay === 'saturday') return Boolean(entry.sat1Taken && entry.sat2Taken);
+      if (entry?.serviceDay === 'sunday') return Boolean(entry.sun1Taken && entry.sun2Taken);
+      return false;
+    }
+
+    function isWeekendFullyOpen(entry) {
+      if (entry?.serviceDay === 'saturday') return !entry.sat1Taken && !entry.sat2Taken;
+      if (entry?.serviceDay === 'sunday') return !entry.sun1Taken && !entry.sun2Taken;
+      return !entry.taken;
+    }
+
+    function isEntryOpen(entry) {
+      if (entry?.serviceDay === 'saturday' || entry?.serviceDay === 'sunday') return !isWeekendFullyTaken(entry);
+      return !entry.taken;
+    }
+
+    function entryMatchesStatus(entry, status) {
+      if (!status || status === 'all') return true;
+      if (status === 'open') return isEntryOpen(entry);
+      if (status === 'fully-open') return isWeekendFullyOpen(entry);
+      if (status === 'partial') return (entry.serviceDay === 'saturday' || entry.serviceDay === 'sunday') && !isWeekendFullyOpen(entry) && !isWeekendFullyTaken(entry);
+      if (status === 'week1-open') {
+        if (entry.serviceDay === 'saturday') return !entry.sat1Taken;
+        if (entry.serviceDay === 'sunday') return !entry.sun1Taken;
+        return true;
+      }
+      if (status === 'week2-open') {
+        if (entry.serviceDay === 'saturday') return !entry.sat2Taken;
+        if (entry.serviceDay === 'sunday') return !entry.sun2Taken;
+        return true;
+      }
+      if (status === 'taken') return Boolean(entry.taken);
+      return true;
+    }
+
+    function entryMatchesFilters(entry, filters) {
+      const pieces = Array.isArray(entry?.pieces) ? entry.pieces : [];
+      const shift = String(entry?.shiftId || entry?.title || '').toLowerCase();
+      if (filters.shift && !shift.includes(String(filters.shift).toLowerCase())) return false;
+      if (!entryMatchesStatus(entry, filters.status)) return false;
+      if (filters.route && !pieces.some((piece) => splitRouteLabels(piece.routeLabel).includes(filters.route))) return false;
+      if (filters.run && !pieces.some((piece) => String(piece.block || '') === filters.run)) return false;
+      if (filters.from && !pieces.some((piece) => String(piece.from || '') === filters.from)) return false;
+      if (filters.to && !pieces.some((piece) => String(piece.to || '') === filters.to)) return false;
+      const after = timeToMinutes(filters.onAfter);
+      const before = timeToMinutes(filters.onBefore);
+      if (after !== null && !pieces.some((piece) => {
+        const minutes = timeToMinutes(piece.startTime);
+        return minutes !== null && minutes >= after;
+      })) return false;
+      if (before !== null && !pieces.some((piece) => {
+        const minutes = timeToMinutes(piece.startTime);
+        return minutes !== null && minutes <= before;
+      })) return false;
+      return true;
+    }
+
+    function getEntryFilterOptions(entries) {
+      const pieces = entries.flatMap((entry) => Array.isArray(entry.pieces) ? entry.pieces : []);
+      return {
+        routes: uniqueSorted(pieces.flatMap((piece) => splitRouteLabels(piece.routeLabel))),
+        runs: uniqueSorted(pieces.map((piece) => piece.block)),
+        from: uniqueSorted(pieces.map((piece) => piece.from)),
+        to: uniqueSorted(pieces.map((piece) => piece.to)),
+      };
+    }
+
+    function renderOptions(values, selectedValue) {
+      return values.map((value) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('');
+    }
+
+    function renderEntryFilters(filterKey, entries, filteredCount, totalCount, options = {}) {
+      const filters = getBoardFilters(filterKey);
+      const filterOptions = getEntryFilterOptions(entries);
+      const includeWeekendStatus = options.weekend === true;
+      const statusOptions = includeWeekendStatus
+        ? [
+            ['open', 'Any open slot'],
+            ['fully-open', 'Both weeks open'],
+            ['week1-open', 'Week 1 open'],
+            ['week2-open', 'Week 2 open'],
+            ['partial', 'Partly taken'],
+            ['all', 'All visible'],
+          ]
+        : [
+            ['open', 'Open work'],
+            ['all', 'All work'],
+            ['taken', 'Taken'],
+          ];
+
+      return `
+        <div class="filter-panel" data-filter-key="${escapeHtml(filterKey)}">
+          <div class="filter-grid">
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Shift">Shift</label>
+              <input id="${escapeHtml(filterKey)}Shift" type="search" inputmode="numeric" placeholder="Shift #" value="${escapeHtml(filters.shift)}" data-filter-field="shift">
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Status">Status</label>
+              <select id="${escapeHtml(filterKey)}Status" data-filter-field="status">
+                ${statusOptions.map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Route">Route</label>
+              <select id="${escapeHtml(filterKey)}Route" data-filter-field="route">
+                <option value="">Any route</option>
+                ${renderOptions(filterOptions.routes, filters.route)}
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Run">Run</label>
+              <select id="${escapeHtml(filterKey)}Run" data-filter-field="run">
+                <option value="">Any run</option>
+                ${renderOptions(filterOptions.runs, filters.run)}
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}From">On Location</label>
+              <select id="${escapeHtml(filterKey)}From" data-filter-field="from">
+                <option value="">Any on location</option>
+                ${renderOptions(filterOptions.from, filters.from)}
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}To">Off Location</label>
+              <select id="${escapeHtml(filterKey)}To" data-filter-field="to">
+                <option value="">Any off location</option>
+                ${renderOptions(filterOptions.to, filters.to)}
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}After">On After</label>
+              <input id="${escapeHtml(filterKey)}After" type="time" value="${escapeHtml(filters.onAfter)}" data-filter-field="onAfter">
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Before">On Before</label>
+              <input id="${escapeHtml(filterKey)}Before" type="time" value="${escapeHtml(filters.onBefore)}" data-filter-field="onBefore">
+            </div>
+          </div>
+          <div class="filter-actions">
+            <div class="filter-summary">${escapeHtml(filteredCount)} of ${escapeHtml(totalCount)} shown</div>
+            <button class="board-btn" type="button" data-clear-filters="${escapeHtml(filterKey)}">Clear filters</button>
+          </div>
+        </div>
+      `;
     }
 
     function getKnownLocationQuery(label) {
@@ -1442,11 +1701,14 @@
         selectedStatWorkBoard = statDefinitions[0]?.key || 'canada-day';
       }
 
-      const filteredEntries = entries.filter((entry) => (
+      const baseEntries = entries.filter((entry) => (
         !entry.taken
         && entry.pieceCount > 0
         && String(entry.holidayKey || '') === selectedStatWorkBoard
       ));
+      const filterKey = `stat-${selectedStatWorkBoard}`;
+      const filters = getBoardFilters(filterKey);
+      const filteredEntries = baseEntries.filter((entry) => entryMatchesFilters(entry, filters));
       const filteredPieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
       const activeHoliday = statDefinitions.find((item) => item.key === selectedStatWorkBoard);
 
@@ -1465,6 +1727,7 @@
               </button>
             `).join('')}
           </div>
+          ${renderEntryFilters(filterKey, baseEntries, filteredEntries.length, baseEntries.length)}
           <div class="spare-group-head">
             <div>
               <h3 class="spare-group-title">Stat Work · ${escapeHtml(activeHoliday?.title || 'Holiday')}</h3>
@@ -1477,7 +1740,7 @@
           </div>
           ${filteredEntries.length
             ? filteredEntries.map((entry) => renderWorkEntryCard(entry, board, { forceOpenLabel: true })).join('')
-            : '<div class="empty">No open stat work was parsed for this holiday board.</div>'}
+            : '<div class="empty">No open stat work matches these filters.</div>'}
         </section>
       `;
     }
@@ -1512,11 +1775,14 @@
       }
 
       const sectionEntries = grouped.get(selectedDailyWorkSection) || [];
-      const pieceCount = sectionEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
+      const filterKey = `daily-${selectedDailyWorkSection}`;
+      const filters = getBoardFilters(filterKey);
+      const filteredEntries = sectionEntries.filter((entry) => entryMatchesFilters(entry, filters));
+      const pieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
 
       metaStrip.innerHTML = `
         <article class="stat-card"><span class="k">Section</span><span class="v">${escapeHtml(selectedDailyWorkSection)}</span></article>
-        <article class="stat-card"><span class="k">Entries</span><span class="v">${sectionEntries.length}</span></article>
+        <article class="stat-card"><span class="k">Entries</span><span class="v">${filteredEntries.length}</span></article>
         <article class="stat-card"><span class="k">Pieces</span><span class="v">${pieceCount}</span></article>
       `;
 
@@ -1529,17 +1795,20 @@
               </button>
             `).join('')}
           </div>
+          ${renderEntryFilters(filterKey, sectionEntries, filteredEntries.length, sectionEntries.length)}
           <div class="spare-group-head">
             <div>
               <h3 class="spare-group-title">${escapeHtml(selectedDailyWorkSection)}</h3>
               <div class="spare-group-sub">Daily work is split by the section headers from the booking board PDF.</div>
             </div>
             <div class="board-totals">
-              <div class="board-total-pill"><strong>Entries</strong><span>${escapeHtml(sectionEntries.length)}</span></div>
+              <div class="board-total-pill"><strong>Entries</strong><span>${escapeHtml(filteredEntries.length)}</span></div>
               <div class="board-total-pill"><strong>Pieces</strong><span>${escapeHtml(pieceCount)}</span></div>
             </div>
           </div>
-          ${sectionEntries.map((entry) => renderWorkEntryCard(entry, board)).join('')}
+          ${filteredEntries.length
+            ? filteredEntries.map((entry) => renderWorkEntryCard(entry, board)).join('')
+            : '<div class="empty">No daily work matches these filters.</div>'}
         </section>
       `;
     }
@@ -1560,7 +1829,10 @@
         selectedGeneralSpareDay = dayDefinitions[0]?.key || 'saturday';
       }
 
-      const dayEntries = entries.filter((entry) => String(entry.serviceDay || '') === selectedGeneralSpareDay);
+      const dayEntries = entries.filter((entry) => (
+        String(entry.serviceDay || '') === selectedGeneralSpareDay
+        && !isWeekendFullyTaken(entry)
+      ));
       const sectionOrder = selectedGeneralSpareDay === 'saturday'
         ? ['Mixed Odd Work Saturday', 'Mixed Relief Work Saturday']
         : ['Mix Odd Work Sunday', 'Mixed Relief Work Sunday'];
@@ -1575,7 +1847,10 @@
         selectedGeneralSpareSection = sections[0] || '';
       }
 
-      const filteredEntries = dayEntries.filter((entry) => !selectedGeneralSpareSection || entry.workSection === selectedGeneralSpareSection);
+      const sectionEntries = dayEntries.filter((entry) => !selectedGeneralSpareSection || entry.workSection === selectedGeneralSpareSection);
+      const filterKey = `weekend-${selectedGeneralSpareDay}-${selectedGeneralSpareSection || 'all'}`;
+      const filters = getBoardFilters(filterKey);
+      const filteredEntries = sectionEntries.filter((entry) => entryMatchesFilters(entry, filters));
       const pieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
       const activeDay = dayDefinitions.find((day) => day.key === selectedGeneralSpareDay);
 
@@ -1590,7 +1865,7 @@
           <div class="spare-group-switcher">
             ${dayDefinitions.map((day) => `
               <button class="board-btn spare-group-btn ${day.key === selectedGeneralSpareDay ? 'active' : ''}" type="button" data-general-spare-day="${escapeHtml(day.key)}">
-                ${escapeHtml(day.title)} (${entries.filter((entry) => entry.serviceDay === day.key).length})
+                ${escapeHtml(day.title)} (${entries.filter((entry) => entry.serviceDay === day.key && !isWeekendFullyTaken(entry)).length})
               </button>
             `).join('')}
           </div>
@@ -1601,17 +1876,20 @@
               </button>
             `).join('')}
           </div>
+          ${renderEntryFilters(filterKey, sectionEntries, filteredEntries.length, sectionEntries.length, { weekend: true })}
           <div class="spare-group-head">
             <div>
               <h3 class="spare-group-title">Weekend ${escapeHtml(activeDay?.title || 'Work')}</h3>
-              <div class="spare-group-sub">Weekend work split by Saturday and Sunday, with odd and relief work separated.</div>
+              <div class="spare-group-sub">Weekend work split by Saturday and Sunday. Shifts with both week slots taken are hidden.</div>
             </div>
             <div class="board-totals">
               <div class="board-total-pill"><strong>Entries</strong><span>${escapeHtml(filteredEntries.length)}</span></div>
               <div class="board-total-pill"><strong>Pieces</strong><span>${escapeHtml(pieceCount)}</span></div>
             </div>
           </div>
-          ${filteredEntries.map((entry) => renderWorkEntryCard(entry, board)).join('')}
+          ${filteredEntries.length
+            ? filteredEntries.map((entry) => renderWorkEntryCard(entry, board)).join('')
+            : '<div class="empty">No weekend work matches these filters.</div>'}
         </section>
       `;
     }
@@ -1790,6 +2068,12 @@
     });
 
     boardList.addEventListener('click', (event) => {
+      const clearFiltersButton = event.target.closest('[data-clear-filters]');
+      if (clearFiltersButton) {
+        clearBoardFilters(String(clearFiltersButton.dataset.clearFilters || '').trim());
+        renderBoardEntries(boardState.board);
+        return;
+      }
       const spareGroupButton = event.target.closest('[data-spare-group]');
       if (spareGroupButton) {
         selectedSpareGroup = String(spareGroupButton.dataset.spareGroup || 'daily').trim() || 'daily';
@@ -1836,6 +2120,31 @@
         const button = event.target.closest('[data-open-paddle]');
         if (!button) return;
         openPiecePaddle(button);
+    });
+
+    boardList.addEventListener('input', (event) => {
+      const field = event.target.closest('[data-filter-field]');
+      if (!field) return;
+      const panel = field.closest('[data-filter-key]');
+      if (!panel) return;
+      const filterKey = String(panel.dataset.filterKey || '').trim();
+      const filterField = String(field.dataset.filterField || '').trim();
+      const filters = getBoardFilters(filterKey);
+      filters[filterField] = field.value;
+      window.clearTimeout(filterRenderTimer);
+      filterRenderTimer = window.setTimeout(() => renderBoardEntriesAndRefocus(filterKey, filterField), 180);
+    });
+
+    boardList.addEventListener('change', (event) => {
+      const field = event.target.closest('[data-filter-field]');
+      if (!field) return;
+      const panel = field.closest('[data-filter-key]');
+      if (!panel) return;
+      const filterKey = String(panel.dataset.filterKey || '').trim();
+      const filterField = String(field.dataset.filterField || '').trim();
+      const filters = getBoardFilters(filterKey);
+      filters[filterField] = field.value;
+      renderBoardEntriesAndRefocus(filterKey, filterField);
     });
 
     refreshBtn.addEventListener('click', () => loadBoard(boardState.selectedBoardId));
