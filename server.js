@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const crypto = require('crypto');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
 const { createClient } = require('@supabase/supabase-js');
 const { trackBlock } = require('./track_block');
 const {
@@ -21,6 +23,14 @@ const {
   SHUTTLE_DEFINITIONS,
   SHUTTLES_BY_SERVICE_DAY,
 } = require('./data/shuttles');
+const execFileAsync = promisify(execFile);
+const BOOKING_BOARDS_DATA_FILE = path.join(__dirname, 'data', 'booking_boards.json');
+const BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Booking_Boards');
+const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking_boards.py');
+const PYTHON_BIN = String(process.env.PYTHON_BIN || 'python').trim() || 'python';
+const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN || '').trim();
+let bookingBoardsDataCache = null;
+let bookingBoardsDataMtimeMs = 0;
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
@@ -42,6 +52,44 @@ let paddleIndexCache = null;
 const busBlockCache = new Map();
 const liveBusPaddleCache = new Map();
 let liveBusPaddleRefreshPromise = null;
+
+const BOOKING_BOARD_DAY_OPTIONS = [
+  { id: 'weekday', label: 'Weekday' },
+  { id: 'saturday', label: 'Saturday' },
+  { id: 'sunday', label: 'Sunday' },
+  { id: 'special', label: 'Special' },
+];
+
+const BOOKING_BOARD_UPLOAD_TARGETS = {
+  daily: {
+    label: 'Daily Work',
+    filename: '2026 Summer daily bords.pdf',
+  },
+  saturday: {
+    label: 'Saturday Work',
+    filename: '2026 Summer Saturday Boards .pdf',
+  },
+  sunday: {
+    label: 'Sunday Work',
+    filename: '2026 Summer Sunday Boards .pdf',
+  },
+  spares: {
+    label: 'Spare Boards',
+    filename: '2026 Summer Spare,s Boards.pdf',
+  },
+  general_spare_weekend: {
+    label: 'General Spare Weekend',
+    filename: '2026 Bus Summer Weekend boards.pdf',
+  },
+  days_off_counter: {
+    label: 'Days Off Counter',
+    filename: '2026 Summer Days off Counter (3).pdf',
+  },
+  stat: {
+    label: 'Stat Work',
+    filename: '2026 Summer stat work.pdf',
+  },
+};
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -1730,6 +1778,210 @@ function formatSummerBookingReply(paddle) {
   return `Here are the paddles for ${displayBlock} for the summer.`;
 }
 
+function normalizeBookingBoardTaken(entry = {}) {
+  if (entry.taken === true) return true;
+  if (Array.isArray(entry.pieces) && entry.pieces.some((piece) => piece?.taken === true)) return true;
+  return false;
+}
+
+function buildBookingBoardPieceSummary(piece = {}, entry = {}) {
+  const block = normalizeBlock(piece.block || '');
+  const routeLabel = String(piece.routeLabel || '').trim();
+  const startTime = String(piece.startTime || '').trim();
+  const endTime = String(piece.endTime || '').trim();
+  const from = String(piece.from || '').trim();
+  const to = String(piece.to || '').trim();
+  const payTime = String(piece.payTime || '').trim();
+  return {
+    pieceId: String(piece.pieceId || '').trim(),
+    block,
+    routeLabel,
+    from,
+    to,
+    startTime,
+    endTime,
+    payTime,
+    taken: piece?.taken === true || entry.taken === true,
+    highlightWindow: block && startTime && endTime
+      ? {
+          block,
+          startTime,
+          endTime,
+        }
+      : null,
+  };
+}
+
+function buildBookingBoardEntrySummary(entry = {}, board = {}) {
+  const pieces = Array.isArray(entry.pieces) ? entry.pieces.map((piece) => buildBookingBoardPieceSummary(piece, entry)) : [];
+  const uniqueBlocks = [...new Set(pieces.map((piece) => piece.block).filter(Boolean))];
+  const title = String(entry.title || '').trim() || 'Booking board shift';
+  const sat1Taken = Boolean(entry.sat1Taken);
+  const sat2Taken = Boolean(entry.sat2Taken);
+  const sun1Taken = Boolean(entry.sun1Taken);
+  const sun2Taken = Boolean(entry.sun2Taken);
+  return {
+    id: String(entry.id || '').trim(),
+    title,
+    serviceDay: String(entry.serviceDay || board.serviceDay || '').trim(),
+    boardPage: Number(entry.boardPage || 0) || null,
+    availabilityStart: String(entry.availabilityStart || '').trim(),
+    availabilityEnd: String(entry.availabilityEnd || '').trim(),
+    taken: normalizeBookingBoardTaken(entry),
+    sourcePdf: String(entry.sourcePdf || board.sourcePdf || '').trim(),
+    workSection: String(entry.workSection || '').trim(),
+    holidayKey: String(entry.holidayKey || '').trim(),
+    holidayLabel: String(entry.holidayLabel || '').trim(),
+    pieces,
+    uniqueBlocks,
+    pieceCount: pieces.length,
+    shiftId: String(entry.shiftId || '').trim(),
+    sat1Taken,
+    sat2Taken,
+    sun1Taken,
+    sun2Taken,
+  };
+}
+
+function buildSpareBoardSectionSummary(section = {}) {
+  const garages = Array.isArray(section.garages) ? section.garages : [];
+  const garageSummaries = garages.map((garage) => {
+    const slots = Array.isArray(garage.slots) ? garage.slots : [];
+    const slotSummaries = slots.map((slot) => ({
+      onTime: String(slot.onTime || '').trim(),
+      limit: Number(slot.limit || 0) || 0,
+      booked: Number(slot.booked || 0) || 0,
+      available: Number(slot.available || 0) || 0,
+    }));
+    const availableTotal = slotSummaries.reduce((sum, slot) => sum + slot.available, 0);
+    const bookedTotal = slotSummaries.reduce((sum, slot) => sum + slot.booked, 0);
+    const limitTotal = slotSummaries.reduce((sum, slot) => sum + slot.limit, 0);
+    const openSlots = slotSummaries.filter((slot) => slot.available > 0);
+    return {
+      name: String(garage.name || '').trim() || 'All locations',
+      slots: slotSummaries,
+      availableTotal,
+      bookedTotal,
+      limitTotal,
+      openSlots,
+    };
+  });
+  return {
+    id: String(section.id || '').trim(),
+    title: String(section.title || '').trim() || 'Spare board',
+    page: Number(section.page || 0) || null,
+    garages: garageSummaries,
+    availableTotal: garageSummaries.reduce((sum, garage) => sum + garage.availableTotal, 0),
+    bookedTotal: garageSummaries.reduce((sum, garage) => sum + garage.bookedTotal, 0),
+    limitTotal: garageSummaries.reduce((sum, garage) => sum + garage.limitTotal, 0),
+    openSlotCount: garageSummaries.reduce((sum, garage) => sum + garage.openSlots.length, 0),
+  };
+}
+
+function buildDaysOffCounterSummary(counter = {}) {
+  const rows = Array.isArray(counter.rows) ? counter.rows.map((row) => ({
+    day: String(row.day || '').trim(),
+    week: String(row.week || '').trim(),
+    total: Number(row.total || 0) || 0,
+    booked: Number(row.booked || 0) || 0,
+    remaining: Number(row.remaining || 0) || 0,
+  })) : [];
+  return {
+    id: String(counter.id || '').trim(),
+    title: String(counter.title || '').trim() || 'Counter',
+    rows,
+    total: Number(counter.total || 0) || rows.reduce((sum, row) => sum + row.total, 0),
+    booked: Number(counter.booked || 0) || rows.reduce((sum, row) => sum + row.booked, 0),
+    remaining: Number(counter.remaining || 0) || rows.reduce((sum, row) => sum + row.remaining, 0),
+  };
+}
+
+function loadBookingBoardsData() {
+  const stat = fs.statSync(BOOKING_BOARDS_DATA_FILE);
+  if (bookingBoardsDataCache && bookingBoardsDataMtimeMs === stat.mtimeMs) {
+    return bookingBoardsDataCache;
+  }
+  bookingBoardsDataCache = JSON.parse(fs.readFileSync(BOOKING_BOARDS_DATA_FILE, 'utf8'));
+  bookingBoardsDataMtimeMs = stat.mtimeMs;
+  return bookingBoardsDataCache;
+}
+
+function getBookingBoardSummaries() {
+  const bookingBoardsData = loadBookingBoardsData();
+  const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
+  return boards
+    .filter((board) => {
+      const entryCount = Array.isArray(board.entries) ? board.entries.length : 0;
+      const sectionCount = Array.isArray(board.sections) ? board.sections.length : 0;
+      const counterCount = Array.isArray(board.counters) ? board.counters.length : 0;
+      return entryCount > 0 || sectionCount > 0 || counterCount > 0;
+    })
+    .map((board) => {
+      const entries = (Array.isArray(board.entries) ? board.entries : []).map((entry) => buildBookingBoardEntrySummary(entry, board));
+      const spareSections = (Array.isArray(board.sections) ? board.sections : []).map((section) => buildSpareBoardSectionSummary(section));
+      const counters = (Array.isArray(board.counters) ? board.counters : []).map((counter) => buildDaysOffCounterSummary(counter));
+      return {
+        id: String(board.id || '').trim(),
+        title: String(board.title || '').trim(),
+        serviceDay: String(board.serviceDay || '').trim(),
+        sourcePdf: String(board.sourcePdf || '').trim(),
+        entryCount: counters.length
+          ? counters.reduce((sum, counter) => sum + counter.rows.length, 0)
+          : board.id === 'spares'
+          ? spareSections.reduce((sum, section) => sum + section.garages.length, 0)
+          : entries.length,
+        takenCount: entries.filter((entry) => entry.taken).length,
+        pieceCount: counters.length
+          ? counters.reduce((sum, counter) => sum + counter.remaining, 0)
+          : board.id === 'spares'
+          ? spareSections.reduce((sum, section) => sum + section.openSlotCount, 0)
+          : entries.reduce((sum, entry) => sum + entry.pieceCount, 0),
+      };
+    });
+}
+
+function buildBookingBoardResponse(requestedBoardId = '') {
+  const summaries = getBookingBoardSummaries();
+  const bookingBoardsData = loadBookingBoardsData();
+  const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
+  const fallbackBoardId = summaries[0]?.id || '';
+  const selectedBoardId = String(requestedBoardId || fallbackBoardId).trim();
+  const board = boards.find((item) => String(item.id || '').trim() === selectedBoardId) || null;
+  if (!board) {
+    return {
+      ok: true,
+      boards: summaries,
+      selectedBoardId: '',
+      board: null,
+      dayOptions: BOOKING_BOARD_DAY_OPTIONS,
+    };
+  }
+
+  const entries = (Array.isArray(board.entries) ? board.entries : [])
+    .map((entry) => buildBookingBoardEntrySummary(entry, board))
+    .filter((entry) => entry.pieceCount > 0 || entry.taken);
+  const sections = (Array.isArray(board.sections) ? board.sections : [])
+    .map((section) => buildSpareBoardSectionSummary(section));
+  const counters = (Array.isArray(board.counters) ? board.counters : [])
+    .map((counter) => buildDaysOffCounterSummary(counter));
+
+  return {
+    ok: true,
+    boards: summaries,
+    selectedBoardId,
+    board: {
+      id: String(board.id || '').trim(),
+      title: String(board.title || '').trim(),
+      serviceDay: String(board.serviceDay || '').trim(),
+      sourcePdf: String(board.sourcePdf || '').trim(),
+      entries,
+      sections,
+      counters,
+    },
+    dayOptions: BOOKING_BOARD_DAY_OPTIONS,
+  };
+}
+
 function getBestPaddleTripCandidates(trips) {
   const nowSeconds = timeToSeconds(
     new Intl.DateTimeFormat('en-GB', {
@@ -2858,6 +3110,18 @@ async function handleSummerBooking(req, res) {
   }
 }
 
+async function handleBookingBoards(req, res) {
+  try {
+    const requestedBoardId = String(req.query.board || '').trim();
+    res.json(buildBookingBoardResponse(requestedBoardId));
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleShuttle(req, res) {
   const shuttleId = normalizeMessage(req.query.id || req.query.shuttle);
   const requestedDay = normalizeServiceDay(req.query.day);
@@ -2999,9 +3263,107 @@ async function handleGtfsDebug(req, res) {
   }
 }
 
+function isAdminBookingBoardRequest(req) {
+  if (!BOOKING_BOARD_ADMIN_TOKEN) return false;
+  const providedToken = String(req.get('x-admin-token') || req.query.token || '').trim();
+  return crypto.timingSafeEqual(
+    Buffer.from(providedToken.padEnd(BOOKING_BOARD_ADMIN_TOKEN.length, '\0').slice(0, BOOKING_BOARD_ADMIN_TOKEN.length)),
+    Buffer.from(BOOKING_BOARD_ADMIN_TOKEN)
+  ) && providedToken.length === BOOKING_BOARD_ADMIN_TOKEN.length;
+}
+
+async function handleBookingBoardUpload(req, res) {
+  if (!BOOKING_BOARD_ADMIN_TOKEN) {
+    res.status(501).json({
+      ok: false,
+      error: 'Booking board uploads are disabled. Set BOOKING_BOARD_ADMIN_TOKEN on the server first.',
+    });
+    return;
+  }
+  if (!isAdminBookingBoardRequest(req)) {
+    res.status(401).json({
+      ok: false,
+      error: 'Invalid admin token.',
+    });
+    return;
+  }
+
+  const boardKey = String(req.params.board || '').trim().toLowerCase();
+  const target = BOOKING_BOARD_UPLOAD_TARGETS[boardKey];
+  if (!target) {
+    res.status(400).json({
+      ok: false,
+      error: 'Unknown booking board type.',
+    });
+    return;
+  }
+
+  const pdfBuffer = Buffer.isBuffer(req.body) ? req.body : null;
+  if (!pdfBuffer || pdfBuffer.length < 5 || pdfBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+    res.status(400).json({
+      ok: false,
+      error: 'Upload a valid PDF file.',
+    });
+    return;
+  }
+
+  fs.mkdirSync(BOOKING_BOARDS_SOURCE_DIR, { recursive: true });
+  const targetPath = path.join(BOOKING_BOARDS_SOURCE_DIR, target.filename);
+  const tempPath = path.join(BOOKING_BOARDS_SOURCE_DIR, `.upload-${boardKey}-${Date.now()}.pdf`);
+  const backupPath = `${targetPath}.bak-${Date.now()}`;
+  let hadExistingFile = false;
+
+  try {
+    fs.writeFileSync(tempPath, pdfBuffer);
+    hadExistingFile = fs.existsSync(targetPath);
+    if (hadExistingFile) fs.copyFileSync(targetPath, backupPath);
+    fs.renameSync(tempPath, targetPath);
+
+    await execFileAsync(PYTHON_BIN, [BOOKING_BOARDS_BUILD_SCRIPT], {
+      cwd: __dirname,
+      timeout: 180000,
+      maxBuffer: 4 * 1024 * 1024,
+    });
+
+    bookingBoardsDataCache = null;
+    bookingBoardsDataMtimeMs = 0;
+    if (hadExistingFile && fs.existsSync(backupPath)) fs.rmSync(backupPath, { force: true });
+
+    const data = loadBookingBoardsData();
+    const boardCount = Array.isArray(data?.boards) ? data.boards.length : 0;
+    res.json({
+      ok: true,
+      board: boardKey,
+      label: target.label,
+      filename: target.filename,
+      boardCount,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    try {
+      if (hadExistingFile && fs.existsSync(backupPath)) {
+        fs.copyFileSync(backupPath, targetPath);
+      }
+      if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { force: true });
+    } catch {}
+    bookingBoardsDataCache = null;
+    bookingBoardsDataMtimeMs = 0;
+    res.status(500).json({
+      ok: false,
+      error: String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 1000),
+    });
+  } finally {
+    try {
+      if (fs.existsSync(backupPath)) fs.rmSync(backupPath, { force: true });
+    } catch {}
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
+app.get('/api/booking-boards', handleBookingBoards);
+app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/shuttle', handleShuttle);
@@ -3045,6 +3407,12 @@ function sendHtmlNoCache(res, filePath) {
 
 app.get('/summer-booking', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
+app.get('/booking-boards', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
+});
+app.get('/booking-board-admin', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-board-admin.html'));
 });
 app.get('/shuttles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'shuttles.html'));

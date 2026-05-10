@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Board Admin</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #607087;
+      --line: #d8deea;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --danger: #b42318;
+      --ok: #087443;
+      --shadow: 0 14px 38px rgba(31, 42, 68, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--accent-dark);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select,
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      padding: 12px;
+    }
+
+    input[type="file"] {
+      padding: 10px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      padding: 12px 16px;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button:disabled { opacity: 0.55; cursor: wait; }
+
+    .status {
+      min-height: 24px;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #fbfcff;
+      white-space: pre-wrap;
+    }
+
+    .status.ok {
+      border-color: rgba(8, 116, 67, 0.25);
+      color: var(--ok);
+      background: rgba(8, 116, 67, 0.06);
+    }
+
+    .status.warn {
+      border-color: rgba(180, 35, 24, 0.25);
+      color: var(--danger);
+      background: rgba(180, 35, 24, 0.06);
+    }
+
+    .note {
+      margin-top: 16px;
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      color: var(--muted);
+      background: #eef7f6;
+      border-radius: 0 8px 8px 0;
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 16px; }
+      .top { display: block; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="main">
+    <section class="top">
+      <div>
+        <h1>Booking Board Admin</h1>
+        <p>Upload a replacement PDF for one board. The site will rebuild the booking board data after upload.</p>
+      </div>
+      <a href="/booking-boards">View boards</a>
+    </section>
+
+    <section class="panel">
+      <form id="uploadForm">
+        <div class="grid">
+          <label>
+            Board
+            <select id="boardType" required>
+              <option value="daily">Daily Work</option>
+              <option value="saturday">Saturday Work</option>
+              <option value="sunday">Sunday Work</option>
+              <option value="spares">Spare Boards</option>
+              <option value="general_spare_weekend">General Spare Weekend</option>
+              <option value="days_off_counter">Days Off Counter</option>
+              <option value="stat">Stat Work</option>
+            </select>
+          </label>
+
+          <label>
+            Admin token
+            <input id="adminToken" type="password" autocomplete="current-password" placeholder="BOOKING_BOARD_ADMIN_TOKEN" required>
+          </label>
+
+          <label>
+            PDF file
+            <input id="pdfFile" type="file" accept="application/pdf,.pdf" required>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="uploadBtn" type="submit">Upload and rebuild</button>
+        </div>
+      </form>
+
+      <div id="status" class="status">Ready.</div>
+      <div class="note">
+        The upload replaces only the selected source PDF. The rebuild uses all five current PDFs, so upload each board that changed.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const boardType = document.getElementById('boardType');
+    const adminToken = document.getElementById('adminToken');
+    const pdfFile = document.getElementById('pdfFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const statusEl = document.getElementById('status');
+
+    const savedToken = sessionStorage.getItem('bookingBoardAdminToken');
+    if (savedToken) adminToken.value = savedToken;
+
+    function setStatus(message, mode = '') {
+      statusEl.textContent = message;
+      statusEl.className = `status ${mode}`.trim();
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = pdfFile.files && pdfFile.files[0];
+      if (!file) {
+        setStatus('Choose a PDF first.', 'warn');
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      sessionStorage.setItem('bookingBoardAdminToken', adminToken.value);
+      setStatus('Uploading PDF and rebuilding booking boards. This can take a minute...');
+
+      try {
+        const response = await fetch(`/api/admin/booking-boards/${encodeURIComponent(boardType.value)}`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/pdf',
+            'x-admin-token': adminToken.value,
+          },
+          body: await file.arrayBuffer(),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Upload failed.');
+        }
+        setStatus(`Updated ${data.label} from ${data.filename}.\nBooking boards rebuilt at ${data.updatedAt}.`, 'ok');
+        pdfFile.value = '';
+      } catch (err) {
+        setStatus(err.message || 'Upload failed.', 'warn');
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
