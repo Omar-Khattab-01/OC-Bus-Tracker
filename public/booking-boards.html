@@ -1063,6 +1063,8 @@
         status: 'open',
         onAfter: '',
         onBefore: '',
+        sortBy: 'board',
+        excludeRoutes: '',
       };
     }
 
@@ -1137,6 +1139,13 @@
         .filter(Boolean);
     }
 
+    function splitRouteFilter(value) {
+      return String(value || '')
+        .split(/[,\s]+/)
+        .map((route) => route.trim())
+        .filter(Boolean);
+    }
+
     function isWeekendFullyTaken(entry) {
       if (entry?.serviceDay === 'saturday') return Boolean(entry.sat1Taken && entry.sat2Taken);
       if (entry?.serviceDay === 'sunday') return Boolean(entry.sun1Taken && entry.sun2Taken);
@@ -1179,6 +1188,8 @@
       if (filters.shift && !shift.includes(String(filters.shift).toLowerCase())) return false;
       if (!entryMatchesStatus(entry, filters.status)) return false;
       if (filters.route && !pieces.some((piece) => splitRouteLabels(piece.routeLabel).includes(filters.route))) return false;
+      const excludedRoutes = splitRouteFilter(filters.excludeRoutes);
+      if (excludedRoutes.length && pieces.some((piece) => splitRouteLabels(piece.routeLabel).some((route) => excludedRoutes.includes(route)))) return false;
       if (filters.run && !pieces.some((piece) => String(piece.block || '') === filters.run)) return false;
       if (filters.from && !pieces.some((piece) => String(piece.from || '') === filters.from)) return false;
       if (filters.to && !pieces.some((piece) => String(piece.to || '') === filters.to)) return false;
@@ -1193,6 +1204,38 @@
         return minutes !== null && minutes <= before;
       })) return false;
       return true;
+    }
+
+    function getEntrySortStats(entry) {
+      const pieces = Array.isArray(entry?.pieces) ? entry.pieces : [];
+      const starts = pieces.map((piece) => timeToMinutes(piece.startTime)).filter((value) => value !== null);
+      const finishes = pieces.map((piece) => timeToMinutes(piece.endTime)).filter((value) => value !== null);
+      const pay = pieces
+        .map((piece) => timeToMinutes(piece.payTime))
+        .filter((value) => value !== null)
+        .reduce((sum, value) => sum + value, 0);
+      return {
+        start: starts.length ? Math.min(...starts) : Number.POSITIVE_INFINITY,
+        latestStart: starts.length ? Math.max(...starts) : Number.NEGATIVE_INFINITY,
+        finish: finishes.length ? Math.max(...finishes) : Number.POSITIVE_INFINITY,
+        pay,
+      };
+    }
+
+    function sortEntriesForView(entries, filters) {
+      const sortBy = String(filters?.sortBy || 'board');
+      if (sortBy === 'board') return entries;
+      return entries
+        .map((entry, index) => ({ entry, index, stats: getEntrySortStats(entry) }))
+        .sort((a, b) => {
+          if (sortBy === 'most-pay') return b.stats.pay - a.stats.pay || a.index - b.index;
+          if (sortBy === 'earliest-finish') return a.stats.finish - b.stats.finish || a.index - b.index;
+          if (sortBy === 'latest-finish') return b.stats.finish - a.stats.finish || a.index - b.index;
+          if (sortBy === 'earliest-start') return a.stats.start - b.stats.start || a.index - b.index;
+          if (sortBy === 'latest-start') return b.stats.latestStart - a.stats.latestStart || a.index - b.index;
+          return a.index - b.index;
+        })
+        .map((item) => item.entry);
     }
 
     function getEntryFilterOptions(entries) {
@@ -1242,11 +1285,28 @@
               </select>
             </div>
             <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}Sort">View By</label>
+              <select id="${escapeHtml(filterKey)}Sort" data-filter-field="sortBy">
+                ${[
+                  ['board', 'Board order'],
+                  ['most-pay', 'Most pay'],
+                  ['earliest-finish', 'Earliest finish'],
+                  ['latest-finish', 'Latest finish'],
+                  ['earliest-start', 'Earliest start'],
+                  ['latest-start', 'Latest start'],
+                ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.sortBy === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="filter-field">
               <label for="${escapeHtml(filterKey)}Route">Route</label>
               <select id="${escapeHtml(filterKey)}Route" data-filter-field="route">
                 <option value="">Any route</option>
                 ${renderOptions(filterOptions.routes, filters.route)}
               </select>
+            </div>
+            <div class="filter-field">
+              <label for="${escapeHtml(filterKey)}ExcludeRoutes">Avoid Routes</label>
+              <input id="${escapeHtml(filterKey)}ExcludeRoutes" type="search" placeholder="e.g. 6, 88, E1" value="${escapeHtml(filters.excludeRoutes)}" data-filter-field="excludeRoutes">
             </div>
             <div class="filter-field">
               <label for="${escapeHtml(filterKey)}Run">Run</label>
@@ -1726,7 +1786,7 @@
       ));
       const filterKey = `stat-${selectedStatWorkBoard}`;
       const filters = getBoardFilters(filterKey);
-      const filteredEntries = baseEntries.filter((entry) => entryMatchesFilters(entry, filters));
+      const filteredEntries = sortEntriesForView(baseEntries.filter((entry) => entryMatchesFilters(entry, filters)), filters);
       const filteredPieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
       const activeHoliday = statDefinitions.find((item) => item.key === selectedStatWorkBoard);
 
@@ -1795,7 +1855,7 @@
       const sectionEntries = grouped.get(selectedDailyWorkSection) || [];
       const filterKey = `daily-${selectedDailyWorkSection}`;
       const filters = getBoardFilters(filterKey);
-      const filteredEntries = sectionEntries.filter((entry) => entryMatchesFilters(entry, filters));
+      const filteredEntries = sortEntriesForView(sectionEntries.filter((entry) => entryMatchesFilters(entry, filters)), filters);
       const pieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
       const spareSummary = Array.isArray(board?.spareSummary) ? board.spareSummary : [];
       const spareSummaryHtml = spareSummary.length ? `
@@ -1889,7 +1949,7 @@
       const sectionEntries = dayEntries.filter((entry) => !selectedGeneralSpareSection || entry.workSection === selectedGeneralSpareSection);
       const filterKey = `weekend-${selectedGeneralSpareDay}-${selectedGeneralSpareSection || 'all'}`;
       const filters = getBoardFilters(filterKey);
-      const filteredEntries = sectionEntries.filter((entry) => entryMatchesFilters(entry, filters));
+      const filteredEntries = sortEntriesForView(sectionEntries.filter((entry) => entryMatchesFilters(entry, filters)), filters);
       const pieceCount = filteredEntries.reduce((sum, entry) => sum + (entry.pieceCount || 0), 0);
       const activeDay = dayDefinitions.find((day) => day.key === selectedGeneralSpareDay);
 
