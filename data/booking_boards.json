@@ -64211,8 +64211,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 40,
-                  "booked": 23,
-                  "available": 17
+                  "booked": 20,
+                  "available": 20
                 }
               ]
             }
@@ -64747,8 +64747,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 25,
-                  "booked": 3,
-                  "available": 22
+                  "booked": 2,
+                  "available": 23
                 }
               ]
             }
@@ -64771,8 +64771,8 @@
                 {
                   "onTime": "14:30",
                   "limit": 33,
-                  "booked": 2,
-                  "available": 31
+                  "booked": 1,
+                  "available": 32
                 },
                 {
                   "onTime": "16:30",
@@ -64819,8 +64819,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 25,
-                  "booked": 2,
-                  "available": 23
+                  "booked": 1,
+                  "available": 24
                 }
               ]
             }
@@ -64843,8 +64843,8 @@
                 {
                   "onTime": "14:30",
                   "limit": 33,
-                  "booked": 1,
-                  "available": 32
+                  "booked": 0,
+                  "available": 33
                 },
                 {
                   "onTime": "16:30",
@@ -65385,8 +65385,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 6,
-                  "available": 14
+                  "booked": 3,
+                  "available": 17
                 }
               ]
             }
@@ -65403,14 +65403,14 @@
                 {
                   "onTime": "12:30",
                   "limit": 20,
-                  "booked": 6,
-                  "available": 14
+                  "booked": 5,
+                  "available": 15
                 },
                 {
                   "onTime": "14:30",
                   "limit": 20,
-                  "booked": 5,
-                  "available": 15
+                  "booked": 4,
+                  "available": 16
                 },
                 {
                   "onTime": "16:30",
@@ -65451,8 +65451,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 7,
-                  "available": 13
+                  "booked": 4,
+                  "available": 16
                 }
               ]
             }
@@ -65469,14 +65469,14 @@
                 {
                   "onTime": "12:30",
                   "limit": 20,
-                  "booked": 6,
-                  "available": 14
+                  "booked": 5,
+                  "available": 15
                 },
                 {
                   "onTime": "14:30",
                   "limit": 20,
-                  "booked": 4,
-                  "available": 16
+                  "booked": 3,
+                  "available": 17
                 },
                 {
                   "onTime": "16:30",
@@ -65535,8 +65535,8 @@
                 {
                   "onTime": "05:15",
                   "limit": 1,
-                  "booked": 1,
-                  "available": 0
+                  "booked": 0,
+                  "available": 1
                 },
                 {
                   "onTime": "05:30",
@@ -65601,8 +65601,8 @@
                 {
                   "onTime": "05:45",
                   "limit": 2,
-                  "booked": 1,
-                  "available": 1
+                  "booked": 0,
+                  "available": 2
                 },
                 {
                   "onTime": "06:00",
@@ -65757,8 +65757,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 25,
-                  "booked": 13,
-                  "available": 12
+                  "booked": 12,
+                  "available": 13
                 }
               ]
             }
@@ -65775,14 +65775,14 @@
                 {
                   "onTime": "12:30",
                   "limit": 20,
-                  "booked": 7,
-                  "available": 13
+                  "booked": 6,
+                  "available": 14
                 },
                 {
                   "onTime": "14:30",
                   "limit": 25,
-                  "booked": 7,
-                  "available": 18
+                  "booked": 4,
+                  "available": 21
                 },
                 {
                   "onTime": "16:30",
@@ -66069,8 +66069,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 11,
-                  "available": 9
+                  "booked": 9,
+                  "available": 11
                 }
               ]
             }
@@ -66087,14 +66087,14 @@
                 {
                   "onTime": "12:30",
                   "limit": 25,
-                  "booked": 11,
-                  "available": 14
+                  "booked": 10,
+                  "available": 15
                 },
                 {
                   "onTime": "14:30",
                   "limit": 26,
-                  "booked": 5,
-                  "available": 21
+                  "booked": 3,
+                  "available": 23
                 },
                 {
                   "onTime": "16:30",
@@ -66132,8 +66132,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 40,
-                  "booked": 20,
-                  "available": 20
+                  "booked": 23,
+                  "available": 17
                 }
               ]
             }
@@ -66150,8 +66150,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 8,
-                  "booked": 3,
-                  "available": 5
+                  "booked": 5,
+                  "available": 3
                 }
               ]
             }
@@ -66168,8 +66168,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 15,
-                  "booked": 8,
-                  "available": 7
+                  "booked": 9,
+                  "available": 6
                 }
               ]
             }
