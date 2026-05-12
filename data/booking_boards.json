@@ -61060,76 +61060,76 @@
               "day": "Monday",
               "week": "1",
               "total": 100,
-              "booked": 10,
-              "remaining": 90
+              "booked": 12,
+              "remaining": 88
             },
             {
               "day": "Tuesday",
               "week": "1",
+              "total": 100,
+              "booked": 7,
+              "remaining": 93
+            },
+            {
+              "day": "Wednesday",
+              "week": "1",
+              "total": 100,
+              "booked": 22,
+              "remaining": 78
+            },
+            {
+              "day": "Thursday",
+              "week": "1",
+              "total": 100,
+              "booked": 14,
+              "remaining": 86
+            },
+            {
+              "day": "Friday",
+              "week": "1",
+              "total": 100,
+              "booked": 61,
+              "remaining": 39
+            },
+            {
+              "day": "Monday",
+              "week": "2",
+              "total": 100,
+              "booked": 11,
+              "remaining": 89
+            },
+            {
+              "day": "Tuesday",
+              "week": "2",
               "total": 100,
               "booked": 6,
               "remaining": 94
             },
             {
               "day": "Wednesday",
-              "week": "1",
+              "week": "2",
               "total": 100,
-              "booked": 17,
-              "remaining": 83
+              "booked": 11,
+              "remaining": 89
             },
             {
               "day": "Thursday",
-              "week": "1",
-              "total": 100,
-              "booked": 12,
-              "remaining": 88
-            },
-            {
-              "day": "Friday",
-              "week": "1",
-              "total": 100,
-              "booked": 56,
-              "remaining": 44
-            },
-            {
-              "day": "Monday",
-              "week": "2",
-              "total": 100,
-              "booked": 7,
-              "remaining": 93
-            },
-            {
-              "day": "Tuesday",
-              "week": "2",
-              "total": 100,
-              "booked": 5,
-              "remaining": 95
-            },
-            {
-              "day": "Wednesday",
               "week": "2",
               "total": 100,
               "booked": 10,
               "remaining": 90
             },
             {
-              "day": "Thursday",
-              "week": "2",
-              "total": 100,
-              "booked": 8,
-              "remaining": 92
-            },
-            {
               "day": "Friday",
               "week": "2",
               "total": 100,
-              "booked": 44,
-              "remaining": 56
+              "booked": 52,
+              "remaining": 48
             }
           ],
           "total": 1000,
-          "booked": 175,
-          "remaining": 825
+          "booked": 206,
+          "remaining": 794
         },
         {
           "id": "night_work",
@@ -61153,62 +61153,62 @@
               "day": "Wednesday",
               "week": "1",
               "total": 70,
-              "booked": 2,
-              "remaining": 68
+              "booked": 4,
+              "remaining": 66
             },
             {
               "day": "Thursday",
               "week": "1",
               "total": 70,
-              "booked": 4,
-              "remaining": 66
+              "booked": 9,
+              "remaining": 61
             },
             {
               "day": "Friday",
               "week": "1",
               "total": 70,
-              "booked": 29,
-              "remaining": 41
+              "booked": 39,
+              "remaining": 31
             },
             {
               "day": "Monday",
               "week": "2",
               "total": 70,
-              "booked": 3,
-              "remaining": 67
+              "booked": 5,
+              "remaining": 65
             },
             {
               "day": "Tuesday",
               "week": "2",
               "total": 70,
-              "booked": 4,
-              "remaining": 66
+              "booked": 5,
+              "remaining": 65
             },
             {
               "day": "Wednesday",
               "week": "2",
               "total": 70,
-              "booked": 5,
-              "remaining": 65
+              "booked": 7,
+              "remaining": 63
             },
             {
               "day": "Thursday",
               "week": "2",
               "total": 70,
-              "booked": 5,
-              "remaining": 65
+              "booked": 10,
+              "remaining": 60
             },
             {
               "day": "Friday",
               "week": "2",
               "total": 70,
-              "booked": 23,
-              "remaining": 47
+              "booked": 33,
+              "remaining": 37
             }
           ],
           "total": 700,
-          "booked": 79,
-          "remaining": 621
+          "booked": 116,
+          "remaining": 584
         }
       ]
     },
