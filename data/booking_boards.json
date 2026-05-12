@@ -18386,6 +18386,448 @@
           "sourcePdf": "2026 Summer daily bords.pdf",
           "shiftId": "292",
           "workSection": "Mixed Relief Work"
+        },
+        {
+          "id": "daily-62-815",
+          "title": "Daily 815",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "815",
+              "block": "41-05",
+              "routeLabel": "6,41",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "05:42",
+              "endTime": "08:57",
+              "payTime": "03:15",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "815",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-818",
+          "title": "Daily 818",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "818",
+              "block": "18-03",
+              "routeLabel": "18,105",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:03",
+              "endTime": "09:40",
+              "payTime": "03:37",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "818",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-821",
+          "title": "Daily 821",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "821",
+              "block": "14-08",
+              "routeLabel": "14,20",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:06",
+              "endTime": "10:03",
+              "payTime": "03:57",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "821",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-824",
+          "title": "Daily 824",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "824",
+              "block": "7-10",
+              "routeLabel": "7,18",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:09",
+              "endTime": "10:37",
+              "payTime": "04:28",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "824",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-825",
+          "title": "Daily 825",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "825",
+              "block": "900-201",
+              "routeLabel": "7,12,226",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:10",
+              "endTime": "09:51",
+              "payTime": "03:41",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "825",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-827",
+          "title": "Daily 827",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "827",
+              "block": "900-202",
+              "routeLabel": "14,56,279",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:13",
+              "endTime": "10:27",
+              "payTime": "04:14",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "827",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-830",
+          "title": "Daily 830",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "830",
+              "block": "900-204",
+              "routeLabel": "6,8,20",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:19",
+              "endTime": "09:03",
+              "payTime": "02:44",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "830",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-835",
+          "title": "Daily 835",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "835",
+              "block": "705-04",
+              "routeLabel": "E1",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:35",
+              "endTime": "09:22",
+              "payTime": "02:47",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "835",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-836",
+          "title": "Daily 836",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "836",
+              "block": "90-06",
+              "routeLabel": "6,90",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:35",
+              "endTime": "10:06",
+              "payTime": "03:31",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "836",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-837",
+          "title": "Daily 837",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "837",
+              "block": "900-206",
+              "routeLabel": "30,34",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:35",
+              "endTime": "10:47",
+              "payTime": "04:12",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "837",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-839",
+          "title": "Daily 839",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "839",
+              "block": "900-207",
+              "routeLabel": "24,32,34",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:39",
+              "endTime": "10:25",
+              "payTime": "03:46",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "839",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-841",
+          "title": "Daily 841",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "841",
+              "block": "14-10",
+              "routeLabel": "14",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:44",
+              "endTime": "08:59",
+              "payTime": "02:15",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "841",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-843",
+          "title": "Daily 843",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "843",
+              "block": "900-208",
+              "routeLabel": "34,39",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "06:46",
+              "endTime": "09:56",
+              "payTime": "03:10",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "843",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-62-844",
+          "title": "Daily 844",
+          "serviceDay": "weekday",
+          "boardPage": 62,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "844",
+              "block": "900-209",
+              "routeLabel": "24,226",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "07:09",
+              "endTime": "09:27",
+              "payTime": "02:18",
+              "page": 62,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "844",
+          "workSection": "AM Biddable Trippers"
+        },
+        {
+          "id": "daily-63-853",
+          "title": "Daily 853",
+          "serviceDay": "weekday",
+          "boardPage": 63,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "853",
+              "block": "901-709",
+              "routeLabel": "198",
+              "from": "Industrial Garage",
+              "to": "Industrial Garage",
+              "startTime": "16:25",
+              "endTime": "19:20",
+              "payTime": "02:55",
+              "page": 63,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "853",
+          "workSection": "PM Biddable Trippers"
+        },
+        {
+          "id": "daily-63-854",
+          "title": "Daily 854",
+          "serviceDay": "weekday",
+          "boardPage": 63,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "854",
+              "block": "5-16",
+              "routeLabel": "5",
+              "from": "Industrial Garage",
+              "to": "Industrial Garage",
+              "startTime": "17:42",
+              "endTime": "20:49",
+              "payTime": "03:07",
+              "page": 63,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "854",
+          "workSection": "PM Biddable Trippers"
+        },
+        {
+          "id": "daily-63-850",
+          "title": "Daily 850",
+          "serviceDay": "weekday",
+          "boardPage": 63,
+          "availabilityStart": "",
+          "availabilityEnd": "",
+          "taken": false,
+          "pieces": [
+            {
+              "pieceId": "850",
+              "block": "705-10",
+              "routeLabel": "E1",
+              "from": "St L North Garage",
+              "to": "St L North Garage",
+              "startTime": "15:05",
+              "endTime": "18:00",
+              "payTime": "02:55",
+              "page": 63,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Summer daily bords.pdf",
+          "shiftId": "850",
+          "workSection": "PM Biddable Trippers"
         }
       ]
     },

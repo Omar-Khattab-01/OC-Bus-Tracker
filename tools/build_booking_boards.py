@@ -395,10 +395,9 @@ def parse_daily_board(pdf_path: Path):
     pending_shift = ""
     expecting_daily = False
     last_biddable_entry = None
+    in_biddable_section = False
     current_biddable_section = "AM Biddable Trippers"
     for page in extract_position_rows(pdf_path):
-        if page["page"] < 99:
-            continue
         for row in page["rows"]:
             cells = row["cells"]
             texts = [cell["text"] for cell in cells]
@@ -415,15 +414,19 @@ def parse_daily_board(pdf_path: Path):
                 }
             if any("AM Biddable Trippers" in text for text in texts):
                 current_biddable_section = "AM Biddable Trippers"
+                in_biddable_section = True
                 expecting_daily = False
                 pending_route = ""
                 pending_shift = ""
                 continue
             if any("PM Biddable Trippers" in text for text in texts):
                 current_biddable_section = "PM Biddable Trippers"
+                in_biddable_section = True
                 expecting_daily = False
                 pending_route = ""
                 pending_shift = ""
+                continue
+            if not in_biddable_section:
                 continue
             shift_cell = next((cell for cell in cells if re.fullmatch(r"\d{1,4}", cell["text"])), None)
             detail_cell = next((
