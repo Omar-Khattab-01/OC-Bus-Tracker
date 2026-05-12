@@ -1514,6 +1514,19 @@
         selectedSpareGroup = availableGroups[0]?.key || 'daily';
       }
 
+      const sortSpareSections = (items) => [...items].sort((a, b) => {
+        const getOrder = (section, index) => {
+          const title = String(section?.title || '').toLowerCase();
+          const page = Number(section?.page || 0) || 0;
+          const saturdayWeek = title.match(/\bsaturday\s+([12])\s+spare\b/);
+          if (saturdayWeek) return [page, Number(saturdayWeek[1]) - 1, index];
+          return [page, 50, index];
+        };
+        const left = getOrder(a, items.indexOf(a));
+        const right = getOrder(b, items.indexOf(b));
+        return left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
+      });
+
       const renderSectionCard = (section) => `
         <article class="board-card">
           <div class="board-card-head">
@@ -1579,7 +1592,7 @@
       `;
 
       const activeGroup = availableGroups.find((group) => group.key === selectedSpareGroup) || availableGroups[0];
-      let groupSections = groups[activeGroup?.key || 'daily'] || [];
+      let groupSections = sortSpareSections(groups[activeGroup?.key || 'daily'] || []);
 
       let statDefinitions = [];
       if (activeGroup?.key === 'stat') {

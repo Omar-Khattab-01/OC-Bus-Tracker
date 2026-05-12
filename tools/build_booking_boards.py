@@ -867,6 +867,15 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
       current_garage = garage
       return garage
 
+    def section_sort_key(index_and_section):
+      index, section = index_and_section
+      section_title = section.get("title", "").lower()
+      page_number = int(section.get("page") or 0)
+      saturday_week_match = re.search(r"\bsaturday\s+([12])\s+spare\b", section_title)
+      if saturday_week_match:
+          return (page_number, int(saturday_week_match.group(1)) - 1, index)
+      return (page_number, 50, index)
+
     for page in pages:
         for line in page["lines"]:
             if line.startswith("General Booking Spare Progress Report") or re.fullmatch(r"\d+/\d+/\d+.*", line):
@@ -889,6 +898,7 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
                 ensure_garage(line)
         # keep current section open across page breaks for continued rows
     flush_section()
+    sections = [section for _, section in sorted(enumerate(sections), key=section_sort_key)]
     return {
         "id": board_id,
         "title": title,
