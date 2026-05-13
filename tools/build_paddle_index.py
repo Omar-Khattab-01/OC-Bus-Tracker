@@ -498,7 +498,11 @@ def normalize_continuation_page_text(text: str) -> str:
     for line in lines:
         current = line
         if not first_non_empty_seen and clean_line(line):
-            current = re.sub(r"^\d+(?=[A-Za-z])", "", current)
+            stripped_page_number = re.sub(r"^\s*\d+\s+(?=\d{1,3}[A-Za-z])", "", current)
+            if stripped_page_number != current:
+                current = stripped_page_number
+            else:
+                current = re.sub(r"^\d+(?=[A-Za-z])", "", current)
             first_non_empty_seen = True
         cleaned.append(current)
 
