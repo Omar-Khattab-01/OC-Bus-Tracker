@@ -59166,8 +59166,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 40,
-                  "booked": 29,
-                  "available": 11
+                  "booked": 30,
+                  "available": 10
                 }
               ]
             }
@@ -59202,8 +59202,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 15,
-                  "booked": 12,
-                  "available": 3
+                  "booked": 13,
+                  "available": 2
                 }
               ]
             }
@@ -59220,8 +59220,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 20,
-                  "booked": 11,
-                  "available": 9
+                  "booked": 12,
+                  "available": 8
                 }
               ]
             }
