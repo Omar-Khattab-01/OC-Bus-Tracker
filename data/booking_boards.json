@@ -14312,7 +14312,7 @@
           "boardPage": 1,
           "availabilityStart": "07:14",
           "availabilityEnd": "07:44",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "12-01",
@@ -14324,7 +14324,7 @@
               "pieceId": "101",
               "routeLabel": "75",
               "page": 1,
-              "taken": false
+              "taken": true
             },
             {
               "block": "12-01",
@@ -14336,13 +14336,13 @@
               "pieceId": "101",
               "routeLabel": "12",
               "page": 1,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "101",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -16766,7 +16766,7 @@
           "boardPage": 10,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "39-06",
@@ -16778,7 +16778,7 @@
               "pieceId": "206",
               "routeLabel": "39",
               "page": 10,
-              "taken": false
+              "taken": true
             },
             {
               "block": "39-06",
@@ -16790,13 +16790,13 @@
               "pieceId": "206",
               "routeLabel": "20,24",
               "page": 10,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "206",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -16976,7 +16976,7 @@
           "boardPage": 11,
           "availabilityStart": "07:55",
           "availabilityEnd": "08:25",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "111-01",
@@ -16988,7 +16988,7 @@
               "pieceId": "486",
               "routeLabel": "111",
               "page": 11,
-              "taken": false
+              "taken": true
             },
             {
               "block": "111-01",
@@ -17000,13 +17000,13 @@
               "pieceId": "486",
               "routeLabel": "6,111,116,197",
               "page": 11,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "486",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -17336,7 +17336,7 @@
           "boardPage": 12,
           "availabilityStart": "09:10",
           "availabilityEnd": "09:40",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "85-05",
@@ -17348,13 +17348,13 @@
               "pieceId": "393",
               "routeLabel": "109",
               "page": 12,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "393",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -17366,7 +17366,7 @@
           "boardPage": 12,
           "availabilityStart": "07:59",
           "availabilityEnd": "08:29",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "63-01",
@@ -17378,7 +17378,7 @@
               "pieceId": "317",
               "routeLabel": "61",
               "page": 12,
-              "taken": false
+              "taken": true
             },
             {
               "block": "63-01",
@@ -17390,13 +17390,13 @@
               "pieceId": "317",
               "routeLabel": "61,62,63",
               "page": 12,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "317",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -17894,7 +17894,7 @@
           "boardPage": 14,
           "availabilityStart": "08:13",
           "availabilityEnd": "08:43",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "31-02",
@@ -17906,14 +17906,14 @@
               "pieceId": "173",
               "routeLabel": "31,35,109",
               "page": 14,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "173",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -18584,7 +18584,7 @@
           "boardPage": 17,
           "availabilityStart": "08:49",
           "availabilityEnd": "09:19",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "63-02",
@@ -18596,7 +18596,7 @@
               "pieceId": "319",
               "routeLabel": "63",
               "page": 17,
-              "taken": false
+              "taken": true
             },
             {
               "block": "63-02",
@@ -18608,14 +18608,14 @@
               "pieceId": "319",
               "routeLabel": "61,62,63",
               "page": 17,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "319",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -18752,7 +18752,7 @@
           "boardPage": 18,
           "availabilityStart": "08:19",
           "availabilityEnd": "08:49",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "80-01",
@@ -18764,13 +18764,13 @@
               "pieceId": "375",
               "routeLabel": "56,109",
               "page": 18,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "375",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -18782,7 +18782,7 @@
           "boardPage": 18,
           "availabilityStart": "09:10",
           "availabilityEnd": "09:40",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "44-02",
@@ -18794,13 +18794,13 @@
               "pieceId": "240",
               "routeLabel": "109",
               "page": 18,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "240",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -18843,7 +18843,7 @@
           "shiftId": "179",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -19317,7 +19317,7 @@
           "shiftId": "349",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -20324,7 +20324,7 @@
           "boardPage": 24,
           "availabilityStart": "07:27",
           "availabilityEnd": "07:57",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "85-07",
@@ -20336,7 +20336,7 @@
               "pieceId": "395",
               "routeLabel": "20",
               "page": 24,
-              "taken": false
+              "taken": true
             },
             {
               "block": "85-07",
@@ -20348,13 +20348,13 @@
               "pieceId": "395",
               "routeLabel": "85",
               "page": 24,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "395",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -20504,7 +20504,7 @@
           "boardPage": 25,
           "availabilityStart": "07:39",
           "availabilityEnd": "08:09",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "74-02",
@@ -20516,7 +20516,7 @@
               "pieceId": "351",
               "routeLabel": "74",
               "page": 25,
-              "taken": false
+              "taken": true
             },
             {
               "block": "74-02",
@@ -20528,13 +20528,13 @@
               "pieceId": "351",
               "routeLabel": "74,81",
               "page": 25,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "351",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -21764,7 +21764,7 @@
           "boardPage": 29,
           "availabilityStart": "10:43",
           "availabilityEnd": "11:43",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "138-01",
@@ -21776,7 +21776,7 @@
               "pieceId": "502",
               "routeLabel": "25",
               "page": 29,
-              "taken": false
+              "taken": true
             },
             {
               "block": "138-01",
@@ -21788,7 +21788,7 @@
               "pieceId": "502",
               "routeLabel": "25,36",
               "page": 29,
-              "taken": false
+              "taken": true
             },
             {
               "block": "138-01",
@@ -21800,14 +21800,14 @@
               "pieceId": "502",
               "routeLabel": "138",
               "page": 29,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "502",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -21890,7 +21890,7 @@
           "boardPage": 30,
           "availabilityStart": "09:31",
           "availabilityEnd": "10:31",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "163-01",
@@ -21902,7 +21902,7 @@
               "pieceId": "510",
               "routeLabel": "163",
               "page": 30,
-              "taken": false
+              "taken": true
             },
             {
               "block": "163-01",
@@ -21914,7 +21914,7 @@
               "pieceId": "510",
               "routeLabel": "163,168",
               "page": 30,
-              "taken": false
+              "taken": true
             },
             {
               "block": "163-01",
@@ -21926,13 +21926,13 @@
               "pieceId": "510",
               "routeLabel": "68",
               "page": 30,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "510",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -22262,7 +22262,7 @@
           "boardPage": 31,
           "availabilityStart": "08:02",
           "availabilityEnd": "08:32",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "35-01",
@@ -22274,7 +22274,7 @@
               "pieceId": "191",
               "routeLabel": "35,109",
               "page": 31,
-              "taken": false
+              "taken": true
             },
             {
               "block": "35-01",
@@ -22286,13 +22286,13 @@
               "pieceId": "191",
               "routeLabel": "109",
               "page": 31,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "191",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -22809,7 +22809,7 @@
           "shiftId": "519",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -23810,7 +23810,7 @@
           "boardPage": 37,
           "availabilityStart": "09:43",
           "availabilityEnd": "10:43",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "139-01",
@@ -23822,7 +23822,7 @@
               "pieceId": "537",
               "routeLabel": "139",
               "page": 37,
-              "taken": false
+              "taken": true
             },
             {
               "block": "139-01",
@@ -23834,7 +23834,7 @@
               "pieceId": "537",
               "routeLabel": "139",
               "page": 37,
-              "taken": false
+              "taken": true
             },
             {
               "block": "139-01",
@@ -23846,13 +23846,13 @@
               "pieceId": "537",
               "routeLabel": "139",
               "page": 37,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "537",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -24032,7 +24032,7 @@
           "boardPage": 38,
           "availabilityStart": "10:03",
           "availabilityEnd": "11:03",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "165-01",
@@ -24044,7 +24044,7 @@
               "pieceId": "514",
               "routeLabel": "67,161,165",
               "page": 38,
-              "taken": false
+              "taken": true
             },
             {
               "block": "165-01",
@@ -24056,7 +24056,7 @@
               "pieceId": "514",
               "routeLabel": "165,168",
               "page": 38,
-              "taken": false
+              "taken": true
             },
             {
               "block": "165-01",
@@ -24068,13 +24068,13 @@
               "pieceId": "514",
               "routeLabel": "163,168",
               "page": 38,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "514",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -25346,7 +25346,7 @@
           "boardPage": 43,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "24-03",
@@ -25358,7 +25358,7 @@
               "pieceId": "155",
               "routeLabel": "24,38",
               "page": 43,
-              "taken": false
+              "taken": true
             },
             {
               "block": "24-03",
@@ -25370,14 +25370,14 @@
               "pieceId": "155",
               "routeLabel": "24",
               "page": 43,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "155",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -25514,7 +25514,7 @@
           "boardPage": 43,
           "availabilityStart": "07:44",
           "availabilityEnd": "08:14",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "88-01",
@@ -25526,7 +25526,7 @@
               "pieceId": "414",
               "routeLabel": "88,98",
               "page": 43,
-              "taken": false
+              "taken": true
             },
             {
               "block": "88-13",
@@ -25538,13 +25538,13 @@
               "pieceId": "414",
               "routeLabel": "88,98",
               "page": 43,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "414",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -26408,7 +26408,7 @@
           "boardPage": 47,
           "availabilityStart": "08:34",
           "availabilityEnd": "09:04",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "12-09",
@@ -26420,7 +26420,7 @@
               "pieceId": "114",
               "routeLabel": "14",
               "page": 47,
-              "taken": false
+              "taken": true
             },
             {
               "block": "12-09",
@@ -26432,14 +26432,14 @@
               "pieceId": "114",
               "routeLabel": "12,14",
               "page": 47,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "114",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -28232,7 +28232,7 @@
           "boardPage": 54,
           "availabilityStart": "08:57",
           "availabilityEnd": "09:57",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "14-12",
@@ -28244,7 +28244,7 @@
               "pieceId": "137",
               "routeLabel": "70,173",
               "page": 54,
-              "taken": false
+              "taken": true
             },
             {
               "block": "14-12",
@@ -28256,7 +28256,7 @@
               "pieceId": "137",
               "routeLabel": "61,110",
               "page": 54,
-              "taken": false
+              "taken": true
             },
             {
               "block": "14-12",
@@ -28268,13 +28268,13 @@
               "pieceId": "137",
               "routeLabel": "14",
               "page": 54,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "137",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -28604,7 +28604,7 @@
           "boardPage": 55,
           "availabilityStart": "07:59",
           "availabilityEnd": "08:29",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "39-15",
@@ -28616,7 +28616,7 @@
               "pieceId": "216",
               "routeLabel": "87,111,116",
               "page": 55,
-              "taken": false
+              "taken": true
             },
             {
               "block": "39-15",
@@ -28628,14 +28628,14 @@
               "pieceId": "216",
               "routeLabel": "39",
               "page": 55,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "216",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -28718,7 +28718,7 @@
           "boardPage": 56,
           "availabilityStart": "09:46",
           "availabilityEnd": "10:46",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "34-01",
@@ -28730,7 +28730,7 @@
               "pieceId": "187",
               "routeLabel": "34,35",
               "page": 56,
-              "taken": false
+              "taken": true
             },
             {
               "block": "34-01",
@@ -28742,7 +28742,7 @@
               "pieceId": "187",
               "routeLabel": "18,40",
               "page": 56,
-              "taken": false
+              "taken": true
             },
             {
               "block": "34-01",
@@ -28754,14 +28754,14 @@
               "pieceId": "187",
               "routeLabel": "90",
               "page": 56,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "187",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -30098,7 +30098,7 @@
           "boardPage": 61,
           "availabilityStart": "07:56",
           "availabilityEnd": "08:26",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "99-02",
@@ -30110,7 +30110,7 @@
               "pieceId": "452",
               "routeLabel": "75",
               "page": 61,
-              "taken": false
+              "taken": true
             },
             {
               "block": "99-02",
@@ -30122,14 +30122,14 @@
               "pieceId": "452",
               "routeLabel": "62,63",
               "page": 61,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "452",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -30393,7 +30393,7 @@
           "shiftId": "248",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -30404,7 +30404,7 @@
           "boardPage": 62,
           "availabilityStart": "09:31",
           "availabilityEnd": "10:31",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "56-09",
@@ -30416,7 +30416,7 @@
               "pieceId": "292",
               "routeLabel": "40",
               "page": 62,
-              "taken": false
+              "taken": true
             },
             {
               "block": "56-09",
@@ -30428,7 +30428,7 @@
               "pieceId": "292",
               "routeLabel": "56,111,116,197",
               "page": 62,
-              "taken": false
+              "taken": true
             },
             {
               "block": "56-09",
@@ -30440,14 +30440,14 @@
               "pieceId": "292",
               "routeLabel": "56,86",
               "page": 62,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "292",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -31221,7 +31221,7 @@
           "shiftId": "164",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -31676,7 +31676,7 @@
           "boardPage": 67,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "18-06",
@@ -31688,7 +31688,7 @@
               "pieceId": "146",
               "routeLabel": "30,109",
               "page": 67,
-              "taken": false
+              "taken": true
             },
             {
               "block": "18-06",
@@ -31700,13 +31700,13 @@
               "pieceId": "146",
               "routeLabel": "10,18",
               "page": 67,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "146",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -31802,7 +31802,7 @@
           "boardPage": 67,
           "availabilityStart": "07:57",
           "availabilityEnd": "08:27",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "87-02",
@@ -31814,7 +31814,7 @@
               "pieceId": "412",
               "routeLabel": "87,111,116",
               "page": 67,
-              "taken": false
+              "taken": true
             },
             {
               "block": "87-02",
@@ -31826,14 +31826,14 @@
               "pieceId": "412",
               "routeLabel": "62",
               "page": 67,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "412",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -34172,7 +34172,7 @@
           "boardPage": 76,
           "availabilityStart": "08:53",
           "availabilityEnd": "09:23",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "81-05",
@@ -34184,7 +34184,7 @@
               "pieceId": "385",
               "routeLabel": "61,68,116,197",
               "page": 76,
-              "taken": false
+              "taken": true
             },
             {
               "block": "81-05",
@@ -34196,13 +34196,13 @@
               "pieceId": "385",
               "routeLabel": "81,972",
               "page": 76,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "385",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -34478,7 +34478,7 @@
           "boardPage": 78,
           "availabilityStart": "08:33",
           "availabilityEnd": "09:03",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "112-04",
@@ -34490,7 +34490,7 @@
               "pieceId": "496",
               "routeLabel": "82,112",
               "page": 78,
-              "taken": false
+              "taken": true
             },
             {
               "block": "112-04",
@@ -34502,14 +34502,14 @@
               "pieceId": "496",
               "routeLabel": "68",
               "page": 78,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "496",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -36140,7 +36140,7 @@
           "boardPage": 84,
           "availabilityStart": "08:33",
           "availabilityEnd": "09:03",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "75-18",
@@ -36152,7 +36152,7 @@
               "pieceId": "374",
               "routeLabel": "75",
               "page": 84,
-              "taken": false
+              "taken": true
             },
             {
               "block": "75-18",
@@ -36164,13 +36164,13 @@
               "pieceId": "374",
               "routeLabel": "61",
               "page": 84,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "374",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -36488,7 +36488,7 @@
           "boardPage": 85,
           "availabilityStart": "08:11",
           "availabilityEnd": "08:41",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "44-06",
@@ -36500,7 +36500,7 @@
               "pieceId": "244",
               "routeLabel": "30,44",
               "page": 85,
-              "taken": false
+              "taken": true
             },
             {
               "block": "44-06",
@@ -36512,14 +36512,14 @@
               "pieceId": "244",
               "routeLabel": "972",
               "page": 85,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
           "shiftId": "244",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -36764,7 +36764,7 @@
           "boardPage": 87,
           "availabilityStart": "08:36",
           "availabilityEnd": "09:06",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "19-01",
@@ -36776,7 +36776,7 @@
               "pieceId": "124",
               "routeLabel": "105",
               "page": 87,
-              "taken": false
+              "taken": true
             },
             {
               "block": "19-01",
@@ -36788,7 +36788,7 @@
               "pieceId": "124",
               "routeLabel": "10,45",
               "page": 87,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -36796,7 +36796,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -36806,7 +36806,7 @@
           "boardPage": 87,
           "availabilityStart": "07:55",
           "availabilityEnd": "08:25",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "33-01",
@@ -36818,7 +36818,7 @@
               "pieceId": "166",
               "routeLabel": "39",
               "page": 87,
-              "taken": false
+              "taken": true
             },
             {
               "block": "33-01",
@@ -36830,7 +36830,7 @@
               "pieceId": "166",
               "routeLabel": "33",
               "page": 87,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -36838,7 +36838,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -37100,7 +37100,7 @@
           "boardPage": 89,
           "availabilityStart": "08:31",
           "availabilityEnd": "09:01",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "53-02",
@@ -37112,7 +37112,7 @@
               "pieceId": "261",
               "routeLabel": "86,945",
               "page": 89,
-              "taken": false
+              "taken": true
             },
             {
               "block": "53-02",
@@ -37124,7 +37124,7 @@
               "pieceId": "261",
               "routeLabel": "53,81",
               "page": 89,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -37132,7 +37132,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -37458,7 +37458,7 @@
               "endTime": "13:44",
               "payTime": "04:40",
               "pieceId": "247",
-              "routeLabel": "51,53,86",
+              "routeLabel": "53,109",
               "page": 90,
               "taken": true
             }
@@ -37836,7 +37836,7 @@
               "endTime": "14:18",
               "payTime": "04:01",
               "pieceId": "153",
-              "routeLabel": "30,35",
+              "routeLabel": "109",
               "page": 91,
               "taken": true
             }
@@ -38024,7 +38024,7 @@
           "boardPage": 92,
           "availabilityStart": "08:32",
           "availabilityEnd": "09:02",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "44-02",
@@ -38036,7 +38036,7 @@
               "pieceId": "222",
               "routeLabel": "111,895",
               "page": 92,
-              "taken": false
+              "taken": true
             },
             {
               "block": "44-02",
@@ -38048,7 +38048,7 @@
               "pieceId": "222",
               "routeLabel": "44,48",
               "page": 92,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -38056,7 +38056,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -38066,31 +38066,31 @@
           "boardPage": 92,
           "availabilityStart": "09:05",
           "availabilityEnd": "09:35",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "61-01",
               "from": "Merivale Garage",
-              "to": "Tunney's Station",
+              "to": "Parking - Merivale Garage",
               "startTime": "04:59",
               "endTime": "09:01",
               "payTime": "04:02",
               "pieceId": "276",
-              "routeLabel": "61",
+              "routeLabel": "61,109",
               "page": 92,
-              "taken": false
+              "taken": true
             },
             {
               "block": "61-01",
-              "from": "Tunney's Station",
+              "from": "Parking - Merivale Garage",
               "to": "Merivale Garage",
               "startTime": "09:53",
               "endTime": "14:34",
               "payTime": "04:41",
               "pieceId": "276",
-              "routeLabel": "51,75",
+              "routeLabel": "109",
               "page": 92,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -38098,7 +38098,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -38856,7 +38856,7 @@
               "endTime": "12:57",
               "payTime": "02:55",
               "pieceId": "236",
-              "routeLabel": "38,42",
+              "routeLabel": "109",
               "page": 95,
               "taken": true
             }
@@ -38867,7 +38867,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-96-324",
@@ -39002,7 +39002,7 @@
           "boardPage": 96,
           "availabilityStart": "08:06",
           "availabilityEnd": "08:36",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "10-04",
@@ -39014,7 +39014,7 @@
               "pieceId": "63",
               "routeLabel": "61,62",
               "page": 96,
-              "taken": false
+              "taken": true
             },
             {
               "block": "10-04",
@@ -39026,7 +39026,7 @@
               "pieceId": "63",
               "routeLabel": "109",
               "page": 96,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -39034,7 +39034,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -39392,7 +39392,7 @@
           "boardPage": 98,
           "availabilityStart": "09:09",
           "availabilityEnd": "09:39",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "173-01",
@@ -39404,7 +39404,7 @@
               "pieceId": "447",
               "routeLabel": "173",
               "page": 98,
-              "taken": false
+              "taken": true
             },
             {
               "block": "173-01",
@@ -39416,7 +39416,7 @@
               "pieceId": "447",
               "routeLabel": "61,62",
               "page": 98,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -39424,8 +39424,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-98-24",
@@ -39593,7 +39593,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-98-407",
@@ -39644,7 +39644,7 @@
           "boardPage": 99,
           "availabilityStart": "07:15",
           "availabilityEnd": "07:45",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "162-02",
@@ -39656,7 +39656,7 @@
               "pieceId": "432",
               "routeLabel": "80,86",
               "page": 99,
-              "taken": false
+              "taken": true
             },
             {
               "block": "162-02",
@@ -39668,7 +39668,7 @@
               "pieceId": "432",
               "routeLabel": "53,68,153",
               "page": 99,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -39676,7 +39676,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -40340,10 +40340,52 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-101-05",
-          "title": "Weekend 05",
+          "id": "bus-weekend-101-342",
+          "title": "Weekend 342",
           "serviceDay": "sunday",
           "boardPage": 101,
+          "availabilityStart": "07:48",
+          "availabilityEnd": "08:18",
+          "taken": false,
+          "pieces": [
+            {
+              "block": "81-01",
+              "from": "St L South Garage",
+              "to": "Bayshore Station",
+              "startTime": "06:24",
+              "endTime": "09:39",
+              "payTime": "03:15",
+              "pieceId": "342",
+              "routeLabel": "9,45",
+              "page": 101,
+              "taken": false
+            },
+            {
+              "block": "81-01",
+              "from": "Bayshore Station",
+              "to": "St L South Garage",
+              "startTime": "10:20",
+              "endTime": "14:42",
+              "payTime": "04:22",
+              "pieceId": "342",
+              "routeLabel": "109",
+              "page": 101,
+              "taken": false
+            }
+          ],
+          "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
+          "shiftId": "342",
+          "workSection": "Mix Odd Work Sunday",
+          "sat1Taken": false,
+          "sat2Taken": false,
+          "sun1Taken": false,
+          "sun2Taken": false
+        },
+        {
+          "id": "bus-weekend-102-05",
+          "title": "Weekend 05",
+          "serviceDay": "sunday",
+          "boardPage": 102,
           "availabilityStart": "09:03",
           "availabilityEnd": "09:33",
           "taken": false,
@@ -40357,7 +40399,7 @@
               "payTime": "04:01",
               "pieceId": "05",
               "routeLabel": "6,197",
-              "page": 101,
+              "page": 102,
               "taken": false
             },
             {
@@ -40369,7 +40411,7 @@
               "payTime": "04:54",
               "pieceId": "05",
               "routeLabel": "6,18,44",
-              "page": 101,
+              "page": 102,
               "taken": false
             }
           ],
@@ -40592,10 +40634,10 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-102-42",
+          "id": "bus-weekend-103-42",
           "title": "Weekend 42",
           "serviceDay": "sunday",
-          "boardPage": 102,
+          "boardPage": 103,
           "availabilityStart": "08:06",
           "availabilityEnd": "08:36",
           "taken": false,
@@ -40609,7 +40651,7 @@
               "payTime": "03:47",
               "pieceId": "42",
               "routeLabel": "8",
-              "page": 102,
+              "page": 103,
               "taken": false
             },
             {
@@ -40621,7 +40663,7 @@
               "payTime": "04:15",
               "pieceId": "42",
               "routeLabel": "112,116",
-              "page": 102,
+              "page": 103,
               "taken": false
             }
           ],
@@ -40826,13 +40868,13 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-103-434",
+          "id": "bus-weekend-104-434",
           "title": "Weekend 434",
           "serviceDay": "sunday",
-          "boardPage": 103,
+          "boardPage": 104,
           "availabilityStart": "08:42",
           "availabilityEnd": "09:12",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "162-03",
@@ -40843,8 +40885,8 @@
               "payTime": "04:01",
               "pieceId": "434",
               "routeLabel": "162",
-              "page": 103,
-              "taken": false
+              "page": 104,
+              "taken": true
             },
             {
               "block": "162-03",
@@ -40855,8 +40897,8 @@
               "payTime": "04:39",
               "pieceId": "434",
               "routeLabel": "67,68,161",
-              "page": 103,
-              "taken": false
+              "page": 104,
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -40864,7 +40906,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -41060,10 +41102,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-104-80",
+          "id": "bus-weekend-105-80",
           "title": "Weekend 80",
           "serviceDay": "sunday",
-          "boardPage": 104,
+          "boardPage": 105,
           "availabilityStart": "09:07",
           "availabilityEnd": "10:07",
           "taken": false,
@@ -41077,7 +41119,7 @@
               "payTime": "02:48",
               "pieceId": "80",
               "routeLabel": "82",
-              "page": 104,
+              "page": 105,
               "taken": false
             },
             {
@@ -41089,7 +41131,7 @@
               "payTime": "02:48",
               "pieceId": "80",
               "routeLabel": "82",
-              "page": 104,
+              "page": 105,
               "taken": false
             },
             {
@@ -41101,7 +41143,7 @@
               "payTime": "03:13",
               "pieceId": "80",
               "routeLabel": "11,85",
-              "page": 104,
+              "page": 105,
               "taken": false
             }
           ],
@@ -41184,7 +41226,7 @@
               "endTime": "16:11",
               "payTime": "04:59",
               "pieceId": "282",
-              "routeLabel": "61,62",
+              "routeLabel": "109",
               "page": 105,
               "taken": true
             }
@@ -41324,10 +41366,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-105-419",
+          "id": "bus-weekend-106-419",
           "title": "Weekend 419",
           "serviceDay": "sunday",
-          "boardPage": 105,
+          "boardPage": 106,
           "availabilityStart": "08:57",
           "availabilityEnd": "09:27",
           "taken": false,
@@ -41341,7 +41383,7 @@
               "payTime": "03:58",
               "pieceId": "419",
               "routeLabel": "85",
-              "page": 105,
+              "page": 106,
               "taken": false
             },
             {
@@ -41353,7 +41395,7 @@
               "payTime": "04:50",
               "pieceId": "419",
               "routeLabel": "112,116",
-              "page": 105,
+              "page": 106,
               "taken": false
             }
           ],
@@ -41550,31 +41592,31 @@
           "title": "Weekend 127",
           "serviceDay": "sunday",
           "boardPage": 106,
-          "availabilityStart": "07:15",
-          "availabilityEnd": "07:45",
+          "availabilityStart": "07:30",
+          "availabilityEnd": "08:00",
           "taken": false,
           "pieces": [
             {
               "block": "19-04",
               "from": "St L South Garage",
-              "to": "Baseline Station",
+              "to": "Parking - St Laurent Garage",
               "startTime": "06:51",
               "endTime": "11:20",
               "payTime": "04:29",
               "pieceId": "127",
-              "routeLabel": "53,111,112",
+              "routeLabel": "53,109,112",
               "page": 106,
               "taken": false
             },
             {
               "block": "19-04",
-              "from": "Baseline Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "11:56",
               "endTime": "14:36",
               "payTime": "02:40",
               "pieceId": "127",
-              "routeLabel": "19",
+              "routeLabel": "109",
               "page": 106,
               "taken": false
             }
@@ -41588,10 +41630,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-106-384",
+          "id": "bus-weekend-107-384",
           "title": "Weekend 384",
           "serviceDay": "sunday",
-          "boardPage": 106,
+          "boardPage": 107,
           "availabilityStart": "08:44",
           "availabilityEnd": "09:14",
           "taken": false,
@@ -41605,7 +41647,7 @@
               "payTime": "04:08",
               "pieceId": "384",
               "routeLabel": "57,58,81",
-              "page": 106,
+              "page": 107,
               "taken": false
             },
             {
@@ -41617,7 +41659,7 @@
               "payTime": "04:36",
               "pieceId": "384",
               "routeLabel": "93",
-              "page": 106,
+              "page": 107,
               "taken": false
             }
           ],
@@ -41840,10 +41882,10 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-107-26",
+          "id": "bus-weekend-108-26",
           "title": "Weekend 26",
           "serviceDay": "sunday",
-          "boardPage": 107,
+          "boardPage": 108,
           "availabilityStart": "08:39",
           "availabilityEnd": "09:09",
           "taken": false,
@@ -41857,7 +41899,7 @@
               "payTime": "03:49",
               "pieceId": "26",
               "routeLabel": "7",
-              "page": 107,
+              "page": 108,
               "taken": false
             },
             {
@@ -41869,7 +41911,7 @@
               "payTime": "04:25",
               "pieceId": "26",
               "routeLabel": "51,53,86",
-              "page": 107,
+              "page": 108,
               "taken": false
             }
           ],
@@ -42048,7 +42090,7 @@
               "endTime": "15:46",
               "payTime": "03:53",
               "pieceId": "206",
-              "routeLabel": "41",
+              "routeLabel": "109",
               "page": 108,
               "taken": false
             }
@@ -42104,10 +42146,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-108-403",
+          "id": "bus-weekend-109-403",
           "title": "Weekend 403",
           "serviceDay": "sunday",
-          "boardPage": 108,
+          "boardPage": 109,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:30",
           "taken": false,
@@ -42121,7 +42163,7 @@
               "payTime": "04:19",
               "pieceId": "403",
               "routeLabel": "105",
-              "page": 108,
+              "page": 109,
               "taken": false
             },
             {
@@ -42133,7 +42175,7 @@
               "payTime": "03:40",
               "pieceId": "403",
               "routeLabel": "90,98",
-              "page": 108,
+              "page": 109,
               "taken": false
             }
           ],
@@ -42248,7 +42290,7 @@
           "boardPage": 109,
           "availabilityStart": "07:22",
           "availabilityEnd": "07:52",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "39-05",
@@ -42260,7 +42302,7 @@
               "pieceId": "191",
               "routeLabel": "39",
               "page": 109,
-              "taken": false
+              "taken": true
             },
             {
               "block": "39-05",
@@ -42270,9 +42312,9 @@
               "endTime": "15:10",
               "payTime": "03:21",
               "pieceId": "191",
-              "routeLabel": "31",
+              "routeLabel": "109",
               "page": 109,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -42280,7 +42322,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -42338,10 +42380,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-109-219",
+          "id": "bus-weekend-110-219",
           "title": "Weekend 219",
           "serviceDay": "sunday",
-          "boardPage": 109,
+          "boardPage": 110,
           "availabilityStart": "08:31",
           "availabilityEnd": "09:01",
           "taken": false,
@@ -42355,7 +42397,7 @@
               "payTime": "03:39",
               "pieceId": "219",
               "routeLabel": "38,42",
-              "page": 109,
+              "page": 110,
               "taken": false
             },
             {
@@ -42367,7 +42409,7 @@
               "payTime": "04:48",
               "pieceId": "219",
               "routeLabel": "34",
-              "page": 109,
+              "page": 110,
               "taken": false
             }
           ],
@@ -42572,13 +42614,13 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-110-192",
+          "id": "bus-weekend-111-192",
           "title": "Weekend 192",
           "serviceDay": "sunday",
-          "boardPage": 110,
+          "boardPage": 111,
           "availabilityStart": "07:50",
           "availabilityEnd": "08:20",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "39-06",
@@ -42589,8 +42631,8 @@
               "payTime": "04:02",
               "pieceId": "192",
               "routeLabel": "33,41",
-              "page": 110,
-              "taken": false
+              "page": 111,
+              "taken": true
             },
             {
               "block": "39-06",
@@ -42601,8 +42643,8 @@
               "payTime": "03:44",
               "pieceId": "192",
               "routeLabel": "39",
-              "page": 110,
-              "taken": false
+              "page": 111,
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -42610,8 +42652,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-111-288",
@@ -42721,24 +42763,24 @@
             {
               "block": "99-03",
               "from": "Barrhaven Ctr",
-              "to": "Billings Bridge Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "11:58",
               "endTime": "14:15",
               "payTime": "02:17",
               "pieceId": "396",
-              "routeLabel": "18",
+              "routeLabel": "109",
               "page": 111,
               "taken": false
             },
             {
               "block": "99-03",
-              "from": "Billings Bridge Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "14:59",
               "endTime": "19:33",
               "payTime": "04:34",
               "pieceId": "396",
-              "routeLabel": "18,40",
+              "routeLabel": "109",
               "page": 111,
               "taken": false
             }
@@ -42806,10 +42848,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-111-113",
+          "id": "bus-weekend-112-113",
           "title": "Weekend 113",
           "serviceDay": "sunday",
-          "boardPage": 111,
+          "boardPage": 112,
           "availabilityStart": "09:51",
           "availabilityEnd": "10:51",
           "taken": false,
@@ -42823,7 +42865,7 @@
               "payTime": "04:15",
               "pieceId": "113",
               "routeLabel": "14,56",
-              "page": 111,
+              "page": 112,
               "taken": false
             },
             {
@@ -42835,7 +42877,7 @@
               "payTime": "02:28",
               "pieceId": "113",
               "routeLabel": "14",
-              "page": 111,
+              "page": 112,
               "taken": false
             },
             {
@@ -42847,7 +42889,7 @@
               "payTime": "02:52",
               "pieceId": "113",
               "routeLabel": "90,98",
-              "page": 111,
+              "page": 112,
               "taken": false
             }
           ],
@@ -43052,10 +43094,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-112-238",
+          "id": "bus-weekend-113-238",
           "title": "Weekend 238",
           "serviceDay": "sunday",
-          "boardPage": 112,
+          "boardPage": 113,
           "availabilityStart": "10:49",
           "availabilityEnd": "11:49",
           "taken": true,
@@ -43069,7 +43111,7 @@
               "payTime": "02:20",
               "pieceId": "238",
               "routeLabel": "48",
-              "page": 112,
+              "page": 113,
               "taken": true
             },
             {
@@ -43081,7 +43123,7 @@
               "payTime": "04:04",
               "pieceId": "238",
               "routeLabel": "48",
-              "page": 112,
+              "page": 113,
               "taken": true
             },
             {
@@ -43093,7 +43135,7 @@
               "payTime": "04:05",
               "pieceId": "238",
               "routeLabel": "10",
-              "page": 112,
+              "page": 113,
               "taken": true
             }
           ],
@@ -43112,7 +43154,7 @@
           "boardPage": 113,
           "availabilityStart": "09:24",
           "availabilityEnd": "10:24",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "63-04",
@@ -43124,7 +43166,7 @@
               "pieceId": "289",
               "routeLabel": "61,62",
               "page": 113,
-              "taken": false
+              "taken": true
             },
             {
               "block": "63-04",
@@ -43136,7 +43178,7 @@
               "pieceId": "289",
               "routeLabel": "63",
               "page": 113,
-              "taken": false
+              "taken": true
             },
             {
               "block": "63-04",
@@ -43148,7 +43190,7 @@
               "pieceId": "289",
               "routeLabel": "80",
               "page": 113,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -43156,7 +43198,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -43242,7 +43284,7 @@
               "endTime": "16:47",
               "payTime": "04:35",
               "pieceId": "193",
-              "routeLabel": "20",
+              "routeLabel": "109",
               "page": 113,
               "taken": false
             }
@@ -43298,10 +43340,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-113-139",
+          "id": "bus-weekend-114-139",
           "title": "Weekend 139",
           "serviceDay": "sunday",
-          "boardPage": 113,
+          "boardPage": 114,
           "availabilityStart": "08:51",
           "availabilityEnd": "09:51",
           "taken": false,
@@ -43315,7 +43357,7 @@
               "payTime": "02:28",
               "pieceId": "139",
               "routeLabel": "24,39",
-              "page": 113,
+              "page": 114,
               "taken": false
             },
             {
@@ -43327,7 +43369,7 @@
               "payTime": "02:56",
               "pieceId": "139",
               "routeLabel": "30,35",
-              "page": 113,
+              "page": 114,
               "taken": false
             },
             {
@@ -43339,7 +43381,7 @@
               "payTime": "03:19",
               "pieceId": "139",
               "routeLabel": "30,35,39",
-              "page": 113,
+              "page": 114,
               "taken": false
             }
           ],
@@ -43400,7 +43442,7 @@
           "boardPage": 114,
           "availabilityStart": "08:19",
           "availabilityEnd": "08:49",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "62-02",
@@ -43412,7 +43454,7 @@
               "pieceId": "283",
               "routeLabel": "61,62",
               "page": 114,
-              "taken": false
+              "taken": true
             },
             {
               "block": "62-02",
@@ -43424,7 +43466,7 @@
               "pieceId": "283",
               "routeLabel": "61,62",
               "page": 114,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -43432,7 +43474,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -43442,7 +43484,7 @@
           "boardPage": 114,
           "availabilityStart": "08:07",
           "availabilityEnd": "08:37",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "75-08",
@@ -43454,7 +43496,7 @@
               "pieceId": "329",
               "routeLabel": "75",
               "page": 114,
-              "taken": false
+              "taken": true
             },
             {
               "block": "75-08",
@@ -43466,7 +43508,7 @@
               "pieceId": "329",
               "routeLabel": "75",
               "page": 114,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -43474,7 +43516,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -43562,10 +43604,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-114-274",
+          "id": "bus-weekend-115-274",
           "title": "Weekend 274",
           "serviceDay": "sunday",
-          "boardPage": 114,
+          "boardPage": 115,
           "availabilityStart": "10:56",
           "availabilityEnd": "11:56",
           "taken": false,
@@ -43579,7 +43621,7 @@
               "payTime": "03:51",
               "pieceId": "274",
               "routeLabel": "44,87,111,112",
-              "page": 114,
+              "page": 115,
               "taken": false
             },
             {
@@ -43591,7 +43633,7 @@
               "payTime": "03:09",
               "pieceId": "274",
               "routeLabel": "56,58",
-              "page": 114,
+              "page": 115,
               "taken": false
             },
             {
@@ -43603,7 +43645,7 @@
               "payTime": "03:38",
               "pieceId": "274",
               "routeLabel": "58,81",
-              "page": 114,
+              "page": 115,
               "taken": false
             }
           ],
@@ -43808,13 +43850,13 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-115-151",
+          "id": "bus-weekend-116-151",
           "title": "Weekend 151",
           "serviceDay": "sunday",
-          "boardPage": 115,
+          "boardPage": 116,
           "availabilityStart": "10:15",
           "availabilityEnd": "11:15",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "25-04",
@@ -43825,8 +43867,8 @@
               "payTime": "04:16",
               "pieceId": "151",
               "routeLabel": "31,138",
-              "page": 115,
-              "taken": false
+              "page": 116,
+              "taken": true
             },
             {
               "block": "25-04",
@@ -43837,8 +43879,8 @@
               "payTime": "02:36",
               "pieceId": "151",
               "routeLabel": "25",
-              "page": 115,
-              "taken": false
+              "page": 116,
+              "taken": true
             },
             {
               "block": "34-03",
@@ -43849,8 +43891,8 @@
               "payTime": "03:13",
               "pieceId": "151",
               "routeLabel": "34,39",
-              "page": 115,
-              "taken": false
+              "page": 116,
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -43858,8 +43900,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-116-293",
@@ -44054,10 +44096,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-116-301",
+          "id": "bus-weekend-117-301",
           "title": "Weekend 301",
           "serviceDay": "sunday",
-          "boardPage": 116,
+          "boardPage": 117,
           "availabilityStart": "08:26",
           "availabilityEnd": "09:26",
           "taken": false,
@@ -44071,7 +44113,7 @@
               "payTime": "02:07",
               "pieceId": "301",
               "routeLabel": "168",
-              "page": 116,
+              "page": 117,
               "taken": false
             },
             {
@@ -44083,7 +44125,7 @@
               "payTime": "02:23",
               "pieceId": "301",
               "routeLabel": "68",
-              "page": 116,
+              "page": 117,
               "taken": false
             },
             {
@@ -44095,7 +44137,7 @@
               "payTime": "03:27",
               "pieceId": "301",
               "routeLabel": "68",
-              "page": 116,
+              "page": 117,
               "taken": false
             }
           ],
@@ -44318,10 +44360,10 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-117-52",
+          "id": "bus-weekend-118-52",
           "title": "Weekend 52",
           "serviceDay": "sunday",
-          "boardPage": 117,
+          "boardPage": 118,
           "availabilityStart": "10:48",
           "availabilityEnd": "11:48",
           "taken": false,
@@ -44335,7 +44377,7 @@
               "payTime": "04:19",
               "pieceId": "52",
               "routeLabel": "9",
-              "page": 117,
+              "page": 118,
               "taken": false
             },
             {
@@ -44347,7 +44389,7 @@
               "payTime": "01:49",
               "pieceId": "52",
               "routeLabel": "112,116",
-              "page": 117,
+              "page": 118,
               "taken": false
             },
             {
@@ -44359,7 +44401,7 @@
               "payTime": "04:31",
               "pieceId": "52",
               "routeLabel": "48",
-              "page": 117,
+              "page": 118,
               "taken": false
             }
           ],
@@ -44564,10 +44606,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-118-46",
+          "id": "bus-weekend-119-46",
           "title": "Weekend 46",
           "serviceDay": "sunday",
-          "boardPage": 118,
+          "boardPage": 119,
           "availabilityStart": "09:08",
           "availabilityEnd": "09:38",
           "taken": false,
@@ -44581,7 +44623,7 @@
               "payTime": "04:25",
               "pieceId": "46",
               "routeLabel": "8",
-              "page": 118,
+              "page": 119,
               "taken": false
             },
             {
@@ -44593,7 +44635,7 @@
               "payTime": "04:06",
               "pieceId": "46",
               "routeLabel": "7",
-              "page": 118,
+              "page": 119,
               "taken": false
             }
           ],
@@ -44659,24 +44701,24 @@
             {
               "block": "85-03",
               "from": "St L South Garage",
-              "to": "Bayshore Station",
+              "to": "Parking - St Laurent Garage",
               "startTime": "08:37",
               "endTime": "12:27",
               "payTime": "03:50",
               "pieceId": "358",
-              "routeLabel": "5,19,88",
+              "routeLabel": "5,109",
               "page": 119,
               "taken": false
             },
             {
               "block": "85-03",
-              "from": "Bayshore Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "13:00",
               "endTime": "17:51",
               "payTime": "04:51",
               "pieceId": "358",
-              "routeLabel": "85",
+              "routeLabel": "109",
               "page": 119,
               "taken": false
             }
@@ -45390,7 +45432,7 @@
               "endTime": "12:57",
               "payTime": "03:58",
               "pieceId": "468",
-              "routeLabel": "125",
+              "routeLabel": "109,125",
               "page": 122,
               "taken": true
             },
@@ -45577,24 +45619,24 @@
             {
               "block": "44-03",
               "from": "Industrial Garage",
-              "to": "Billings Bridge Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "09:01",
               "endTime": "13:03",
               "payTime": "04:02",
               "pieceId": "223",
-              "routeLabel": "41,44",
+              "routeLabel": "109",
               "page": 123,
               "taken": true
             },
             {
               "block": "44-03",
-              "from": "Billings Bridge Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "13:53",
               "endTime": "18:49",
               "payTime": "04:56",
               "pieceId": "223",
-              "routeLabel": "24,40",
+              "routeLabel": "24,109",
               "page": 123,
               "taken": true
             }
@@ -45619,36 +45661,36 @@
             {
               "block": "12-10",
               "from": "Industrial Garage",
-              "to": "Greenboro Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "09:02",
               "endTime": "12:06",
               "payTime": "03:04",
               "pieceId": "100",
-              "routeLabel": "90,98,898",
+              "routeLabel": "98,109,898",
               "page": 123,
               "taken": false
             },
             {
               "block": "12-10",
-              "from": "Greenboro Station",
-              "to": "Tunney's Station",
+              "from": "Parking - Industrial Garage",
+              "to": "Parking - Industrial Garage",
               "startTime": "12:37",
               "endTime": "15:15",
               "payTime": "02:38",
               "pieceId": "100",
-              "routeLabel": "80",
+              "routeLabel": "109",
               "page": 123,
               "taken": false
             },
             {
               "block": "12-10",
-              "from": "Tunney's Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "15:50",
               "endTime": "18:46",
               "payTime": "02:56",
               "pieceId": "100",
-              "routeLabel": "12",
+              "routeLabel": "109",
               "page": 123,
               "taken": false
             }
@@ -45919,24 +45961,24 @@
             {
               "block": "12-04",
               "from": "Blair Station",
-              "to": "Tunney's Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "09:11",
               "endTime": "12:09",
               "payTime": "02:58",
               "pieceId": "93",
-              "routeLabel": "12",
+              "routeLabel": "12,109",
               "page": 124,
               "taken": false
             },
             {
               "block": "12-04",
-              "from": "Tunney's Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "13:12",
               "endTime": "18:11",
               "payTime": "04:59",
               "pieceId": "93",
-              "routeLabel": "61,62",
+              "routeLabel": "109",
               "page": 124,
               "taken": false
             }
@@ -45950,52 +45992,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-124-340",
-          "title": "Weekend 340",
-          "serviceDay": "sunday",
-          "boardPage": 124,
-          "availabilityStart": "08:34",
-          "availabilityEnd": "09:04",
-          "taken": false,
-          "pieces": [
-            {
-              "block": "80-01",
-              "from": "Industrial Garage",
-              "to": "Tunney's Station",
-              "startTime": "09:13",
-              "endTime": "13:15",
-              "payTime": "04:02",
-              "pieceId": "340",
-              "routeLabel": "80,85",
-              "page": 124,
-              "taken": false
-            },
-            {
-              "block": "80-01",
-              "from": "Tunney's Station",
-              "to": "Industrial Garage",
-              "startTime": "14:05",
-              "endTime": "18:17",
-              "payTime": "04:12",
-              "pieceId": "340",
-              "routeLabel": "80",
-              "page": 124,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
-          "shiftId": "340",
-          "workSection": "Mix Odd Work Sunday",
-          "sat1Taken": false,
-          "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
-        },
-        {
-          "id": "bus-weekend-125-400",
+          "id": "bus-weekend-124-400",
           "title": "Weekend 400",
           "serviceDay": "sunday",
-          "boardPage": 125,
+          "boardPage": 124,
           "availabilityStart": "10:05",
           "availabilityEnd": "11:05",
           "taken": false,
@@ -46009,7 +46009,7 @@
               "payTime": "04:09",
               "pieceId": "400",
               "routeLabel": "7",
-              "page": 125,
+              "page": 124,
               "taken": false
             },
             {
@@ -46021,7 +46021,7 @@
               "payTime": "02:02",
               "pieceId": "400",
               "routeLabel": "70",
-              "page": 125,
+              "page": 124,
               "taken": false
             },
             {
@@ -46033,7 +46033,7 @@
               "payTime": "03:12",
               "pieceId": "400",
               "routeLabel": "99",
-              "page": 125,
+              "page": 124,
               "taken": false
             }
           ],
@@ -46195,24 +46195,24 @@
             {
               "block": "165-03",
               "from": "Terry Fox Station",
-              "to": "Baseline Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "13:26",
               "endTime": "15:23",
               "payTime": "01:57",
               "pieceId": "444",
-              "routeLabel": "82",
+              "routeLabel": "109",
               "page": 125,
               "taken": false
             },
             {
               "block": "165-03",
-              "from": "Baseline Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "15:58",
               "endTime": "19:56",
               "payTime": "03:58",
               "pieceId": "444",
-              "routeLabel": "75",
+              "routeLabel": "109",
               "page": 125,
               "taken": false
             }
@@ -46226,10 +46226,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-126-176",
+          "id": "bus-weekend-125-176",
           "title": "Weekend 176",
           "serviceDay": "sunday",
-          "boardPage": 126,
+          "boardPage": 125,
           "availabilityStart": "08:26",
           "availabilityEnd": "08:56",
           "taken": false,
@@ -46243,7 +46243,7 @@
               "payTime": "04:16",
               "pieceId": "176",
               "routeLabel": "30,35,42",
-              "page": 126,
+              "page": 125,
               "taken": false
             },
             {
@@ -46255,7 +46255,7 @@
               "payTime": "04:04",
               "pieceId": "176",
               "routeLabel": "12",
-              "page": 126,
+              "page": 125,
               "taken": false
             }
           ],
@@ -46268,10 +46268,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-126-23",
+          "id": "bus-weekend-125-23",
           "title": "Weekend 23",
           "serviceDay": "sunday",
-          "boardPage": 126,
+          "boardPage": 125,
           "availabilityStart": "09:19",
           "availabilityEnd": "09:49",
           "taken": false,
@@ -46285,7 +46285,7 @@
               "payTime": "04:14",
               "pieceId": "23",
               "routeLabel": "7,85",
-              "page": 126,
+              "page": 125,
               "taken": false
             },
             {
@@ -46297,7 +46297,7 @@
               "payTime": "04:58",
               "pieceId": "23",
               "routeLabel": "80,81",
-              "page": 126,
+              "page": 125,
               "taken": false
             }
           ],
@@ -46448,10 +46448,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-127-17",
+          "id": "bus-weekend-126-17",
           "title": "Weekend 17",
           "serviceDay": "sunday",
-          "boardPage": 127,
+          "boardPage": 126,
           "availabilityStart": "10:25",
           "availabilityEnd": "11:25",
           "taken": false,
@@ -46465,7 +46465,7 @@
               "payTime": "03:50",
               "pieceId": "17",
               "routeLabel": "109",
-              "page": 127,
+              "page": 126,
               "taken": false
             },
             {
@@ -46477,7 +46477,7 @@
               "payTime": "03:19",
               "pieceId": "17",
               "routeLabel": "109",
-              "page": 127,
+              "page": 126,
               "taken": false
             },
             {
@@ -46489,7 +46489,7 @@
               "payTime": "02:49",
               "pieceId": "17",
               "routeLabel": "6,109",
-              "page": 127,
+              "page": 126,
               "taken": false
             }
           ],
@@ -46502,10 +46502,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-127-181",
+          "id": "bus-weekend-126-181",
           "title": "Weekend 181",
           "serviceDay": "sunday",
-          "boardPage": 127,
+          "boardPage": 126,
           "availabilityStart": "09:31",
           "availabilityEnd": "10:31",
           "taken": false,
@@ -46519,7 +46519,7 @@
               "payTime": "03:54",
               "pieceId": "181",
               "routeLabel": "36",
-              "page": 127,
+              "page": 126,
               "taken": false
             },
             {
@@ -46531,7 +46531,7 @@
               "payTime": "02:10",
               "pieceId": "181",
               "routeLabel": "75",
-              "page": 127,
+              "page": 126,
               "taken": false
             },
             {
@@ -46543,7 +46543,7 @@
               "payTime": "02:50",
               "pieceId": "181",
               "routeLabel": "63",
-              "page": 127,
+              "page": 126,
               "taken": false
             }
           ],
@@ -46706,10 +46706,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-128-453",
+          "id": "bus-weekend-127-453",
           "title": "Weekend 453",
           "serviceDay": "sunday",
-          "boardPage": 128,
+          "boardPage": 127,
           "availabilityStart": "09:13",
           "availabilityEnd": "09:43",
           "taken": false,
@@ -46723,7 +46723,7 @@
               "payTime": "03:46",
               "pieceId": "453",
               "routeLabel": "173",
-              "page": 128,
+              "page": 127,
               "taken": false
             },
             {
@@ -46735,7 +46735,7 @@
               "payTime": "04:57",
               "pieceId": "453",
               "routeLabel": "61,62,161,168",
-              "page": 128,
+              "page": 127,
               "taken": false
             }
           ],
@@ -46748,10 +46748,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-128-375",
+          "id": "bus-weekend-127-375",
           "title": "Weekend 375",
           "serviceDay": "sunday",
-          "boardPage": 128,
+          "boardPage": 127,
           "availabilityStart": "08:41",
           "availabilityEnd": "09:11",
           "taken": false,
@@ -46765,7 +46765,7 @@
               "payTime": "04:14",
               "pieceId": "375",
               "routeLabel": "88",
-              "page": 128,
+              "page": 127,
               "taken": false
             },
             {
@@ -46777,7 +46777,7 @@
               "payTime": "04:19",
               "pieceId": "375",
               "routeLabel": "85,110",
-              "page": 128,
+              "page": 127,
               "taken": false
             }
           ],
@@ -46940,10 +46940,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-129-409",
+          "id": "bus-weekend-128-409",
           "title": "Weekend 409",
           "serviceDay": "sunday",
-          "boardPage": 129,
+          "boardPage": 128,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:30",
           "taken": true,
@@ -46957,7 +46957,7 @@
               "payTime": "03:59",
               "pieceId": "409",
               "routeLabel": "109",
-              "page": 129,
+              "page": 128,
               "taken": true
             },
             {
@@ -46969,7 +46969,7 @@
               "payTime": "04:01",
               "pieceId": "409",
               "routeLabel": "109",
-              "page": 129,
+              "page": 128,
               "taken": true
             }
           ],
@@ -46982,10 +46982,10 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-129-318",
+          "id": "bus-weekend-128-318",
           "title": "Weekend 318",
           "serviceDay": "sunday",
-          "boardPage": 129,
+          "boardPage": 128,
           "availabilityStart": "07:42",
           "availabilityEnd": "08:12",
           "taken": false,
@@ -46999,7 +46999,7 @@
               "payTime": "04:26",
               "pieceId": "318",
               "routeLabel": "63,74,80",
-              "page": 129,
+              "page": 128,
               "taken": false
             },
             {
@@ -47011,7 +47011,7 @@
               "payTime": "03:15",
               "pieceId": "318",
               "routeLabel": "11,85",
-              "page": 129,
+              "page": 128,
               "taken": false
             }
           ],
@@ -47204,10 +47204,10 @@
           "sun2Taken": true
         },
         {
-          "id": "bus-weekend-130-437",
+          "id": "bus-weekend-129-437",
           "title": "Weekend 437",
           "serviceDay": "sunday",
-          "boardPage": 130,
+          "boardPage": 129,
           "availabilityStart": "09:18",
           "availabilityEnd": "10:18",
           "taken": false,
@@ -47221,7 +47221,7 @@
               "payTime": "04:01",
               "pieceId": "437",
               "routeLabel": "67,168",
-              "page": 130,
+              "page": 129,
               "taken": false
             },
             {
@@ -47233,7 +47233,7 @@
               "payTime": "02:42",
               "pieceId": "437",
               "routeLabel": "162",
-              "page": 130,
+              "page": 129,
               "taken": false
             },
             {
@@ -47245,7 +47245,7 @@
               "payTime": "02:34",
               "pieceId": "437",
               "routeLabel": "68",
-              "page": 130,
+              "page": 129,
               "taken": false
             }
           ],
@@ -47306,7 +47306,7 @@
           "boardPage": 130,
           "availabilityStart": "09:11",
           "availabilityEnd": "09:41",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "70-05",
@@ -47318,7 +47318,7 @@
               "pieceId": "312",
               "routeLabel": "70",
               "page": 130,
-              "taken": false
+              "taken": true
             },
             {
               "block": "70-05",
@@ -47330,7 +47330,7 @@
               "pieceId": "312",
               "routeLabel": "70",
               "page": 130,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -47338,8 +47338,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-130-196",
@@ -47468,10 +47468,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-131-367",
+          "id": "bus-weekend-130-367",
           "title": "Weekend 367",
           "serviceDay": "sunday",
-          "boardPage": 131,
+          "boardPage": 130,
           "availabilityStart": "07:26",
           "availabilityEnd": "07:56",
           "taken": false,
@@ -47485,7 +47485,7 @@
               "payTime": "02:46",
               "pieceId": "367",
               "routeLabel": "87,111",
-              "page": 131,
+              "page": 130,
               "taken": false
             },
             {
@@ -47497,7 +47497,7 @@
               "payTime": "04:32",
               "pieceId": "367",
               "routeLabel": "87,111",
-              "page": 131,
+              "page": 130,
               "taken": false
             }
           ],
@@ -47642,7 +47642,7 @@
           "boardPage": 131,
           "availabilityStart": "08:36",
           "availabilityEnd": "09:06",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "31-02",
@@ -47654,7 +47654,7 @@
               "pieceId": "164",
               "routeLabel": "105",
               "page": 131,
-              "taken": false
+              "taken": true
             },
             {
               "block": "31-02",
@@ -47666,7 +47666,7 @@
               "pieceId": "164",
               "routeLabel": "31",
               "page": 131,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -47674,8 +47674,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-131-155",
@@ -47720,10 +47720,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-132-31",
+          "id": "bus-weekend-131-31",
           "title": "Weekend 31",
           "serviceDay": "sunday",
-          "boardPage": 132,
+          "boardPage": 131,
           "availabilityStart": "08:46",
           "availabilityEnd": "09:16",
           "taken": false,
@@ -47737,7 +47737,7 @@
               "payTime": "04:17",
               "pieceId": "31",
               "routeLabel": "7",
-              "page": 132,
+              "page": 131,
               "taken": false
             },
             {
@@ -47749,7 +47749,7 @@
               "payTime": "04:03",
               "pieceId": "31",
               "routeLabel": "20",
-              "page": 132,
+              "page": 131,
               "taken": false
             }
           ],
@@ -47832,7 +47832,7 @@
               "endTime": "20:33",
               "payTime": "04:58",
               "pieceId": "208",
-              "routeLabel": "40,48",
+              "routeLabel": "109",
               "page": 132,
               "taken": false
             }
@@ -47894,7 +47894,7 @@
           "boardPage": 132,
           "availabilityStart": "08:07",
           "availabilityEnd": "08:37",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "88-01",
@@ -47906,7 +47906,7 @@
               "pieceId": "369",
               "routeLabel": "11",
               "page": 132,
-              "taken": false
+              "taken": true
             },
             {
               "block": "88-01",
@@ -47918,7 +47918,7 @@
               "pieceId": "369",
               "routeLabel": "88",
               "page": 132,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -47926,7 +47926,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -47972,10 +47972,10 @@
           "sun2Taken": false
         },
         {
-          "id": "bus-weekend-133-333",
+          "id": "bus-weekend-132-333",
           "title": "Weekend 333",
           "serviceDay": "sunday",
-          "boardPage": 133,
+          "boardPage": 132,
           "availabilityStart": "08:03",
           "availabilityEnd": "08:33",
           "taken": false,
@@ -47989,7 +47989,7 @@
               "payTime": "04:23",
               "pieceId": "333",
               "routeLabel": "75",
-              "page": 133,
+              "page": 132,
               "taken": false
             },
             {
@@ -48001,7 +48001,7 @@
               "payTime": "03:40",
               "pieceId": "333",
               "routeLabel": "189",
-              "page": 133,
+              "page": 132,
               "taken": false
             }
           ],
@@ -48247,36 +48247,36 @@
             {
               "block": "67-04",
               "from": "Merivale Garage",
-              "to": "Terry Fox Station",
+              "to": "Parking - Merivale Garage",
               "startTime": "09:24",
               "endTime": "12:25",
               "payTime": "03:01",
               "pieceId": "295",
-              "routeLabel": "67,168",
+              "routeLabel": "109",
               "page": 134,
               "taken": false
             },
             {
               "block": "67-04",
-              "from": "Terry Fox Station",
-              "to": "Terry Fox Station",
+              "from": "Parking - Merivale Garage",
+              "to": "Parking - Merivale Garage",
               "startTime": "12:55",
               "endTime": "15:25",
               "payTime": "02:30",
               "pieceId": "295",
-              "routeLabel": "67,168",
+              "routeLabel": "109",
               "page": 134,
               "taken": false
             },
             {
               "block": "67-04",
-              "from": "Terry Fox Station",
+              "from": "Parking - Merivale Garage",
               "to": "Merivale Garage",
               "startTime": "16:02",
               "endTime": "21:01",
               "payTime": "04:59",
               "pieceId": "295",
-              "routeLabel": "6,112,116,197",
+              "routeLabel": "6,109,197",
               "page": 134,
               "taken": false
             }
@@ -49128,7 +49128,7 @@
               "endTime": "21:03",
               "payTime": "04:38",
               "pieceId": "346",
-              "routeLabel": "56,58,63",
+              "routeLabel": "58,109",
               "page": 138,
               "taken": false
             }
@@ -49999,36 +49999,36 @@
             {
               "block": "38-03",
               "from": "St L South Garage",
-              "to": "Trim Park & Ride",
+              "to": "Parking - St Laurent Garage",
               "startTime": "12:44",
               "endTime": "16:42",
               "payTime": "03:58",
               "pieceId": "186",
-              "routeLabel": "38",
+              "routeLabel": "109",
               "page": 142,
               "taken": true
             },
             {
               "block": "38-03",
-              "from": "Trim Park & Ride",
-              "to": "Tunney's Station",
+              "from": "Parking - St Laurent Garage",
+              "to": "Parking - St Laurent Garage",
               "startTime": "17:15",
               "endTime": "20:23",
               "payTime": "03:08",
               "pieceId": "186",
-              "routeLabel": "86,111",
+              "routeLabel": "109",
               "page": 142,
               "taken": true
             },
             {
               "block": "38-03",
-              "from": "Tunney's Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "21:24",
               "endTime": "23:48",
               "payTime": "02:24",
               "pieceId": "186",
-              "routeLabel": "5",
+              "routeLabel": "5,109",
               "page": 142,
               "taken": true
             }
@@ -50174,7 +50174,7 @@
           "boardPage": 142,
           "availabilityStart": "08:46",
           "availabilityEnd": "09:16",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "163-04",
@@ -50186,7 +50186,7 @@
               "pieceId": "441",
               "routeLabel": "163",
               "page": 142,
-              "taken": false
+              "taken": true
             },
             {
               "block": "163-04",
@@ -50198,7 +50198,7 @@
               "pieceId": "441",
               "routeLabel": "68,163",
               "page": 142,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -50206,7 +50206,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -50354,7 +50354,7 @@
           "boardPage": 143,
           "availabilityStart": "10:30",
           "availabilityEnd": "11:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "8-08",
@@ -50366,7 +50366,7 @@
               "pieceId": "50",
               "routeLabel": "51,86",
               "page": 143,
-              "taken": false
+              "taken": true
             },
             {
               "block": "8-08",
@@ -50378,7 +50378,7 @@
               "pieceId": "50",
               "routeLabel": "8,57",
               "page": 143,
-              "taken": false
+              "taken": true
             },
             {
               "block": "8-08",
@@ -50390,7 +50390,7 @@
               "pieceId": "50",
               "routeLabel": "53",
               "page": 143,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -50398,8 +50398,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-143-387",
@@ -51128,7 +51128,7 @@
           "boardPage": 147,
           "availabilityStart": "08:34",
           "availabilityEnd": "09:34",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "61-02",
@@ -51140,7 +51140,7 @@
               "pieceId": "278",
               "routeLabel": "61,62",
               "page": 147,
-              "taken": false
+              "taken": true
             },
             {
               "block": "189-01",
@@ -51152,7 +51152,7 @@
               "pieceId": "278",
               "routeLabel": "63",
               "page": 147,
-              "taken": false
+              "taken": true
             },
             {
               "block": "189-01",
@@ -51164,7 +51164,7 @@
               "pieceId": "278",
               "routeLabel": "168",
               "page": 147,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -51172,7 +51172,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -51341,7 +51341,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-148-169",
@@ -51458,7 +51458,7 @@
           "boardPage": 148,
           "availabilityStart": "08:57",
           "availabilityEnd": "09:27",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "48-07",
@@ -51470,7 +51470,7 @@
               "pieceId": "241",
               "routeLabel": "48",
               "page": 148,
-              "taken": false
+              "taken": true
             },
             {
               "block": "48-07",
@@ -51480,9 +51480,9 @@
               "endTime": "23:38",
               "payTime": "04:16",
               "pieceId": "241",
-              "routeLabel": "18,88",
+              "routeLabel": "109",
               "page": 148,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -51490,7 +51490,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -51505,36 +51505,36 @@
             {
               "block": "63-06",
               "from": "St L South Garage",
-              "to": "Tunney's Station",
+              "to": "Parking - St Laurent Garage",
               "startTime": "14:19",
               "endTime": "17:03",
               "payTime": "02:44",
               "pieceId": "291",
-              "routeLabel": "53",
+              "routeLabel": "109",
               "page": 148,
               "taken": true
             },
             {
               "block": "63-06",
-              "from": "Tunney's Station",
-              "to": "Tunney's Station",
+              "from": "Parking - St Laurent Garage",
+              "to": "Parking - St Laurent Garage",
               "startTime": "17:45",
               "endTime": "20:12",
               "payTime": "02:27",
               "pieceId": "291",
-              "routeLabel": "63",
+              "routeLabel": "109",
               "page": 148,
               "taken": true
             },
             {
               "block": "63-06",
-              "from": "Tunney's Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "20:45",
               "endTime": "23:32",
               "payTime": "02:47",
               "pieceId": "291",
-              "routeLabel": "63",
+              "routeLabel": "63,109",
               "page": 148,
               "taken": true
             }
@@ -51559,24 +51559,24 @@
             {
               "block": "34-05",
               "from": "Industrial Garage",
-              "to": "Blair Station",
+              "to": "Parking - Industrial Garage",
               "startTime": "14:20",
               "endTime": "17:10",
               "payTime": "02:50",
               "pieceId": "173",
-              "routeLabel": "30,34",
+              "routeLabel": "109",
               "page": 148,
               "taken": false
             },
             {
               "block": "34-05",
-              "from": "Blair Station",
+              "from": "Parking - Industrial Garage",
               "to": "Industrial Garage",
               "startTime": "17:44",
               "endTime": "21:59",
               "payTime": "04:15",
               "pieceId": "173",
-              "routeLabel": "88,90,98",
+              "routeLabel": "90,98,109",
               "page": 148,
               "taken": false
             }
@@ -51961,24 +51961,24 @@
             {
               "block": "44-05",
               "from": "St L South Garage",
-              "to": "Billings Bridge Station",
+              "to": "Parking - St Laurent Garage",
               "startTime": "14:40",
               "endTime": "19:03",
               "payTime": "04:23",
               "pieceId": "225",
-              "routeLabel": "40,44",
+              "routeLabel": "109",
               "page": 150,
               "taken": true
             },
             {
               "block": "44-05",
-              "from": "Billings Bridge Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "19:34",
               "endTime": "00:13",
               "payTime": "04:39",
               "pieceId": "225",
-              "routeLabel": "57,85",
+              "routeLabel": "57,109",
               "page": 150,
               "taken": true
             }
@@ -52190,7 +52190,7 @@
           "boardPage": 151,
           "availabilityStart": "08:23",
           "availabilityEnd": "08:53",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "20-05",
@@ -52202,7 +52202,7 @@
               "pieceId": "137",
               "routeLabel": "30,35,42",
               "page": 151,
-              "taken": false
+              "taken": true
             },
             {
               "block": "20-05",
@@ -52214,7 +52214,7 @@
               "pieceId": "137",
               "routeLabel": "20,31,138",
               "page": 151,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -52222,8 +52222,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-151-431",
@@ -52487,7 +52487,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-152-332",
@@ -52496,7 +52496,7 @@
           "boardPage": 152,
           "availabilityStart": "08:42",
           "availabilityEnd": "09:12",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "75-10",
@@ -52508,7 +52508,7 @@
               "pieceId": "332",
               "routeLabel": "74,75",
               "page": 152,
-              "taken": false
+              "taken": true
             },
             {
               "block": "75-10",
@@ -52520,7 +52520,7 @@
               "pieceId": "332",
               "routeLabel": "111,112",
               "page": 152,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -52528,7 +52528,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -52538,7 +52538,7 @@
           "boardPage": 153,
           "availabilityStart": "08:42",
           "availabilityEnd": "09:12",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "80-02",
@@ -52550,7 +52550,7 @@
               "pieceId": "341",
               "routeLabel": "61,62",
               "page": 153,
-              "taken": false
+              "taken": true
             },
             {
               "block": "80-02",
@@ -52562,7 +52562,7 @@
               "pieceId": "341",
               "routeLabel": "61,80",
               "page": 153,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -52570,8 +52570,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-153-287",
@@ -53279,7 +53279,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-156-40",
@@ -53372,7 +53372,7 @@
           "boardPage": 156,
           "availabilityStart": "09:00",
           "availabilityEnd": "09:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "90-03",
@@ -53384,7 +53384,7 @@
               "pieceId": "381",
               "routeLabel": "88,90,98",
               "page": 156,
-              "taken": false
+              "taken": true
             },
             {
               "block": "90-03",
@@ -53396,7 +53396,7 @@
               "pieceId": "381",
               "routeLabel": "53,61,62",
               "page": 156,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -53404,7 +53404,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -54416,7 +54416,7 @@
           "boardPage": 161,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:30",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "44-07",
@@ -54428,7 +54428,7 @@
               "pieceId": "227",
               "routeLabel": "44",
               "page": 161,
-              "taken": false
+              "taken": true
             },
             {
               "block": "44-07",
@@ -54440,7 +54440,7 @@
               "pieceId": "227",
               "routeLabel": "44,48,90,98",
               "page": 161,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -54448,8 +54448,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-161-330",
@@ -55046,7 +55046,7 @@
           "boardPage": 163,
           "availabilityStart": "07:49",
           "availabilityEnd": "08:19",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "93-06",
@@ -55058,7 +55058,7 @@
               "pieceId": "388",
               "routeLabel": "48,93",
               "page": 163,
-              "taken": false
+              "taken": true
             },
             {
               "block": "93-06",
@@ -55070,7 +55070,7 @@
               "pieceId": "388",
               "routeLabel": "47,93",
               "page": 163,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -55078,8 +55078,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-164-13",
@@ -55177,24 +55177,24 @@
             {
               "block": "19-09",
               "from": "St L South Garage",
-              "to": "Hurdman Station",
+              "to": "Parking - St Laurent Garage",
               "startTime": "17:23",
               "endTime": "21:23",
               "payTime": "04:00",
               "pieceId": "132",
-              "routeLabel": "19",
+              "routeLabel": "109",
               "page": 164,
               "taken": true
             },
             {
               "block": "19-09",
-              "from": "Hurdman Station",
+              "from": "Parking - St Laurent Garage",
               "to": "St L South Garage",
               "startTime": "21:57",
               "endTime": "02:33",
               "payTime": "04:36",
               "pieceId": "132",
-              "routeLabel": "61,90",
+              "routeLabel": "61,109",
               "page": 164,
               "taken": true
             }
@@ -55236,7 +55236,7 @@
               "endTime": "01:18",
               "payTime": "04:31",
               "pieceId": "201",
-              "routeLabel": "39",
+              "routeLabel": "39,109",
               "page": 164,
               "taken": true
             }
@@ -55298,7 +55298,7 @@
           "boardPage": 164,
           "availabilityStart": "09:11",
           "availabilityEnd": "09:41",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "53-05",
@@ -55310,7 +55310,7 @@
               "pieceId": "264",
               "routeLabel": "53",
               "page": 164,
-              "taken": false
+              "taken": true
             },
             {
               "block": "53-05",
@@ -55322,7 +55322,7 @@
               "pieceId": "264",
               "routeLabel": "86,940",
               "page": 164,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -55330,7 +55330,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -55436,7 +55436,7 @@
           "boardPage": 165,
           "availabilityStart": "08:33",
           "availabilityEnd": "09:03",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "30-07",
@@ -55448,7 +55448,7 @@
               "pieceId": "160",
               "routeLabel": "30,34,38",
               "page": 165,
-              "taken": false
+              "taken": true
             },
             {
               "block": "30-07",
@@ -55460,7 +55460,7 @@
               "pieceId": "160",
               "routeLabel": "98,970",
               "page": 165,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -55468,7 +55468,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -55562,7 +55562,7 @@
           "boardPage": 166,
           "availabilityStart": "09:12",
           "availabilityEnd": "09:42",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "33-05",
@@ -55574,7 +55574,7 @@
               "pieceId": "170",
               "routeLabel": "33",
               "page": 166,
-              "taken": false
+              "taken": true
             },
             {
               "block": "33-05",
@@ -55586,7 +55586,7 @@
               "pieceId": "170",
               "routeLabel": "39",
               "page": 166,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -55594,7 +55594,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -56088,7 +56088,7 @@
               "endTime": "22:11",
               "payTime": "02:42",
               "pieceId": "233",
-              "routeLabel": "9,90",
+              "routeLabel": "109",
               "page": 168,
               "taken": true
             },
@@ -56246,7 +56246,7 @@
           "boardPage": 168,
           "availabilityStart": "08:17",
           "availabilityEnd": "08:47",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "39-17",
@@ -56258,7 +56258,7 @@
               "pieceId": "203",
               "routeLabel": "38,39",
               "page": 168,
-              "taken": false
+              "taken": true
             },
             {
               "block": "39-17",
@@ -56270,7 +56270,7 @@
               "pieceId": "203",
               "routeLabel": "971",
               "page": 168,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -56278,8 +56278,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-169-211",
@@ -56298,7 +56298,7 @@
               "endTime": "00:22",
               "payTime": "04:12",
               "pieceId": "211",
-              "routeLabel": "40",
+              "routeLabel": "40,109",
               "page": 169,
               "taken": true
             },
@@ -56456,7 +56456,7 @@
           "boardPage": 169,
           "availabilityStart": "07:40",
           "availabilityEnd": "08:10",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "85-08",
@@ -56468,7 +56468,7 @@
               "pieceId": "364",
               "routeLabel": "85",
               "page": 169,
-              "taken": false
+              "taken": true
             },
             {
               "block": "85-08",
@@ -56480,7 +56480,7 @@
               "pieceId": "364",
               "routeLabel": "940",
               "page": 169,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Bus Summer Weekend boards.pdf",
@@ -56488,8 +56488,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-169-217",
@@ -56718,7 +56718,7 @@
               "endTime": "00:16",
               "payTime": "03:01",
               "pieceId": "281",
-              "routeLabel": "61,62",
+              "routeLabel": "109",
               "page": 170,
               "taken": true
             },
@@ -56760,7 +56760,7 @@
               "endTime": "00:55",
               "payTime": "03:18",
               "pieceId": "106",
-              "routeLabel": "12",
+              "routeLabel": "12,109",
               "page": 170,
               "taken": true
             },
