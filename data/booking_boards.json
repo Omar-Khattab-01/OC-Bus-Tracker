@@ -57648,8 +57648,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 8,
-                  "booked": 5,
-                  "available": 3
+                  "booked": 6,
+                  "available": 2
                 }
               ]
             }
@@ -57684,8 +57684,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 20,
-                  "booked": 12,
-                  "available": 8
+                  "booked": 16,
+                  "available": 4
                 }
               ]
             }
