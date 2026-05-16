@@ -1632,6 +1632,7 @@
       { key: 'week1', label: 'Week 1' },
       { key: 'week2', label: 'Week 2' },
     ];
+    const WORK_SAME_BOTH_WEEKS_KEY = '__same_both_weeks';
     const WORK_WEEK_ONE_ANCHOR_DATE = '2026-04-20';
     const WORK_DAYS = [
       { key: 'monday', label: 'Monday', serviceDay: 'weekday' },
@@ -1988,10 +1989,23 @@
     }
 
     function getWorkSameBothWeeks(assignments = buildWorkAssignmentsFromProfile()) {
+      const storedAssignments = currentProfile?.work_assignments && typeof currentProfile.work_assignments === 'object'
+        ? currentProfile.work_assignments
+        : {};
+      if (typeof storedAssignments[WORK_SAME_BOTH_WEEKS_KEY] === 'boolean') {
+        return storedAssignments[WORK_SAME_BOTH_WEEKS_KEY];
+      }
       if (typeof currentProfile?.work_same_both_weeks === 'boolean') {
         return currentProfile.work_same_both_weeks;
       }
       return workWeeksHaveSameAssignments(assignments);
+    }
+
+    function withWorkAssignmentSettings(assignments, sameBothWeeks = getWorkSameBothWeeks(assignments)) {
+      return {
+        ...assignments,
+        [WORK_SAME_BOTH_WEEKS_KEY]: Boolean(sameBothWeeks),
+      };
     }
 
     function mirrorWeekOneWorkAssignments(assignments) {
@@ -2705,8 +2719,7 @@
         weekday_blocks: legacy.weekday,
         saturday_blocks: legacy.saturday,
         sunday_blocks: legacy.sunday,
-        work_assignments: workAssignments,
-        work_same_both_weeks: getWorkSameBothWeeks(workAssignments),
+        work_assignments: withWorkAssignmentSettings(workAssignments),
         saved_shuttles: getSavedShuttles(),
         ...extra,
       };
@@ -2723,9 +2736,15 @@
 
     async function setSameWorkBothWeeks(enabled) {
       if (!currentProfile) currentProfile = {};
-      currentProfile.work_same_both_weeks = Boolean(enabled);
+      const assignments = buildWorkAssignmentsFromProfile();
+      currentProfile.work_assignments = withWorkAssignmentSettings(
+        enabled ? mirrorWeekOneWorkAssignments(assignments) : assignments,
+        enabled
+      );
       if (enabled) {
-        currentProfile.work_assignments = mirrorWeekOneWorkAssignments(buildWorkAssignmentsFromProfile());
+        currentProfile.work_same_both_weeks = true;
+      } else {
+        delete currentProfile.work_same_both_weeks;
       }
       renderQuickLookup();
       renderAccountModal();

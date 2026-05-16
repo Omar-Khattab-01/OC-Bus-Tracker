@@ -3,7 +3,6 @@ alter table public.user_profiles
   add column if not exists saturday_blocks text[] not null default '{}',
   add column if not exists sunday_blocks text[] not null default '{}',
   add column if not exists work_assignments jsonb not null default '{}'::jsonb,
-  add column if not exists work_same_both_weeks boolean not null default true,
   add column if not exists saved_shuttles text[] not null default '{}';
 
 do $$
@@ -41,16 +40,6 @@ set work_assignments = jsonb_build_object(
   'week2_sunday', to_jsonb(sunday_blocks)
 )
 where work_assignments = '{}'::jsonb;
-
-update public.user_profiles
-set work_same_both_weeks = false
-where coalesce(work_assignments->'week1_monday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_monday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_tuesday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_tuesday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_wednesday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_wednesday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_thursday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_thursday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_friday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_friday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_saturday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_saturday', '[]'::jsonb)
-  or coalesce(work_assignments->'week1_sunday', '[]'::jsonb) is distinct from coalesce(work_assignments->'week2_sunday', '[]'::jsonb);
 
 alter table public.user_profiles
   drop column if exists primary_block,
