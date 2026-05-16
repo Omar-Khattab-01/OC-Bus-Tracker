@@ -1943,6 +1943,13 @@
       return `${week}_${day}`;
     }
 
+    function workBlockListsMatch(first, second) {
+      const firstBlocks = normalizeSavedBlockList(first);
+      const secondBlocks = normalizeSavedBlockList(second);
+      if (firstBlocks.length !== secondBlocks.length) return false;
+      return firstBlocks.every((block, index) => block === secondBlocks[index]);
+    }
+
     function normalizeSavedBlockList(values) {
       if (!Array.isArray(values)) return [];
       return [...new Set(values.map(normalizeBlockValue).filter(Boolean))];
@@ -1957,7 +1964,7 @@
       );
     }
 
-    function getWorkAssignments() {
+    function buildWorkAssignmentsFromProfile() {
       const assignments = currentProfile?.work_assignments && typeof currentProfile.work_assignments === 'object'
         ? { ...currentProfile.work_assignments }
         : {};
@@ -1971,6 +1978,35 @@
         }
       }
       return normalized;
+    }
+
+    function workWeeksHaveSameAssignments(assignments) {
+      return WORK_DAYS.every((day) => workBlockListsMatch(
+        assignments[getWorkAssignmentKey('week1', day.key)],
+        assignments[getWorkAssignmentKey('week2', day.key)]
+      ));
+    }
+
+    function getWorkSameBothWeeks(assignments = buildWorkAssignmentsFromProfile()) {
+      if (typeof currentProfile?.work_same_both_weeks === 'boolean') {
+        return currentProfile.work_same_both_weeks;
+      }
+      return workWeeksHaveSameAssignments(assignments);
+    }
+
+    function mirrorWeekOneWorkAssignments(assignments) {
+      const mirrored = { ...assignments };
+      for (const day of WORK_DAYS) {
+        mirrored[getWorkAssignmentKey('week2', day.key)] = normalizeSavedBlockList(
+          mirrored[getWorkAssignmentKey('week1', day.key)]
+        );
+      }
+      return mirrored;
+    }
+
+    function getWorkAssignments() {
+      const assignments = buildWorkAssignmentsFromProfile();
+      return getWorkSameBothWeeks(assignments) ? mirrorWeekOneWorkAssignments(assignments) : assignments;
     }
 
     function getSavedBlocksForAssignment(week, day) {
@@ -2343,12 +2379,22 @@
     }
 
     function renderWorkAssignmentGrid() {
-      return WORK_WEEKS.map((week) => `
+      const sameBothWeeks = getWorkSameBothWeeks();
+      const visibleWeeks = sameBothWeeks ? [{ key: 'week1', label: 'Every Week' }] : WORK_WEEKS;
+      return `
         <section class="section-card">
-          <div class="field-label">${escapeHtml(week.label)}</div>
-          ${WORK_DAYS.map((day) => renderWorkAssignmentSection(week, day)).join('')}
+          <label class="checkbox-row">
+            <input id="sameWorkBothWeeksToggle" type="checkbox" ${sameBothWeeks ? 'checked' : ''} />
+            <span>Use the same work for Week 1 and Week 2</span>
+          </label>
         </section>
-      `).join('');
+        ${visibleWeeks.map((week) => `
+          <section class="section-card">
+            <div class="field-label">${escapeHtml(week.label)}</div>
+            ${WORK_DAYS.map((day) => renderWorkAssignmentSection(week, day)).join('')}
+          </section>
+        `).join('')}
+      `;
     }
 
     function renderAccountModal() {
@@ -2592,6 +2638,7 @@
       const showSignInPasswordToggle = document.getElementById('showSignInPasswordToggle');
       const showPasswordToggle = document.getElementById('showPasswordToggle');
       const showRecoveryPasswordToggle = document.getElementById('showRecoveryPasswordToggle');
+      const sameWorkBothWeeksToggle = document.getElementById('sameWorkBothWeeksToggle');
 
       if (signInBtn) signInBtn.addEventListener('click', signInWithPassword);
       if (signUpBtn) signUpBtn.addEventListener('click', signUpWithPassword);
@@ -2607,6 +2654,9 @@
       if (addSaturdayBlockBtn) addSaturdayBlockBtn.addEventListener('click', () => addBlockToProfile('saturday'));
       if (addSundayBlockBtn) addSundayBlockBtn.addEventListener('click', () => addBlockToProfile('sunday'));
       if (addSavedShuttleBtn) addSavedShuttleBtn.addEventListener('click', addShuttleToProfile);
+      if (sameWorkBothWeeksToggle) {
+        sameWorkBothWeeksToggle.addEventListener('change', () => setSameWorkBothWeeks(sameWorkBothWeeksToggle.checked));
+      }
       accountBody.querySelectorAll('[data-add-work-key]').forEach((button) => {
         button.addEventListener('click', () => addWorkAssignmentToProfile(button.dataset.addWorkKey));
       });
@@ -2656,6 +2706,7 @@
         saturday_blocks: legacy.saturday,
         sunday_blocks: legacy.sunday,
         work_assignments: workAssignments,
+        work_same_both_weeks: getWorkSameBothWeeks(workAssignments),
         saved_shuttles: getSavedShuttles(),
         ...extra,
       };
@@ -2668,6 +2719,17 @@
       setAccountNotice('Saved to your work schedule.', 'ok');
       await loadProfile();
       return true;
+    }
+
+    async function setSameWorkBothWeeks(enabled) {
+      if (!currentProfile) currentProfile = {};
+      currentProfile.work_same_both_weeks = Boolean(enabled);
+      if (enabled) {
+        currentProfile.work_assignments = mirrorWeekOneWorkAssignments(buildWorkAssignmentsFromProfile());
+      }
+      renderQuickLookup();
+      renderAccountModal();
+      await syncProfileWorkChanges();
     }
 
     async function addBlockToProfile(day) {
