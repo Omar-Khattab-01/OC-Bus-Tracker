@@ -22,26 +22,32 @@ TARGETS = {
     "daily": {
         "label": "Daily Work",
         "filename": "2026 Summer daily bords.pdf",
+        "board_ids": ["daily_open_work"],
     },
     "weekend": {
         "label": "Weekend Work",
         "filename": "2026 Bus Summer Weekend boards.pdf",
+        "board_ids": ["weekend_boards"],
     },
     "spares": {
         "label": "Spare Boards",
         "filename": "2026 Summer Spare,s Boards.pdf",
+        "board_ids": ["spares"],
     },
     "floating_spares": {
         "label": "Daily and Weekly Floating Spares",
         "filename": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
+        "board_ids": ["floating_spares"],
     },
     "days_off_counter": {
         "label": "Days Off Counter",
         "filename": "2026 Summer Days off Counter (3).pdf",
+        "board_ids": ["days_off_counter"],
     },
     "stat": {
         "label": "Stat Work",
         "filename": "2026 Summer stat work.pdf",
+        "board_ids": ["stat_work"],
     },
 }
 
@@ -84,17 +90,23 @@ def copy_sources(temp_source_dir: Path):
 
 def build_payload(temp_source_dir: Path) -> dict:
     builder = load_builder()
+    daily_pdf = temp_source_dir / "2026 Summer daily bords.pdf"
+    weekend_pdf = temp_source_dir / "2026 Bus Summer Weekend boards.pdf"
+    days_off_pdf = temp_source_dir / "2026 Summer Days off Counter (3).pdf"
+    spares_pdf = temp_source_dir / "2026 Summer Spare,s Boards.pdf"
+    floating_spares_pdf = temp_source_dir / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
+    stat_pdf = temp_source_dir / "2026 Summer stat work.pdf"
     boards = [
-        builder.parse_daily_board(temp_source_dir / "2026 Summer daily bords.pdf"),
-        builder.parse_bus_summer_weekend_board(temp_source_dir / "2026 Bus Summer Weekend boards.pdf"),
-        builder.parse_days_off_counter(temp_source_dir / "2026 Summer Days off Counter (3).pdf"),
-        builder.parse_spares_board(temp_source_dir / "2026 Summer Spare,s Boards.pdf"),
-        builder.parse_spares_board(
-            temp_source_dir / "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
+        builder.with_board_updated_at(builder.parse_daily_board(daily_pdf), daily_pdf),
+        builder.with_board_updated_at(builder.parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf),
+        builder.with_board_updated_at(builder.parse_days_off_counter(days_off_pdf), days_off_pdf),
+        builder.with_board_updated_at(builder.parse_spares_board(spares_pdf), spares_pdf),
+        builder.with_board_updated_at(builder.parse_spares_board(
+            floating_spares_pdf,
             "floating_spares",
             "Daily and Weekly Floating Spares",
-        ),
-        builder.parse_stat_board(temp_source_dir / "2026 Summer stat work.pdf"),
+        ), floating_spares_pdf),
+        builder.with_board_updated_at(builder.parse_stat_board(stat_pdf), stat_pdf),
     ]
     return {
         "generatedFrom": "Booking_Boards PDFs",
@@ -149,6 +161,42 @@ def put_github_file(repo: str, branch: str, path: str, content: bytes, message: 
     )
 
 
+def get_existing_booking_board_payload(repo: str, branch: str, token: str) -> dict:
+    try:
+        existing = get_github_file(repo, branch, "data/booking_boards.json", token)
+        encoded = str(existing.get("content") or "")
+        if not encoded:
+            return {}
+        return json.loads(base64.b64decode(encoded).decode("utf-8"))
+    except Exception:
+        return {}
+
+
+def fallback_updated_at(payload: dict) -> str:
+    return str(payload.get("updatedAt") or payload.get("generatedAt") or "").strip()
+
+
+def merge_board_update_timestamps(payload: dict, previous_payload: dict, target: dict, updated_at: str) -> dict:
+    target_board_ids = set(target.get("board_ids") or [])
+    previous_fallback = fallback_updated_at(previous_payload)
+    previous_by_id = {
+        str(board.get("id") or "").strip(): board
+        for board in previous_payload.get("boards", [])
+        if str(board.get("id") or "").strip()
+    }
+    boards = []
+    for board in payload.get("boards", []):
+        board_id = str(board.get("id") or "").strip()
+        previous_board = previous_by_id.get(board_id, {})
+        boards.append({
+            **board,
+            "updatedAt": updated_at
+            if board_id in target_board_ids
+            else str(previous_board.get("updatedAt") or previous_fallback or board.get("updatedAt") or "").strip(),
+        })
+    return {**payload, "boards": boards}
+
+
 def commit_updates(target: dict, pdf_bytes: bytes, payload: dict):
     token = os.environ.get("BOOKING_BOARD_GITHUB_TOKEN", "").strip()
     if not token:
@@ -157,6 +205,9 @@ def commit_updates(target: dict, pdf_bytes: bytes, payload: dict):
     repo = os.environ.get("BOOKING_BOARD_GITHUB_REPO", "Omar-Khattab-01/OC-Bus-Tracker").strip()
     branch = os.environ.get("BOOKING_BOARD_GITHUB_BRANCH", "main").strip()
     pdf_path = f"Booking_Boards/{target['filename']}"
+    updated_at = datetime.now(timezone.utc).isoformat()
+    previous_payload = get_existing_booking_board_payload(repo, branch, token)
+    payload = merge_board_update_timestamps(payload, previous_payload, target, updated_at)
     data_bytes = json.dumps(payload, indent=2).encode("utf-8") + b"\n"
 
     put_github_file(
@@ -175,7 +226,7 @@ def commit_updates(target: dict, pdf_bytes: bytes, payload: dict):
         f"Rebuild booking boards after {target['label']} upload",
         token,
     )
-    return repo, branch
+    return repo, branch, updated_at, payload
 
 
 class handler(BaseHTTPRequestHandler):
@@ -207,7 +258,7 @@ class handler(BaseHTTPRequestHandler):
                 copy_sources(temp_source_dir)
                 (temp_source_dir / target["filename"]).write_bytes(pdf_bytes)
                 payload = build_payload(temp_source_dir)
-                repo, branch = commit_updates(target, pdf_bytes, payload)
+                repo, branch, updated_at, payload = commit_updates(target, pdf_bytes, payload)
 
             json_response(
                 self,
@@ -218,6 +269,7 @@ class handler(BaseHTTPRequestHandler):
                     "label": target["label"],
                     "filename": target["filename"],
                     "boardCount": len(payload["boards"]),
+                    "updatedAt": updated_at,
                     "storage": "github",
                     "repo": repo,
                     "branch": branch,

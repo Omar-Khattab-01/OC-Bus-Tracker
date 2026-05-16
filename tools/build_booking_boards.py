@@ -929,14 +929,34 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
     }
 
 
+def source_pdf_updated_at(pdf_path: Path):
+    try:
+        return datetime.fromtimestamp(pdf_path.stat().st_mtime, timezone.utc).isoformat()
+    except OSError:
+        return ""
+
+
+def with_board_updated_at(board: dict, pdf_path: Path):
+    return {
+        **board,
+        "updatedAt": source_pdf_updated_at(pdf_path),
+    }
+
+
 def main():
+    daily_pdf = SOURCE_DIR / "2026 Summer daily bords.pdf"
+    weekend_pdf = SOURCE_DIR / "2026 Bus Summer Weekend boards.pdf"
+    days_off_pdf = SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"
+    spares_pdf = SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"
+    floating_spares_pdf = SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
+    stat_pdf = SOURCE_DIR / "2026 Summer stat work.pdf"
     boards = []
-    boards.append(parse_daily_board(SOURCE_DIR / "2026 Summer daily bords.pdf"))
-    boards.append(parse_bus_summer_weekend_board(SOURCE_DIR / "2026 Bus Summer Weekend boards.pdf"))
-    boards.append(parse_days_off_counter(SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"))
-    boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"))
-    boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf", "floating_spares", "Daily and Weekly Floating Spares"))
-    boards.append(parse_stat_board(SOURCE_DIR / "2026 Summer stat work.pdf"))
+    boards.append(with_board_updated_at(parse_daily_board(daily_pdf), daily_pdf))
+    boards.append(with_board_updated_at(parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf))
+    boards.append(with_board_updated_at(parse_days_off_counter(days_off_pdf), days_off_pdf))
+    boards.append(with_board_updated_at(parse_spares_board(spares_pdf), spares_pdf))
+    boards.append(with_board_updated_at(parse_spares_board(floating_spares_pdf, "floating_spares", "Daily and Weekly Floating Spares"), floating_spares_pdf))
+    boards.append(with_board_updated_at(parse_stat_board(stat_pdf), stat_pdf))
     payload = {
         "generatedFrom": "Booking_Boards PDFs",
         "generatedAt": datetime.now(timezone.utc).isoformat(),

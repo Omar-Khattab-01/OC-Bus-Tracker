@@ -67,30 +67,37 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
   daily: {
     label: 'Daily Work',
     filename: '2026 Summer daily bords.pdf',
+    boardIds: ['daily_open_work'],
   },
   spares: {
     label: 'Spare Boards',
     filename: '2026 Summer Spare,s Boards.pdf',
+    boardIds: ['spares'],
   },
   floating_spares: {
     label: 'Daily and Weekly Floating Spares',
     filename: '2026 Summer Daily and weekly floating spares  (4) (1).pdf',
+    boardIds: ['floating_spares'],
   },
   weekend: {
     label: 'Weekend Work',
     filename: '2026 Bus Summer Weekend boards.pdf',
+    boardIds: ['weekend_boards'],
   },
   general_spare_weekend: {
     label: 'Weekend Work',
     filename: '2026 Bus Summer Weekend boards.pdf',
+    boardIds: ['weekend_boards'],
   },
   days_off_counter: {
     label: 'Days Off Counter',
     filename: '2026 Summer Days off Counter (3).pdf',
+    boardIds: ['days_off_counter'],
   },
   stat: {
     label: 'Stat Work',
     filename: '2026 Summer stat work.pdf',
+    boardIds: ['stat_work'],
   },
 };
 
@@ -1952,8 +1959,7 @@ function loadBookingBoardsData() {
   return bookingBoardsDataCache;
 }
 
-function getBookingBoardsUpdatedAt(bookingBoardsData = null) {
-  if (bookingBoardsRuntimeUpdatedAt) return bookingBoardsRuntimeUpdatedAt;
+function getFallbackBookingBoardsUpdatedAt(bookingBoardsData = null) {
   const generatedAt = String(bookingBoardsData?.updatedAt || bookingBoardsData?.generatedAt || '').trim();
   if (generatedAt) return generatedAt;
   try {
@@ -1963,9 +1969,37 @@ function getBookingBoardsUpdatedAt(bookingBoardsData = null) {
   }
 }
 
+function getBoardUpdatedAt(board, bookingBoardsData = null) {
+  const boardUpdatedAt = String(board?.updatedAt || '').trim();
+  return boardUpdatedAt || getFallbackBookingBoardsUpdatedAt(bookingBoardsData);
+}
+
+function mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, uploadedBoardKey, updatedAt) {
+  const target = BOOKING_BOARD_UPLOAD_TARGETS[uploadedBoardKey] || {};
+  const uploadedBoardIds = new Set(target.boardIds || []);
+  const previousFallback = getFallbackBookingBoardsUpdatedAt(previousData);
+  const previousById = new Map(
+    (Array.isArray(previousData?.boards) ? previousData.boards : [])
+      .map((board) => [String(board?.id || '').trim(), board])
+      .filter(([id]) => id)
+  );
+  return {
+    ...rebuiltData,
+    boards: (Array.isArray(rebuiltData?.boards) ? rebuiltData.boards : []).map((board) => {
+      const boardId = String(board?.id || '').trim();
+      const previousBoard = previousById.get(boardId);
+      return {
+        ...board,
+        updatedAt: uploadedBoardIds.has(boardId)
+          ? updatedAt
+          : String(previousBoard?.updatedAt || previousFallback || board?.updatedAt || '').trim(),
+      };
+    }),
+  };
+}
+
 function getBookingBoardSummaries() {
   const bookingBoardsData = loadBookingBoardsData();
-  const updatedAt = getBookingBoardsUpdatedAt(bookingBoardsData);
   const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
   return boards
     .filter((board) => {
@@ -1985,7 +2019,7 @@ function getBookingBoardSummaries() {
         title: String(board.title || '').trim(),
         serviceDay: String(board.serviceDay || '').trim(),
         sourcePdf: String(board.sourcePdf || '').trim(),
-        updatedAt,
+        updatedAt: getBoardUpdatedAt(board, bookingBoardsData),
         entryCount: counters.length
           ? counters.reduce((sum, counter) => sum + counter.rows.length, 0)
           : spareSections.length
@@ -2004,7 +2038,7 @@ function getBookingBoardSummaries() {
 function buildBookingBoardResponse(requestedBoardId = '') {
   const summaries = getBookingBoardSummaries();
   const bookingBoardsData = loadBookingBoardsData();
-  const updatedAt = getBookingBoardsUpdatedAt(bookingBoardsData);
+  const updatedAt = getFallbackBookingBoardsUpdatedAt(bookingBoardsData);
   const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
   const fallbackBoardId = summaries[0]?.id || '';
   const selectedBoardId = String(requestedBoardId || fallbackBoardId).trim();
@@ -2040,7 +2074,7 @@ function buildBookingBoardResponse(requestedBoardId = '') {
       title: String(board.title || '').trim(),
       serviceDay: String(board.serviceDay || '').trim(),
       sourcePdf: String(board.sourcePdf || '').trim(),
-      updatedAt,
+      updatedAt: getBoardUpdatedAt(board, bookingBoardsData),
       entries,
       sections,
       counters,
@@ -3424,24 +3458,27 @@ async function handleBookingBoardUpload(req, res) {
   const targetPath = path.join(tempSourceDir, target.filename);
 
   try {
+    const previousData = loadBookingBoardsData();
     copyBookingBoardSourcesToTemp(tempSourceDir);
     fs.writeFileSync(targetPath, pdfBuffer);
 
     const pythonBin = await rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile);
 
     const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
-    bookingBoardsDataCache = rebuiltData;
+    const updatedAt = new Date().toISOString();
+    const mergedData = mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, boardKey, updatedAt);
+    bookingBoardsDataCache = mergedData;
     bookingBoardsDataMtimeMs = -1;
-    bookingBoardsRuntimeUpdatedAt = new Date().toISOString();
+    bookingBoardsRuntimeUpdatedAt = updatedAt;
 
-    const boardCount = Array.isArray(rebuiltData?.boards) ? rebuiltData.boards.length : 0;
+    const boardCount = Array.isArray(mergedData?.boards) ? mergedData.boards.length : 0;
     res.json({
       ok: true,
       board: boardKey,
       label: target.label,
       filename: target.filename,
       boardCount,
-      updatedAt: bookingBoardsRuntimeUpdatedAt,
+      updatedAt,
       storage: 'runtime-memory',
       runtime: pythonBin,
       note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
