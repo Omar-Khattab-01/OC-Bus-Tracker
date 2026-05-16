@@ -341,6 +341,35 @@ const SHUTTLE_DEFINITIONS = {
       ['19:00', '19:13', '19:15', '19:28'],
     ],
   },
+  merivale_billings_saturday: {
+    id: 'merivale_billings_saturday',
+    route: '899',
+    name: 'Merivale to Billings Shuttle',
+    sourceLabel: 'Saturday Merivale to Billings (899)',
+    sourceFile: SHUTTLE_SOURCE_FILE,
+    stops: ['Merivale Depot', 'Billings Bridge Terminal', 'Billings Bridge Terminal', 'Merivale Depot'],
+    trips: [
+      ['10:00', '10:13', '10:15', '10:28'],
+      ['10:30', '10:43', '10:45', '10:58'],
+      ['11:00', '11:13', '11:15', '11:28'],
+      ['11:29', '11:42', '11:44', '11:57'],
+      ['12:00', '12:13', '12:15', '12:28'],
+      ['12:32', '12:45', '12:46', '12:59'],
+      ['13:00', '13:13', '13:15', '13:28'],
+      ['13:30', '13:43', '13:45', '13:58'],
+      ['14:00', '14:13', '14:15', '14:28'],
+      ['14:30', '14:43', '14:45', '14:58'],
+      ['15:00', '15:13', '15:15', '15:28'],
+      ['15:30', '15:43', '15:45', '15:58'],
+      ['15:59', '16:12', '16:14', '16:27'],
+      ['16:30', '16:43', '16:45', '16:58'],
+      ['17:02', '17:15', '17:16', '17:29'],
+      ['17:30', '17:43', '17:45', '17:58'],
+      ['18:00', '18:13', '18:15', '18:28'],
+      ['18:30', '18:43', '18:45', '18:58'],
+      ['19:00', '19:13', '19:15', '19:28'],
+    ],
+  },
 };
 
 const SHUTTLES_BY_SERVICE_DAY = {
@@ -361,6 +390,7 @@ const SHUTTLES_BY_SERVICE_DAY = {
   saturday: [
     'east_end_weekend',
     'merivale_baseline_weekend',
+    'merivale_billings_saturday',
   ],
   sunday: [
     'east_end_weekend',

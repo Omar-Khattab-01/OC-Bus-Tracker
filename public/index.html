@@ -1628,6 +1628,20 @@
     let currentMainView = 'chat';
     let pendingConfirmResolver = null;
     const TODAY_WORK_STORAGE_KEY = 'oc-bus-tracker:today-work:v1';
+    const WORK_WEEKS = [
+      { key: 'week1', label: 'Week 1' },
+      { key: 'week2', label: 'Week 2' },
+    ];
+    const WORK_WEEK_ONE_ANCHOR_DATE = '2026-04-20';
+    const WORK_DAYS = [
+      { key: 'monday', label: 'Monday', serviceDay: 'weekday' },
+      { key: 'tuesday', label: 'Tuesday', serviceDay: 'weekday' },
+      { key: 'wednesday', label: 'Wednesday', serviceDay: 'weekday' },
+      { key: 'thursday', label: 'Thursday', serviceDay: 'weekday' },
+      { key: 'friday', label: 'Friday', serviceDay: 'weekday' },
+      { key: 'saturday', label: 'Saturday', serviceDay: 'saturday' },
+      { key: 'sunday', label: 'Sunday', serviceDay: 'sunday' },
+    ];
     const defaultChatMarkup = `
       <div class="message bot">Send a block like <strong>44-07</strong>, a bus like <strong>6525</strong>, or type <strong>shuttle</strong> to see shuttles for today.</div>
     `;
@@ -1740,6 +1754,22 @@
       if (weekday === 'saturday') return 'saturday';
       if (weekday === 'sunday') return 'sunday';
       return 'weekday';
+    }
+
+    function getCurrentCalendarDayKey(date = new Date()) {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Toronto',
+        weekday: 'long',
+      }).format(date).toLowerCase();
+    }
+
+    function getCurrentWorkWeekKey(date = new Date()) {
+      const today = getOttawaDateString(date);
+      const start = new Date(`${WORK_WEEK_ONE_ANCHOR_DATE}T00:00:00Z`);
+      const current = new Date(`${today}T00:00:00Z`);
+      const diffDays = Math.floor((current - start) / (24 * 60 * 60 * 1000));
+      const weekIndex = Math.floor(diffDays / 7);
+      return Math.abs(weekIndex) % 2 === 0 ? 'week1' : 'week2';
     }
 
     function getOttawaNowSeconds(date = new Date()) {
@@ -1880,14 +1910,20 @@
 
     function getDefaultTodayWorkFromProfile() {
       if (!currentUser) return null;
-      const serviceDay = getCurrentServiceDayKey();
-      const savedBlocks = getSavedBlocksForDay(serviceDay);
+      const weekKey = getCurrentWorkWeekKey();
+      const dayKey = getCurrentCalendarDayKey();
+      const dayConfig = WORK_DAYS.find((day) => day.key === dayKey) || WORK_DAYS[0];
+      const serviceDay = dayConfig.serviceDay;
+      const savedBlocks = getSavedBlocksForAssignment(weekKey, dayKey);
       if (!savedBlocks.length) return null;
+      const weekLabel = WORK_WEEKS.find((week) => week.key === weekKey)?.label || formatServiceDayLabel(weekKey);
       return {
         block: savedBlocks[0],
         serviceDay,
+        weekKey,
+        dayKey,
         source: 'account',
-        label: `${formatServiceDayLabel(serviceDay)}: ${savedBlocks[0]}`,
+        label: `${weekLabel} ${dayConfig.label}: ${savedBlocks[0]}`,
       };
     }
 
@@ -1898,9 +1934,81 @@
       return null;
     }
 
-    function getSavedBlocksForDay(day) {
+    function getLegacySavedBlocksForDay(day) {
       const key = `${day}_blocks`;
-      return Array.isArray(currentProfile?.[key]) ? currentProfile[key] : [];
+      return normalizeSavedBlockList(currentProfile?.[key]);
+    }
+
+    function getWorkAssignmentKey(week, day) {
+      return `${week}_${day}`;
+    }
+
+    function normalizeSavedBlockList(values) {
+      if (!Array.isArray(values)) return [];
+      return [...new Set(values.map(normalizeBlockValue).filter(Boolean))];
+    }
+
+    function hasExplicitWorkAssignment(assignments, week, day) {
+      const key = getWorkAssignmentKey(week, day);
+      return Boolean(
+        assignments &&
+        typeof assignments === 'object' &&
+        Object.prototype.hasOwnProperty.call(assignments, key)
+      );
+    }
+
+    function getWorkAssignments() {
+      const assignments = currentProfile?.work_assignments && typeof currentProfile.work_assignments === 'object'
+        ? { ...currentProfile.work_assignments }
+        : {};
+      const normalized = {};
+      for (const week of WORK_WEEKS) {
+        for (const day of WORK_DAYS) {
+          const key = getWorkAssignmentKey(week.key, day.key);
+          normalized[key] = hasExplicitWorkAssignment(assignments, week.key, day.key)
+            ? normalizeSavedBlockList(assignments[key])
+            : getLegacySavedBlocksForDay(day.serviceDay);
+        }
+      }
+      return normalized;
+    }
+
+    function getSavedBlocksForAssignment(week, day) {
+      return getWorkAssignments()[getWorkAssignmentKey(week, day)] || [];
+    }
+
+    function getSavedBlocksForDay(day) {
+      const blocks = [...getLegacySavedBlocksForDay(day)];
+      const currentDay = day === 'weekday' ? getCurrentCalendarDayKey() : day;
+      for (const week of WORK_WEEKS) {
+        blocks.push(...getSavedBlocksForAssignment(week.key, currentDay));
+      }
+      return normalizeSavedBlockList(blocks);
+    }
+
+    function setSavedBlocksForAssignment(week, day, blocks) {
+      if (!currentProfile) currentProfile = {};
+      const assignments = getWorkAssignments();
+      assignments[getWorkAssignmentKey(week, day)] = normalizeSavedBlockList(blocks);
+      currentProfile.work_assignments = assignments;
+    }
+
+    function buildLegacyBlocksFromAssignments(assignments = getWorkAssignments()) {
+      const legacy = { weekday: [], saturday: [], sunday: [] };
+      for (const week of WORK_WEEKS) {
+        for (const day of WORK_DAYS) {
+          legacy[day.serviceDay].push(...(assignments[getWorkAssignmentKey(week.key, day.key)] || []));
+        }
+      }
+      return {
+        weekday: normalizeSavedBlockList(legacy.weekday),
+        saturday: normalizeSavedBlockList(legacy.saturday),
+        sunday: normalizeSavedBlockList(legacy.sunday),
+      };
+    }
+
+    function getWorkSlotInputId(week, day) {
+      return `${week}${day.charAt(0).toUpperCase()}${day.slice(1)}BlockInput`;
     }
 
     function getSavedShuttles() {
@@ -2092,7 +2200,11 @@
       updateAccountButton();
       const todayWork = ensureTodayWorkRecord();
       const todayServiceDay = getCurrentServiceDayKey();
-      const savedTodayBlocks = currentUser ? getSavedBlocksForDay(todayServiceDay) : [];
+      const todayWeekKey = getCurrentWorkWeekKey();
+      const todayDayKey = getCurrentCalendarDayKey();
+      const todayWeekLabel = WORK_WEEKS.find((week) => week.key === todayWeekKey)?.label || formatServiceDayLabel(todayWeekKey);
+      const todayDayLabel = WORK_DAYS.find((day) => day.key === todayDayKey)?.label || formatServiceDayLabel(todayServiceDay);
+      const savedTodayBlocks = currentUser ? getSavedBlocksForAssignment(todayWeekKey, todayDayKey) : [];
 
       if (!currentUser && !todayWork) {
         quickLookupPanel.hidden = true;
@@ -2103,7 +2215,7 @@
 
       quickLookupPanel.hidden = false;
       quickLookupMeta.textContent = currentUser
-        ? `${formatServiceDayLabel(todayServiceDay)} work${currentProfile?.display_name ? ` for ${currentProfile.display_name}` : ''}`
+        ? `${todayWeekLabel} ${todayDayLabel} work${currentProfile?.display_name ? ` for ${currentProfile.display_name}` : ''}`
         : 'Saved on this device for today';
 
       const actions = [];
@@ -2117,7 +2229,7 @@
       for (const block of savedTodayBlocks) {
         if (todayWork && normalizeBlockValue(todayWork.block) === normalizeBlockValue(block)) continue;
         actions.push(
-          `<button class="link-btn" type="button" data-quick-block="${escapeAttribute(block)}">${escapeHtml(formatServiceDayLabel(todayServiceDay))}: ${escapeHtml(block)}</button>`
+          `<button class="link-btn" type="button" data-quick-block="${escapeAttribute(block)}">${escapeHtml(todayWeekLabel)} ${escapeHtml(todayDayLabel)}: ${escapeHtml(block)}</button>`
         );
       }
 
@@ -2201,6 +2313,42 @@
       await openTodayWorkPage();
       return;
       addMessage('Save a paddle to Today’s Work first, then it will open here automatically for the rest of the day.', 'bot');
+    }
+
+    function getBlockOptionsForWorkDay(dayKey) {
+      const day = WORK_DAYS.find((item) => item.key === dayKey);
+      return accountOptions[day?.serviceDay || 'weekday'] || [];
+    }
+
+    function renderWorkAssignmentSection(week, day) {
+      const key = getWorkAssignmentKey(week.key, day.key);
+      const blocks = getSavedBlocksForAssignment(week.key, day.key);
+      const options = getBlockOptionsForWorkDay(day.key);
+      return `
+        <section class="section-card">
+          <div class="field-label">${escapeHtml(week.label)} ${escapeHtml(day.label)}</div>
+          <div class="field-grid">
+            <label class="field-stack">
+              <span class="field-label">Add Block</span>
+              <input id="${escapeAttribute(key)}BlockInput" class="text-input" type="text" list="${escapeAttribute(key)}BlockOptions" placeholder="Type or choose a block" />
+              <datalist id="${escapeAttribute(key)}BlockOptions">${options.map((block) => `<option value="${escapeAttribute(block)}"></option>`).join('')}</datalist>
+            </label>
+            <div class="section-actions">
+              <button class="link-btn" type="button" data-add-work-key="${escapeAttribute(key)}">Add</button>
+            </div>
+          </div>
+          <div class="saved-list">${blocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-work-key="${escapeAttribute(key)}" data-remove-block="${escapeAttribute(block)}">Ã—</button></span>`).join('') || '<span class="subtle-text">No work saved for this day.</span>'}</div>
+        </section>
+      `;
+    }
+
+    function renderWorkAssignmentGrid() {
+      return WORK_WEEKS.map((week) => `
+        <section class="section-card">
+          <div class="field-label">${escapeHtml(week.label)}</div>
+          ${WORK_DAYS.map((day) => renderWorkAssignmentSection(week, day)).join('')}
+        </section>
+      `).join('');
     }
 
     function renderAccountModal() {
@@ -2325,9 +2473,9 @@
         return;
       }
 
-      const weekdayBlocks = getSavedBlocksForDay('weekday');
-      const saturdayBlocks = getSavedBlocksForDay('saturday');
-      const sundayBlocks = getSavedBlocksForDay('sunday');
+      const weekdayBlocks = [];
+      const saturdayBlocks = [];
+      const sundayBlocks = [];
       const savedShuttles = getSavedShuttles();
       if (accountViewMode === 'settings') {
         accountMeta.textContent = `Signed in as ${currentUser.email || 'account user'}`;
@@ -2355,6 +2503,8 @@
       accountBody.innerHTML = `
         <section class="section-card">
           ${renderAccountNotice()}
+          ${renderWorkAssignmentGrid()}
+          <div hidden>
           <section class="section-card">
             <div class="field-label">Weekday Work</div>
             <div class="field-grid">
@@ -2369,7 +2519,8 @@
             </div>
             <div id="weekdayBlocksList" class="saved-list">${weekdayBlocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-day="weekday" data-remove-block="${escapeAttribute(block)}">×</button></span>`).join('')}</div>
           </section>
-          <section class="section-card">
+          </div>
+          <section class="section-card" hidden>
             <div class="field-label">Saturday Work</div>
             <div class="field-grid">
               <label class="field-stack">
@@ -2383,7 +2534,7 @@
             </div>
             <div id="saturdayBlocksList" class="saved-list">${saturdayBlocks.map((block) => `<span class="saved-chip">${escapeHtml(block)} <button class="chip-remove" type="button" data-remove-day="saturday" data-remove-block="${escapeAttribute(block)}">×</button></span>`).join('')}</div>
           </section>
-          <section class="section-card">
+          <section class="section-card" hidden>
             <div class="field-label">Sunday Work</div>
             <div class="field-grid">
               <label class="field-stack">
@@ -2456,6 +2607,9 @@
       if (addSaturdayBlockBtn) addSaturdayBlockBtn.addEventListener('click', () => addBlockToProfile('saturday'));
       if (addSundayBlockBtn) addSundayBlockBtn.addEventListener('click', () => addBlockToProfile('sunday'));
       if (addSavedShuttleBtn) addSavedShuttleBtn.addEventListener('click', addShuttleToProfile);
+      accountBody.querySelectorAll('[data-add-work-key]').forEach((button) => {
+        button.addEventListener('click', () => addWorkAssignmentToProfile(button.dataset.addWorkKey));
+      });
       if (showSignInPasswordToggle) {
         showSignInPasswordToggle.addEventListener('change', () => {
           const password = document.getElementById('authPassword');
@@ -2484,21 +2638,32 @@
       accountBody.querySelectorAll('[data-remove-day][data-remove-block]').forEach((button) => {
         button.addEventListener('click', () => removeBlockFromProfile(button.dataset.removeDay, button.dataset.removeBlock));
       });
+      accountBody.querySelectorAll('[data-remove-work-key][data-remove-block]').forEach((button) => {
+        button.addEventListener('click', () => removeWorkAssignmentFromProfile(button.dataset.removeWorkKey, button.dataset.removeBlock));
+      });
       accountBody.querySelectorAll('[data-remove-shuttle]').forEach((button) => {
         button.addEventListener('click', () => removeShuttleFromProfile(button.dataset.removeShuttle));
       });
     }
 
-    async function syncProfileWorkChanges(errorMessage = 'Could not save your work schedule.') {
-      if (!supabaseClient || !currentUser) return false;
-      const saved = await persistProfilePayload({
+    function buildProfilePayload(extra = {}) {
+      const workAssignments = getWorkAssignments();
+      const legacy = buildLegacyBlocksFromAssignments(workAssignments);
+      return {
         user_id: currentUser.id,
         display_name: currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || null,
-        weekday_blocks: getSavedBlocksForDay('weekday'),
-        saturday_blocks: getSavedBlocksForDay('saturday'),
-        sunday_blocks: getSavedBlocksForDay('sunday'),
+        weekday_blocks: legacy.weekday,
+        saturday_blocks: legacy.saturday,
+        sunday_blocks: legacy.sunday,
+        work_assignments: workAssignments,
         saved_shuttles: getSavedShuttles(),
-      }, errorMessage);
+        ...extra,
+      };
+    }
+
+    async function syncProfileWorkChanges(errorMessage = 'Could not save your work schedule.') {
+      if (!supabaseClient || !currentUser) return false;
+      const saved = await persistProfilePayload(buildProfilePayload(), errorMessage);
       if (!saved) return false;
       setAccountNotice('Saved to your work schedule.', 'ok');
       await loadProfile();
@@ -2511,7 +2676,7 @@
       if (!value) return;
 
       const key = `${day}_blocks`;
-      const existing = getSavedBlocksForDay(day);
+      const existing = getLegacySavedBlocksForDay(day);
       if (existing.includes(value)) {
         setAccountNotice(`${value} is already saved for ${formatServiceDayLabel(day)}.`, 'warn');
         return;
@@ -2526,9 +2691,51 @@
 
     async function removeBlockFromProfile(day, block) {
       const key = `${day}_blocks`;
-      const existing = getSavedBlocksForDay(day);
+      const existing = getLegacySavedBlocksForDay(day);
       if (!currentProfile) currentProfile = {};
       currentProfile[key] = existing.filter((item) => item !== block);
+      renderQuickLookup();
+      renderAccountModal();
+      await syncProfileWorkChanges();
+    }
+
+    async function addWorkAssignmentToProfile(key) {
+      const input = document.getElementById(`${key}BlockInput`);
+      const value = normalizeBlockValue(input?.value);
+      if (!key || !value) return;
+
+      const assignments = getWorkAssignments();
+      const existing = normalizeSavedBlockList(assignments[key]);
+      if (existing.includes(value)) {
+        setAccountNotice(`${value} is already saved for this day.`, 'warn');
+        return;
+      }
+      if (!currentProfile) currentProfile = {};
+      currentProfile.work_assignments = {
+        ...assignments,
+        [key]: [...existing, value],
+      };
+      currentProfile.weekday_blocks = [];
+      currentProfile.saturday_blocks = [];
+      currentProfile.sunday_blocks = [];
+      if (input) input.value = '';
+      renderQuickLookup();
+      renderAccountModal();
+      await syncProfileWorkChanges();
+    }
+
+    async function removeWorkAssignmentFromProfile(key, block) {
+      if (!key || !block) return;
+      const assignments = getWorkAssignments();
+      const existing = normalizeSavedBlockList(assignments[key]);
+      if (!currentProfile) currentProfile = {};
+      currentProfile.work_assignments = {
+        ...assignments,
+        [key]: existing.filter((item) => item !== normalizeBlockValue(block)),
+      };
+      currentProfile.weekday_blocks = [];
+      currentProfile.saturday_blocks = [];
+      currentProfile.sunday_blocks = [];
       renderQuickLookup();
       renderAccountModal();
       await syncProfileWorkChanges();
@@ -2717,14 +2924,9 @@
     async function saveProfile() {
       if (!supabaseClient || !currentUser) return;
 
-      const payload = {
-        user_id: currentUser.id,
+      const payload = buildProfilePayload({
         display_name: document.getElementById('profileDisplayName')?.value?.trim() || null,
-        weekday_blocks: getSavedBlocksForDay('weekday'),
-        saturday_blocks: getSavedBlocksForDay('saturday'),
-        sunday_blocks: getSavedBlocksForDay('sunday'),
-        saved_shuttles: getSavedShuttles(),
-      };
+      });
 
       const saved = await persistProfilePayload(payload, 'Could not save your work.');
       if (!saved) return;
@@ -2761,23 +2963,26 @@
         return false;
       }
 
-      const key = `${serviceDay}_blocks`;
-      const existing = getSavedBlocksForDay(serviceDay);
+      const existing = getLegacySavedBlocksForDay(serviceDay);
+      const assignments = getWorkAssignments();
+      const weekKey = String(entry.weekKey || getCurrentWorkWeekKey()).trim().toLowerCase();
+      const calendarDay = String(entry.dayKey || (serviceDay === 'weekday' ? getCurrentCalendarDayKey() : serviceDay)).trim().toLowerCase();
+      const assignmentKey = getWorkAssignmentKey(weekKey, calendarDay);
+      assignments[assignmentKey] = normalizeSavedBlockList(assignments[assignmentKey])
+        .filter((item) => normalizeBlockValue(item) !== block);
       if (!existing.includes(block)) {
+        if (!currentProfile) currentProfile = {};
+        currentProfile.work_assignments = assignments;
+        const assignmentsSaved = await persistProfilePayload(buildProfilePayload(), 'Could not update your work schedule.');
+        if (!assignmentsSaved) return false;
+        await loadProfile();
         return true;
       }
 
       if (!currentProfile) currentProfile = {};
-      currentProfile[key] = existing.filter((item) => normalizeBlockValue(item) !== block);
+      currentProfile.work_assignments = assignments;
 
-      const saved = await persistProfilePayload({
-        user_id: currentUser.id,
-        display_name: currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || null,
-        weekday_blocks: getSavedBlocksForDay('weekday'),
-        saturday_blocks: getSavedBlocksForDay('saturday'),
-        sunday_blocks: getSavedBlocksForDay('sunday'),
-        saved_shuttles: getSavedShuttles(),
-      }, 'Could not update your work schedule.');
+      const saved = await persistProfilePayload(buildProfilePayload(), 'Could not update your work schedule.');
 
       if (!saved) return false;
 
@@ -2792,14 +2997,7 @@
       const displayName = document.getElementById('profileDisplayName')?.value?.trim() || '';
       const { error } = await supabaseClient
         .from('user_profiles')
-        .upsert({
-          user_id: currentUser.id,
-          display_name: displayName || null,
-          weekday_blocks: getSavedBlocksForDay('weekday'),
-          saturday_blocks: getSavedBlocksForDay('saturday'),
-          sunday_blocks: getSavedBlocksForDay('sunday'),
-          saved_shuttles: getSavedShuttles(),
-        }, { onConflict: 'user_id' });
+        .upsert(buildProfilePayload({ display_name: displayName || null }), { onConflict: 'user_id' });
 
       if (error) {
         setAccountNotice(error.message || 'Could not save your settings.', 'warn');

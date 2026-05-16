@@ -4,6 +4,7 @@ create table if not exists public.user_profiles (
   weekday_blocks text[] not null default '{}',
   saturday_blocks text[] not null default '{}',
   sunday_blocks text[] not null default '{}',
+  work_assignments jsonb not null default '{}'::jsonb,
   saved_shuttles text[] not null default '{}',
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
