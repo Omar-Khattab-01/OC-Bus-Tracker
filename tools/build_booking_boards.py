@@ -15,6 +15,12 @@ OUTPUT_FILE = Path(os.environ.get("BOOKING_BOARDS_OUTPUT_FILE") or ROOT / "data"
 TIME_RE = re.compile(r"\b\d{2}:\d{2}\b")
 BLOCK_RE = re.compile(r"\b\d{1,3}-\d{2}\b")
 WIDE_BLOCK_RE = re.compile(r"\b\d{1,3}-\d{2,3}\b")
+FLOATING_SPARE_TITLES = {
+    "Weekly Floating Spare",
+    "Weekly PM Floating Spare",
+    "Daily Early Early Floating Spare",
+    "Daily Early Floating Spare",
+}
 
 
 def extract_lines(pdf_path: Path):
@@ -665,6 +671,16 @@ def parse_days_off_counter(pdf_path: Path):
     lines = extract_lines(pdf_path)[0]["lines"]
     rows = []
     day_names = {"Monday", "Tuesday", "Wednesday", "Wedneday", "Thursday", "Friday"}
+
+    def parse_remaining_count(value: str):
+        if value.strip().lower() == "closed":
+            return "Closed"
+        count = int(value)
+        return "Closed" if count == 0 else count
+
+    def count_for_total(value):
+        return 0 if isinstance(value, str) and value.lower() == "closed" else int(value)
+
     for line in lines:
         parts = line.split()
         if not parts or parts[0] not in day_names:
@@ -689,7 +705,7 @@ def parse_days_off_counter(pdf_path: Path):
             "week": week,
             "total": int(total),
             "booked": int(booked),
-            "remaining": int(remaining),
+            "remaining": parse_remaining_count(remaining),
         })
 
     counters = []
@@ -701,7 +717,7 @@ def parse_days_off_counter(pdf_path: Path):
             "rows": counter_rows,
             "total": sum(row["total"] for row in counter_rows),
             "booked": sum(row["booked"] for row in counter_rows),
-            "remaining": sum(row["remaining"] for row in counter_rows),
+            "remaining": sum(count_for_total(row["remaining"]) for row in counter_rows),
         })
 
     return {
@@ -881,6 +897,9 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
             if line.startswith("General Booking Spare Progress Report") or re.fullmatch(r"\d+/\d+/\d+.*", line):
                 continue
             if line in {"Booked AvailableLimitOn Time", "On Time Limit Booked Available"}:
+                continue
+            if board_id == "spares" and line in FLOATING_SPARE_TITLES:
+                flush_section()
                 continue
             if line in {"Saturday Spare", "Sunday Spare", "Stats Spare"}:
                 flush_section()

@@ -2005,10 +2005,15 @@
       }
 
       const activeCounter = counters.find((counter) => counter.id === selectedDaysOffCounter) || counters[0];
+      const formatRemainingCount = (value) => {
+        if (String(value || '').trim().toLowerCase() === 'closed') return 'Closed';
+        const count = Number(value || 0);
+        return count === 0 ? 'Closed' : count;
+      };
       metaStrip.innerHTML = `
         <article class="stat-card"><span class="k">Total</span><span class="v">${escapeHtml(activeCounter.total || 0)}</span></article>
         <article class="stat-card"><span class="k">Booked</span><span class="v">${escapeHtml(activeCounter.booked || 0)}</span></article>
-        <article class="stat-card"><span class="k">Remaining</span><span class="v">${escapeHtml(activeCounter.remaining || 0)}</span></article>
+        <article class="stat-card"><span class="k">Remaining</span><span class="v">${escapeHtml(formatRemainingCount(activeCounter.remaining))}</span></article>
       `;
 
       boardList.innerHTML = `
@@ -2026,7 +2031,7 @@
                 <h3>${escapeHtml(activeCounter.title)}</h3>
                 <div class="board-sub">Days off counter from ${escapeHtml(board.sourcePdf || 'uploaded PDF')}</div>
               </div>
-              <div class="pill open">${escapeHtml(activeCounter.remaining || 0)} remaining</div>
+              <div class="pill open">${escapeHtml(formatRemainingCount(activeCounter.remaining))} remaining</div>
             </div>
             <div class="spare-grid">
               <table class="spare-section-table">
@@ -2046,7 +2051,7 @@
                       <td>${escapeHtml(row.week || 'All')}</td>
                       <td class="value-cell">${escapeHtml(row.total)}</td>
                       <td class="value-cell">${escapeHtml(row.booked)}</td>
-                      <td class="value-cell">${escapeHtml(row.remaining)}</td>
+                      <td class="value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
                     </tr>
                   `).join('')}
                 </tbody>

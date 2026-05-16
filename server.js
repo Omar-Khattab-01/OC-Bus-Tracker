@@ -1908,21 +1908,34 @@ function buildDailySpareSummaryRow(row = {}) {
   };
 }
 
+function numericDaysOffCount(value) {
+  if (String(value || '').trim().toLowerCase() === 'closed') return 0;
+  const count = Number(value || 0);
+  return Number.isFinite(count) ? count : 0;
+}
+
+function displayDaysOffRemaining(value) {
+  if (String(value || '').trim().toLowerCase() === 'closed') return 'Closed';
+  const count = numericDaysOffCount(value);
+  return count === 0 ? 'Closed' : count;
+}
+
 function buildDaysOffCounterSummary(counter = {}) {
   const rows = Array.isArray(counter.rows) ? counter.rows.map((row) => ({
     day: String(row.day || '').trim(),
     week: String(row.week || '').trim(),
     total: Number(row.total || 0) || 0,
     booked: Number(row.booked || 0) || 0,
-    remaining: Number(row.remaining || 0) || 0,
+    remaining: displayDaysOffRemaining(row.remaining),
   })) : [];
+  const calculatedRemaining = rows.reduce((sum, row) => sum + numericDaysOffCount(row.remaining), 0);
   return {
     id: String(counter.id || '').trim(),
     title: String(counter.title || '').trim() || 'Counter',
     rows,
     total: Number(counter.total || 0) || rows.reduce((sum, row) => sum + row.total, 0),
     booked: Number(counter.booked || 0) || rows.reduce((sum, row) => sum + row.booked, 0),
-    remaining: Number(counter.remaining || 0) || rows.reduce((sum, row) => sum + row.remaining, 0),
+    remaining: Number(counter.remaining || 0) || calculatedRemaining,
   };
 }
 

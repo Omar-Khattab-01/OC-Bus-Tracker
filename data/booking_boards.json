@@ -54953,66 +54953,6 @@
           ]
         },
         {
-          "id": "weekly-floating-spare",
-          "title": "Weekly Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "00:00 40 40",
-              "slots": []
-            }
-          ]
-        },
-        {
-          "id": "weekly-pm-floating-spare",
-          "title": "Weekly PM Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "00:00 08 08",
-              "slots": []
-            }
-          ]
-        },
-        {
-          "id": "daily-early-early-floating-spare",
-          "title": "Daily Early Early Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "00:00 15 15",
-              "slots": []
-            }
-          ]
-        },
-        {
-          "id": "daily-early-floating-spare",
-          "title": "Daily Early Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "00:00 20 20",
-              "slots": []
-            },
-            {
-              "name": "30",
-              "slots": []
-            },
-            {
-              "name": "6",
-              "slots": []
-            },
-            {
-              "name": "13",
-              "slots": []
-            },
-            {
-              "name": "16",
-              "slots": []
-            }
-          ]
-        },
-        {
           "id": "saturday-1-spare",
           "title": "Saturday 1 Spare",
           "page": 3,
