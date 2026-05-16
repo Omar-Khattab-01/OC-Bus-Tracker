@@ -236,6 +236,12 @@
       gap: 10px;
     }
 
+    .board-updated-at {
+      color: var(--oc-mist);
+      font-size: 12px;
+      margin-top: -8px;
+    }
+
     .board-btn.active {
       border-color: rgba(218, 41, 28, 0.65);
       background: rgba(218, 41, 28, 0.16);
@@ -1012,6 +1018,7 @@
       </section>
 
       <section id="boardSwitcher" class="board-switcher"></section>
+      <div id="boardUpdatedAt" class="board-updated-at" hidden></div>
       <section id="boardList" class="board-list"></section>
     </div>
   </main>
@@ -1036,6 +1043,7 @@
     const boardSwitcher = document.getElementById('boardSwitcher');
     const boardList = document.getElementById('boardList');
     const metaStrip = document.getElementById('metaStrip');
+    const boardUpdatedAt = document.getElementById('boardUpdatedAt');
     const paddleOverlay = document.getElementById('paddleOverlay');
     const paddleTitle = document.getElementById('paddleTitle');
     const paddleMeta = document.getElementById('paddleMeta');
@@ -1099,6 +1107,25 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function formatBoardUpdatedAt(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(date);
+    }
+
+    function renderBoardUpdatedAt(board) {
+      const label = formatBoardUpdatedAt(board?.updatedAt);
+      boardUpdatedAt.hidden = !label;
+      boardUpdatedAt.textContent = label ? `Last updated ${label}` : '';
     }
 
     function titleCase(value) {
@@ -2122,10 +2149,12 @@
         boardState = data;
         renderBoardSwitcher();
         buildMetaStats(data.board);
+        renderBoardUpdatedAt(data.board);
         renderBoardEntries(data.board);
         statusEl.textContent = data.board ? `${data.board.title} ready` : 'No board found';
         statusEl.classList.add(data.board ? 'ok' : 'warn');
       } catch (err) {
+        renderBoardUpdatedAt(null);
         boardList.innerHTML = `<div class="empty">${escapeHtml(err.message || 'Unexpected error.')}</div>`;
         statusEl.textContent = 'Error';
         statusEl.classList.add('warn');

@@ -11,6 +11,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -95,7 +96,11 @@ def build_payload(temp_source_dir: Path) -> dict:
         ),
         builder.parse_stat_board(temp_source_dir / "2026 Summer stat work.pdf"),
     ]
-    return {"generatedFrom": "Booking_Boards PDFs", "boards": boards}
+    return {
+        "generatedFrom": "Booking_Boards PDFs",
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "boards": boards,
+    }
 
 
 def github_request(method: str, url: str, token: str, body: dict | None = None) -> dict:

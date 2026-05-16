@@ -1952,8 +1952,20 @@ function loadBookingBoardsData() {
   return bookingBoardsDataCache;
 }
 
+function getBookingBoardsUpdatedAt(bookingBoardsData = null) {
+  if (bookingBoardsRuntimeUpdatedAt) return bookingBoardsRuntimeUpdatedAt;
+  const generatedAt = String(bookingBoardsData?.updatedAt || bookingBoardsData?.generatedAt || '').trim();
+  if (generatedAt) return generatedAt;
+  try {
+    return fs.statSync(BOOKING_BOARDS_DATA_FILE).mtime.toISOString();
+  } catch {
+    return '';
+  }
+}
+
 function getBookingBoardSummaries() {
   const bookingBoardsData = loadBookingBoardsData();
+  const updatedAt = getBookingBoardsUpdatedAt(bookingBoardsData);
   const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
   return boards
     .filter((board) => {
@@ -1973,6 +1985,7 @@ function getBookingBoardSummaries() {
         title: String(board.title || '').trim(),
         serviceDay: String(board.serviceDay || '').trim(),
         sourcePdf: String(board.sourcePdf || '').trim(),
+        updatedAt,
         entryCount: counters.length
           ? counters.reduce((sum, counter) => sum + counter.rows.length, 0)
           : spareSections.length
@@ -1991,6 +2004,7 @@ function getBookingBoardSummaries() {
 function buildBookingBoardResponse(requestedBoardId = '') {
   const summaries = getBookingBoardSummaries();
   const bookingBoardsData = loadBookingBoardsData();
+  const updatedAt = getBookingBoardsUpdatedAt(bookingBoardsData);
   const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
   const fallbackBoardId = summaries[0]?.id || '';
   const selectedBoardId = String(requestedBoardId || fallbackBoardId).trim();
@@ -2001,6 +2015,7 @@ function buildBookingBoardResponse(requestedBoardId = '') {
       boards: summaries,
       selectedBoardId: '',
       board: null,
+      updatedAt,
       dayOptions: BOOKING_BOARD_DAY_OPTIONS,
     };
   }
@@ -2025,11 +2040,13 @@ function buildBookingBoardResponse(requestedBoardId = '') {
       title: String(board.title || '').trim(),
       serviceDay: String(board.serviceDay || '').trim(),
       sourcePdf: String(board.sourcePdf || '').trim(),
+      updatedAt,
       entries,
       sections,
       counters,
       spareSummary,
     },
+    updatedAt,
     dayOptions: BOOKING_BOARD_DAY_OPTIONS,
   };
 }

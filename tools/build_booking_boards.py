@@ -4,6 +4,7 @@ import json
 import os
 import re
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -936,7 +937,11 @@ def main():
     boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"))
     boards.append(parse_spares_board(SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf", "floating_spares", "Daily and Weekly Floating Spares"))
     boards.append(parse_stat_board(SOURCE_DIR / "2026 Summer stat work.pdf"))
-    payload = {"generatedFrom": "Booking_Boards PDFs", "boards": boards}
+    payload = {
+        "generatedFrom": "Booking_Boards PDFs",
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "boards": boards,
+    }
     OUTPUT_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Wrote {OUTPUT_FILE}")
 
