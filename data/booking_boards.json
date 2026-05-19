@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Booking_Boards PDFs",
-  "generatedAt": "2026-05-19T18:51:08.426005+00:00",
+  "generatedAt": "2026-05-19T19:14:31.141937+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -10669,7 +10669,7 @@
           "workSection": "PM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-05-19T18:51:02.469123+00:00"
+      "updatedAt": "2026-05-19T19:14:25.390467+00:00"
     },
     {
       "id": "weekend_boards",
@@ -53242,7 +53242,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-05-19T18:51:08.426047+00:00"
+      "updatedAt": "2026-05-19T19:14:25.394467+00:00"
     },
     {
       "id": "days_off_counter",
@@ -53410,7 +53410,7 @@
           "remaining": 467
         }
       ],
-      "updatedAt": "2026-05-19T18:51:02.485123+00:00"
+      "updatedAt": "2026-05-19T19:14:25.406467+00:00"
     },
     {
       "id": "spares",
@@ -53454,8 +53454,8 @@
                 {
                   "onTime": "05:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "05:45",
@@ -53471,8 +53471,8 @@
                 {
                   "onTime": "02:45",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "03:45",
@@ -53633,6 +53633,42 @@
           ]
         },
         {
+          "id": "pm-spare",
+          "title": "PM Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "12:30",
+                  "limit": 8,
+                  "booked": 6,
+                  "available": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "daily-floating-spare",
+          "title": "Daily Floating Spare",
+          "page": 1,
+          "garages": [
+            {
+              "name": "All locations",
+              "slots": [
+                {
+                  "onTime": "00:00",
+                  "limit": 40,
+                  "booked": 30,
+                  "available": 10
+                }
+              ]
+            }
+          ]
+        },
+        {
           "id": "saturday-1-spare",
           "title": "Saturday 1 Spare",
           "page": 3,
@@ -53661,8 +53697,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "04:30",
@@ -53703,8 +53739,8 @@
                 {
                   "onTime": "06:15",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "06:30",
@@ -53792,8 +53828,8 @@
                 {
                   "onTime": "07:00",
                   "limit": 13,
-                  "booked": 7,
-                  "available": 6
+                  "booked": 9,
+                  "available": 4
                 },
                 {
                   "onTime": "07:30",
@@ -53929,8 +53965,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "04:30",
@@ -53953,8 +53989,8 @@
                 {
                   "onTime": "05:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "05:45",
@@ -54060,8 +54096,8 @@
                 {
                   "onTime": "07:00",
                   "limit": 13,
-                  "booked": 4,
-                  "available": 9
+                  "booked": 6,
+                  "available": 7
                 },
                 {
                   "onTime": "07:30",
@@ -54161,8 +54197,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 25,
-                  "booked": 8,
-                  "available": 17
+                  "booked": 9,
+                  "available": 16
                 }
               ]
             }
@@ -54179,20 +54215,20 @@
                 {
                   "onTime": "12:30",
                   "limit": 30,
-                  "booked": 8,
-                  "available": 22
+                  "booked": 10,
+                  "available": 20
                 },
                 {
                   "onTime": "14:30",
                   "limit": 33,
-                  "booked": 8,
-                  "available": 25
+                  "booked": 11,
+                  "available": 22
                 },
                 {
                   "onTime": "16:30",
                   "limit": 23,
-                  "booked": 1,
-                  "available": 22
+                  "booked": 2,
+                  "available": 21
                 },
                 {
                   "onTime": "18:30",
@@ -54257,8 +54293,8 @@
                 {
                   "onTime": "14:30",
                   "limit": 33,
-                  "booked": 5,
-                  "available": 28
+                  "booked": 7,
+                  "available": 26
                 },
                 {
                   "onTime": "16:30",
@@ -54305,8 +54341,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "04:30",
@@ -54329,8 +54365,8 @@
                 {
                   "onTime": "05:30",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "05:45",
@@ -54400,8 +54436,8 @@
                 {
                   "onTime": "05:45",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "06:00",
@@ -54555,8 +54591,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "04:30",
@@ -54597,8 +54633,8 @@
                 {
                   "onTime": "06:15",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "06:30",
@@ -54668,8 +54704,8 @@
                 {
                   "onTime": "06:30",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "06:45",
@@ -54799,8 +54835,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 11,
-                  "available": 9
+                  "booked": 13,
+                  "available": 7
                 }
               ]
             }
@@ -54817,8 +54853,8 @@
                 {
                   "onTime": "12:30",
                   "limit": 20,
-                  "booked": 12,
-                  "available": 8
+                  "booked": 14,
+                  "available": 6
                 },
                 {
                   "onTime": "14:30",
@@ -54829,8 +54865,8 @@
                 {
                   "onTime": "16:30",
                   "limit": 10,
-                  "booked": 2,
-                  "available": 8
+                  "booked": 3,
+                  "available": 7
                 },
                 {
                   "onTime": "18:30",
@@ -54865,8 +54901,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 12,
-                  "available": 8
+                  "booked": 13,
+                  "available": 7
                 }
               ]
             }
@@ -54889,8 +54925,8 @@
                 {
                   "onTime": "14:30",
                   "limit": 20,
-                  "booked": 10,
-                  "available": 10
+                  "booked": 11,
+                  "available": 9
                 },
                 {
                   "onTime": "16:30",
@@ -54925,8 +54961,8 @@
                 {
                   "onTime": "03:00",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "03:30",
@@ -55021,8 +55057,8 @@
                 {
                   "onTime": "06:00",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "06:15",
@@ -55033,8 +55069,8 @@
                 {
                   "onTime": "06:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "06:45",
@@ -55171,8 +55207,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 25,
-                  "booked": 18,
-                  "available": 7
+                  "booked": 19,
+                  "available": 6
                 }
               ]
             }
@@ -55189,8 +55225,8 @@
                 {
                   "onTime": "12:30",
                   "limit": 20,
-                  "booked": 10,
-                  "available": 10
+                  "booked": 11,
+                  "available": 9
                 },
                 {
                   "onTime": "14:30",
@@ -55225,8 +55261,8 @@
                 {
                   "onTime": "02:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "03:00",
@@ -55273,8 +55309,8 @@
                 {
                   "onTime": "05:45",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "06:00",
@@ -55327,8 +55363,8 @@
                 {
                   "onTime": "05:00",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "05:15",
@@ -55351,8 +55387,8 @@
                 {
                   "onTime": "06:00",
                   "limit": 2,
-                  "booked": 1,
-                  "available": 1
+                  "booked": 2,
+                  "available": 0
                 },
                 {
                   "onTime": "06:15",
@@ -55375,8 +55411,8 @@
                 {
                   "onTime": "07:00",
                   "limit": 10,
-                  "booked": 9,
-                  "available": 1
+                  "booked": 10,
+                  "available": 0
                 }
               ]
             }
@@ -55483,8 +55519,8 @@
                 {
                   "onTime": "09:30",
                   "limit": 20,
-                  "booked": 14,
-                  "available": 6
+                  "booked": 15,
+                  "available": 5
                 }
               ]
             }
@@ -55501,14 +55537,14 @@
                 {
                   "onTime": "12:30",
                   "limit": 25,
-                  "booked": 16,
-                  "available": 9
+                  "booked": 20,
+                  "available": 5
                 },
                 {
                   "onTime": "14:30",
                   "limit": 26,
-                  "booked": 17,
-                  "available": 9
+                  "booked": 18,
+                  "available": 8
                 },
                 {
                   "onTime": "16:30",
@@ -55527,7 +55563,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-19T18:51:02.473123+00:00"
+      "updatedAt": "2026-05-19T19:14:31.141981+00:00"
     },
     {
       "id": "floating_spares",
@@ -55609,7 +55645,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-19T18:51:02.481123+00:00"
+      "updatedAt": "2026-05-19T19:14:25.402467+00:00"
     },
     {
       "id": "stat_work",
@@ -102088,7 +102124,7 @@
           "holidayLabel": ""
         }
       ],
-      "updatedAt": "2026-05-19T18:51:02.485123+00:00"
+      "updatedAt": "2026-05-19T19:14:25.406467+00:00"
     }
   ]
 }
