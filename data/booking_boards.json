@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Booking_Boards PDFs",
-  "generatedAt": "2026-05-20T18:59:01.646726+00:00",
+  "generatedAt": "2026-05-20T19:01:07.485130+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -9251,7 +9251,7 @@
           "workSection": "Mixed Relief Work"
         }
       ],
-      "updatedAt": "2026-05-20T18:58:55.544550+00:00"
+      "updatedAt": "2026-05-20T19:01:01.322898+00:00"
     },
     {
       "id": "weekend_boards",
@@ -51824,7 +51824,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-05-20T18:58:55.548550+00:00"
+      "updatedAt": "2026-05-20T19:01:01.326898+00:00"
     },
     {
       "id": "days_off_counter",
@@ -51992,7 +51992,7 @@
           "remaining": 355
         }
       ],
-      "updatedAt": "2026-05-20T18:59:01.646768+00:00"
+      "updatedAt": "2026-05-20T19:01:07.485172+00:00"
     },
     {
       "id": "spares",
@@ -54109,7 +54109,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-20T18:58:55.552550+00:00"
+      "updatedAt": "2026-05-20T19:01:01.330898+00:00"
     },
     {
       "id": "floating_spares",
@@ -54118,7 +54118,7 @@
       "sourcePdf": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
       "entries": [],
       "sections": [],
-      "updatedAt": "2026-05-20T18:58:55.552550+00:00"
+      "updatedAt": "2026-05-20T19:01:01.330898+00:00"
     },
     {
       "id": "stat_work",
@@ -100186,7 +100186,7 @@
           "holidayLabel": ""
         }
       ],
-      "updatedAt": "2026-05-20T18:58:55.560550+00:00"
+      "updatedAt": "2026-05-20T19:01:01.334898+00:00"
     }
   ]
 }
