@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Booking_Boards PDFs",
-  "generatedAt": "2026-05-20T18:51:09.852470+00:00",
+  "generatedAt": "2026-05-20T18:56:21.928595+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -9251,7 +9251,7 @@
           "workSection": "Mixed Relief Work"
         }
       ],
-      "updatedAt": "2026-05-20T18:51:03.676037+00:00"
+      "updatedAt": "2026-05-20T18:56:16.111027+00:00"
     },
     {
       "id": "weekend_boards",
@@ -51824,7 +51824,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-05-20T18:51:03.680037+00:00"
+      "updatedAt": "2026-05-20T18:56:16.115027+00:00"
     },
     {
       "id": "days_off_counter",
@@ -51992,7 +51992,7 @@
           "remaining": 398
         }
       ],
-      "updatedAt": "2026-05-20T18:51:03.688037+00:00"
+      "updatedAt": "2026-05-20T18:56:16.127027+00:00"
     },
     {
       "id": "spares",
@@ -54109,7 +54109,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-20T18:51:09.852514+00:00"
+      "updatedAt": "2026-05-20T18:56:16.119027+00:00"
     },
     {
       "id": "floating_spares",
@@ -54117,81 +54117,8 @@
       "serviceDay": "mixed",
       "sourcePdf": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
       "entries": [],
-      "sections": [
-        {
-          "id": "weekly-floating-spare",
-          "title": "Weekly Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "All locations",
-              "slots": [
-                {
-                  "onTime": "00:00",
-                  "limit": 40,
-                  "booked": 30,
-                  "available": 10
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "weekly-pm-floating-spare",
-          "title": "Weekly PM Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "All locations",
-              "slots": [
-                {
-                  "onTime": "00:00",
-                  "limit": 8,
-                  "booked": 6,
-                  "available": 2
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "daily-early-early-floating-spare",
-          "title": "Daily Early Early Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "All locations",
-              "slots": [
-                {
-                  "onTime": "00:00",
-                  "limit": 15,
-                  "booked": 13,
-                  "available": 2
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "daily-early-floating-spare",
-          "title": "Daily Early Floating Spare",
-          "page": 1,
-          "garages": [
-            {
-              "name": "All locations",
-              "slots": [
-                {
-                  "onTime": "00:00",
-                  "limit": 20,
-                  "booked": 16,
-                  "available": 4
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "updatedAt": "2026-05-20T18:51:03.684037+00:00"
+      "sections": [],
+      "updatedAt": "2026-05-20T18:56:21.928637+00:00"
     },
     {
       "id": "stat_work",
@@ -100259,7 +100186,7 @@
           "holidayLabel": ""
         }
       ],
-      "updatedAt": "2026-05-20T18:51:03.692037+00:00"
+      "updatedAt": "2026-05-20T18:56:16.131027+00:00"
     }
   ]
 }
