@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Booking_Boards PDFs",
-  "generatedAt": "2026-05-20T18:56:21.928595+00:00",
+  "generatedAt": "2026-05-20T18:59:01.646726+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -9251,7 +9251,7 @@
           "workSection": "Mixed Relief Work"
         }
       ],
-      "updatedAt": "2026-05-20T18:56:16.111027+00:00"
+      "updatedAt": "2026-05-20T18:58:55.544550+00:00"
     },
     {
       "id": "weekend_boards",
@@ -51824,7 +51824,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-05-20T18:56:16.115027+00:00"
+      "updatedAt": "2026-05-20T18:58:55.548550+00:00"
     },
     {
       "id": "days_off_counter",
@@ -51841,29 +51841,29 @@
               "day": "Monday",
               "week": "1",
               "total": 90,
-              "booked": 33,
-              "remaining": 57
+              "booked": 42,
+              "remaining": 48
             },
             {
               "day": "Tuesday",
               "week": "1",
               "total": 100,
-              "booked": 19,
-              "remaining": 81
+              "booked": 22,
+              "remaining": 78
             },
             {
               "day": "Wednesday",
               "week": "1",
               "total": 100,
-              "booked": 42,
-              "remaining": 58
+              "booked": 45,
+              "remaining": 55
             },
             {
               "day": "Thursday",
               "week": "1",
               "total": 100,
-              "booked": 32,
-              "remaining": 68
+              "booked": 39,
+              "remaining": 61
             },
             {
               "day": "Friday",
@@ -51876,41 +51876,41 @@
               "day": "Monday",
               "week": "2",
               "total": 90,
-              "booked": 31,
-              "remaining": 59
+              "booked": 39,
+              "remaining": 51
             },
             {
               "day": "Tuesday",
               "week": "2",
               "total": 100,
-              "booked": 24,
-              "remaining": 76
+              "booked": 30,
+              "remaining": 70
             },
             {
               "day": "Wednesday",
               "week": "2",
               "total": 100,
-              "booked": 28,
-              "remaining": 72
+              "booked": 32,
+              "remaining": 68
             },
             {
               "day": "Thursday",
               "week": "2",
               "total": 100,
-              "booked": 25,
-              "remaining": 75
+              "booked": 29,
+              "remaining": 71
             },
             {
               "day": "Friday",
               "week": "2",
               "total": 90,
-              "booked": 82,
-              "remaining": 8
+              "booked": 83,
+              "remaining": 7
             }
           ],
           "total": 960,
-          "booked": 406,
-          "remaining": 554
+          "booked": 451,
+          "remaining": 509
         },
         {
           "id": "night_work",
@@ -51920,29 +51920,29 @@
               "day": "Monday",
               "week": "1",
               "total": 75,
-              "booked": 17,
-              "remaining": 58
+              "booked": 21,
+              "remaining": 54
             },
             {
               "day": "Tuesday",
               "week": "1",
               "total": 75,
-              "booked": 25,
-              "remaining": 50
+              "booked": 28,
+              "remaining": 47
             },
             {
               "day": "Wednesday",
               "week": "1",
               "total": 75,
-              "booked": 26,
-              "remaining": 49
+              "booked": 33,
+              "remaining": 42
             },
             {
               "day": "Thursday",
               "week": "1",
               "total": 75,
-              "booked": 33,
-              "remaining": 42
+              "booked": 40,
+              "remaining": 35
             },
             {
               "day": "Friday",
@@ -51955,29 +51955,29 @@
               "day": "Monday",
               "week": "2",
               "total": 75,
-              "booked": 25,
-              "remaining": 50
+              "booked": 29,
+              "remaining": 46
             },
             {
               "day": "Tuesday",
               "week": "2",
               "total": 75,
-              "booked": 23,
-              "remaining": 52
+              "booked": 27,
+              "remaining": 48
             },
             {
               "day": "Wednesday",
               "week": "2",
               "total": 75,
-              "booked": 28,
-              "remaining": 47
+              "booked": 35,
+              "remaining": 40
             },
             {
               "day": "Thursday",
               "week": "2",
               "total": 75,
-              "booked": 25,
-              "remaining": 50
+              "booked": 32,
+              "remaining": 43
             },
             {
               "day": "Friday",
@@ -51988,11 +51988,11 @@
             }
           ],
           "total": 750,
-          "booked": 352,
-          "remaining": 398
+          "booked": 395,
+          "remaining": 355
         }
       ],
-      "updatedAt": "2026-05-20T18:56:16.127027+00:00"
+      "updatedAt": "2026-05-20T18:59:01.646768+00:00"
     },
     {
       "id": "spares",
@@ -54109,7 +54109,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-20T18:56:16.119027+00:00"
+      "updatedAt": "2026-05-20T18:58:55.552550+00:00"
     },
     {
       "id": "floating_spares",
@@ -54118,7 +54118,7 @@
       "sourcePdf": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
       "entries": [],
       "sections": [],
-      "updatedAt": "2026-05-20T18:56:21.928637+00:00"
+      "updatedAt": "2026-05-20T18:58:55.552550+00:00"
     },
     {
       "id": "stat_work",
@@ -100186,7 +100186,7 @@
           "holidayLabel": ""
         }
       ],
-      "updatedAt": "2026-05-20T18:56:16.131027+00:00"
+      "updatedAt": "2026-05-20T18:58:55.560550+00:00"
     }
   ]
 }
