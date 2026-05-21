@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Booking_Boards PDFs",
-  "generatedAt": "2026-05-21T09:48:25.857242+00:00",
+  "generatedAt": "2026-05-21T09:51:26.225430+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -8225,7 +8225,7 @@
           "workSection": "Mixed Relief Work"
         }
       ],
-      "updatedAt": "2026-05-21T09:48:19.898817+00:00"
+      "updatedAt": "2026-05-21T09:51:20.323200+00:00"
     },
     {
       "id": "weekend_boards",
@@ -50798,7 +50798,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-05-21T09:48:19.898817+00:00"
+      "updatedAt": "2026-05-21T09:51:20.327200+00:00"
     },
     {
       "id": "days_off_counter",
@@ -50815,29 +50815,29 @@
               "day": "Monday",
               "week": "1",
               "total": 90,
-              "booked": 42,
-              "remaining": 48
+              "booked": 47,
+              "remaining": 43
             },
             {
               "day": "Tuesday",
               "week": "1",
               "total": 100,
-              "booked": 22,
-              "remaining": 78
+              "booked": 29,
+              "remaining": 71
             },
             {
               "day": "Wednesday",
               "week": "1",
               "total": 100,
-              "booked": 45,
-              "remaining": 55
+              "booked": 50,
+              "remaining": 50
             },
             {
               "day": "Thursday",
               "week": "1",
               "total": 100,
-              "booked": 39,
-              "remaining": 61
+              "booked": 43,
+              "remaining": 57
             },
             {
               "day": "Friday",
@@ -50850,41 +50850,41 @@
               "day": "Monday",
               "week": "2",
               "total": 90,
-              "booked": 39,
-              "remaining": 51
+              "booked": 47,
+              "remaining": 43
             },
             {
               "day": "Tuesday",
               "week": "2",
               "total": 100,
-              "booked": 30,
-              "remaining": 70
+              "booked": 39,
+              "remaining": 61
             },
             {
               "day": "Wednesday",
+              "week": "2",
+              "total": 100,
+              "booked": 40,
+              "remaining": 60
+            },
+            {
+              "day": "Thursday",
               "week": "2",
               "total": 100,
               "booked": 32,
               "remaining": 68
             },
             {
-              "day": "Thursday",
-              "week": "2",
-              "total": 100,
-              "booked": 29,
-              "remaining": 71
-            },
-            {
               "day": "Friday",
               "week": "2",
               "total": 90,
-              "booked": 83,
-              "remaining": 7
+              "booked": 84,
+              "remaining": 6
             }
           ],
           "total": 960,
-          "booked": 451,
-          "remaining": 509
+          "booked": 501,
+          "remaining": 459
         },
         {
           "id": "night_work",
@@ -50894,29 +50894,29 @@
               "day": "Monday",
               "week": "1",
               "total": 75,
-              "booked": 21,
-              "remaining": 54
+              "booked": 26,
+              "remaining": 49
             },
             {
               "day": "Tuesday",
               "week": "1",
               "total": 75,
-              "booked": 28,
-              "remaining": 47
+              "booked": 35,
+              "remaining": 40
             },
             {
               "day": "Wednesday",
               "week": "1",
               "total": 75,
-              "booked": 33,
-              "remaining": 42
+              "booked": 47,
+              "remaining": 28
             },
             {
               "day": "Thursday",
               "week": "1",
               "total": 75,
-              "booked": 40,
-              "remaining": 35
+              "booked": 49,
+              "remaining": 26
             },
             {
               "day": "Friday",
@@ -50929,29 +50929,29 @@
               "day": "Monday",
               "week": "2",
               "total": 75,
-              "booked": 29,
-              "remaining": 46
+              "booked": 35,
+              "remaining": 40
             },
             {
               "day": "Tuesday",
               "week": "2",
               "total": 75,
-              "booked": 27,
-              "remaining": 48
+              "booked": 34,
+              "remaining": 41
             },
             {
               "day": "Wednesday",
               "week": "2",
               "total": 75,
-              "booked": 35,
-              "remaining": 40
+              "booked": 47,
+              "remaining": 28
             },
             {
               "day": "Thursday",
               "week": "2",
               "total": 75,
-              "booked": 32,
-              "remaining": 43
+              "booked": 40,
+              "remaining": 35
             },
             {
               "day": "Friday",
@@ -50962,11 +50962,11 @@
             }
           ],
           "total": 750,
-          "booked": 395,
-          "remaining": 355
+          "booked": 463,
+          "remaining": 287
         }
       ],
-      "updatedAt": "2026-05-21T09:48:19.906817+00:00"
+      "updatedAt": "2026-05-21T09:51:26.225469+00:00"
     },
     {
       "id": "spares",
@@ -53119,7 +53119,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-21T09:48:19.902817+00:00"
+      "updatedAt": "2026-05-21T09:51:20.327200+00:00"
     },
     {
       "id": "floating_spares",
@@ -53201,7 +53201,7 @@
           ]
         }
       ],
-      "updatedAt": "2026-05-21T09:48:25.857285+00:00"
+      "updatedAt": "2026-05-21T09:51:20.335200+00:00"
     },
     {
       "id": "stat_work",
@@ -98837,7 +98837,7 @@
           "holidayLabel": ""
         }
       ],
-      "updatedAt": "2026-05-21T09:48:19.906817+00:00"
+      "updatedAt": "2026-05-21T09:51:20.339200+00:00"
     }
   ]
 }
