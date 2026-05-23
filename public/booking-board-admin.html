@@ -121,6 +121,28 @@
     button:hover { background: var(--accent-dark); }
     button:disabled { opacity: 0.55; cursor: wait; }
 
+    .secondary-btn {
+      background: #e8eef7;
+      color: var(--text);
+    }
+
+    .secondary-btn:hover {
+      background: #dae3f0;
+    }
+
+    .remove-btn {
+      justify-self: end;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--danger);
+      font-size: 12px;
+    }
+
+    .remove-btn:hover {
+      background: rgba(180, 35, 24, 0.06);
+    }
+
     .status {
       min-height: 24px;
       margin-top: 16px;
@@ -161,7 +183,7 @@
 
     .match-row {
       display: grid;
-      grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.4fr) minmax(0, 1.4fr);
+      grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.4fr) minmax(0, 1.4fr) auto;
       gap: 10px;
       align-items: center;
       border: 1px solid var(--line);
@@ -224,13 +246,14 @@
 
           <label>
             PDF files
-            <input id="pdfFile" type="file" accept="application/pdf,.pdf" multiple required>
+            <input id="pdfFile" type="file" accept="application/pdf,.pdf" multiple>
           </label>
         </div>
         <div id="matchList" class="match-list"></div>
 
         <div class="actions">
           <button id="uploadBtn" type="submit">Upload matched PDFs and rebuild</button>
+          <button id="clearFilesBtn" class="secondary-btn" type="button">Clear staged PDFs</button>
         </div>
       </form>
 
@@ -246,8 +269,10 @@
     const adminToken = document.getElementById('adminToken');
     const pdfFile = document.getElementById('pdfFile');
     const uploadBtn = document.getElementById('uploadBtn');
+    const clearFilesBtn = document.getElementById('clearFilesBtn');
     const statusEl = document.getElementById('status');
     const matchList = document.getElementById('matchList');
+    let stagedFiles = [];
 
     const boardTargets = [
       { key: 'daily', label: 'Daily Work', filename: '2026 Summer daily bords.pdf' },
@@ -292,52 +317,79 @@
     }
 
     function getMatchedFiles() {
-      const files = [...(pdfFile.files || [])];
       const matched = new Map();
       const unmatched = [];
       const duplicates = [];
-      for (const file of files) {
+      for (const item of stagedFiles) {
+        const file = item.file;
         const boardKey = classifyUploadName(file.name);
         if (!boardKey || !boardTargetsByKey[boardKey]) {
-          unmatched.push(file);
+          unmatched.push(item);
           continue;
         }
         if (matched.has(boardKey)) {
-          duplicates.push({ boardKey, file });
+          duplicates.push({ boardKey, item });
           continue;
         }
-        matched.set(boardKey, file);
+        matched.set(boardKey, item);
       }
       return { matched, unmatched, duplicates };
+    }
+
+    function addStagedFiles(files) {
+      for (const file of files) {
+        const duplicate = stagedFiles.some((item) => (
+          item.file.name === file.name &&
+          item.file.size === file.size &&
+          item.file.lastModified === file.lastModified
+        ));
+        if (!duplicate) {
+          stagedFiles.push({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            file,
+          });
+        }
+      }
+    }
+
+    function removeStagedFile(id) {
+      stagedFiles = stagedFiles.filter((item) => item.id !== id);
+      renderMatches();
     }
 
     function renderMatches() {
       const { matched, unmatched, duplicates } = getMatchedFiles();
       const rows = boardTargets.map((target) => {
-        const file = matched.get(target.key);
+        const item = matched.get(target.key);
+        const file = item?.file;
         return `
           <div class="match-row ${file ? 'matched' : 'missing'}">
             <div class="match-board">${escapeHtml(target.label)}</div>
             <div class="match-source">${file ? escapeHtml(file.name) : 'Missing from this batch'}</div>
             <div class="match-target">${file ? `Will rename to ${escapeHtml(target.filename)}` : 'Current PDF will stay in place'}</div>
+            ${item ? `<button class="remove-btn" type="button" data-remove-file="${escapeHtml(item.id)}">Remove</button>` : '<span></span>'}
           </div>
         `;
       });
-      for (const file of unmatched) {
+      for (const item of unmatched) {
+        const file = item.file;
         rows.push(`
           <div class="match-row warn">
             <div class="match-board">Not matched</div>
             <div class="match-source">${escapeHtml(file.name)}</div>
             <div class="match-target">Rename the file with daily, weekend, spare, floating, days off/counter, or stat.</div>
+            <button class="remove-btn" type="button" data-remove-file="${escapeHtml(item.id)}">Remove</button>
           </div>
         `);
       }
       for (const duplicate of duplicates) {
+        const file = duplicate.item.file;
         rows.push(`
           <div class="match-row warn">
             <div class="match-board">Duplicate ${escapeHtml(boardTargetsByKey[duplicate.boardKey]?.label || 'board')}</div>
-            <div class="match-source">${escapeHtml(duplicate.file.name)}</div>
+            <div class="match-source">${escapeHtml(file.name)}</div>
             <div class="match-target">Only one PDF per board can be uploaded in a batch.</div>
+            <button class="remove-btn" type="button" data-remove-file="${escapeHtml(duplicate.item.id)}">Remove</button>
           </div>
         `);
       }
@@ -360,7 +412,24 @@
       });
     }
 
-    pdfFile.addEventListener('change', renderMatches);
+    pdfFile.addEventListener('change', () => {
+      addStagedFiles([...(pdfFile.files || [])]);
+      pdfFile.value = '';
+      renderMatches();
+    });
+
+    clearFilesBtn.addEventListener('click', () => {
+      stagedFiles = [];
+      pdfFile.value = '';
+      renderMatches();
+      setStatus('Cleared staged PDFs.');
+    });
+
+    matchList.addEventListener('click', (event) => {
+      const removeButton = event.target.closest('[data-remove-file]');
+      if (!removeButton) return;
+      removeStagedFile(removeButton.dataset.removeFile);
+    });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -381,7 +450,8 @@
 
       try {
         const files = [];
-        for (const [boardKey, file] of matched.entries()) {
+        for (const [boardKey, item] of matched.entries()) {
+          const file = item.file;
           files.push({
             board: boardKey,
             name: file.name,
@@ -408,6 +478,7 @@
         const missingLine = missing.length ? `Missing from this batch: ${missing.map((item) => item.label).join(', ')}` : 'All board PDFs were included.';
         const unmatchedLine = unmatchedResponse.length ? `Not matched: ${unmatchedResponse.join(', ')}` : '';
         setStatus([...uploadedLines, missingLine, unmatchedLine, data.note || 'Booking boards rebuilt.'].filter(Boolean).join('\n'), 'ok');
+        stagedFiles = [];
         pdfFile.value = '';
         renderMatches();
       } catch (err) {
