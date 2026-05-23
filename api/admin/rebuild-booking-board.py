@@ -366,7 +366,7 @@ class handler(BaseHTTPRequestHandler):
                     "storage": "github",
                     "repo": repo,
                     "branch": branch,
-                    "note": "Committed uploaded PDFs and rebuilt data to GitHub. Vercel will redeploy the updated boards from the repository.",
+                    "note": "Site update successful. It can take about a minute to show on the site.",
                 },
             )
         except ValueError as error:

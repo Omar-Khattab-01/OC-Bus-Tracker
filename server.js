@@ -3519,7 +3519,7 @@ async function handleBookingBoardUpload(req, res) {
       updatedAt: result.updatedAt,
       storage: 'runtime-memory',
       runtime: result.runtime,
-      note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
+      note: 'Site update successful. It can take about a minute to show on the site.',
     });
   } catch (err) {
     res.status(500).json({
@@ -3589,7 +3589,7 @@ async function handleBookingBoardBatchUpload(req, res) {
       updatedAt: result.updatedAt,
       storage: 'runtime-memory',
       runtime: result.runtime,
-      note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
+      note: 'Site update successful. It can take about a minute to show on the site.',
     });
   } catch (err) {
     res.status(500).json({

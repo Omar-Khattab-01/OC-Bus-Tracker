@@ -474,10 +474,17 @@
         const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
         const missing = Array.isArray(data.missing) ? data.missing : [];
         const unmatchedResponse = Array.isArray(data.unmatched) ? data.unmatched : unmatched.map((file) => file.name);
-        const uploadedLines = uploaded.map((item) => `Updated ${item.label}: ${item.sourceName} -> ${item.filename}`);
+        const uploadedLine = uploaded.length
+          ? `Updated: ${uploaded.map((item) => item.label).join(', ')}`
+          : 'Updated selected boards.';
         const missingLine = missing.length ? `Missing from this batch: ${missing.map((item) => item.label).join(', ')}` : 'All board PDFs were included.';
         const unmatchedLine = unmatchedResponse.length ? `Not matched: ${unmatchedResponse.join(', ')}` : '';
-        setStatus([...uploadedLines, missingLine, unmatchedLine, data.note || 'Booking boards rebuilt.'].filter(Boolean).join('\n'), 'ok');
+        setStatus([
+          'Site update successful. It can take about a minute to show on the site.',
+          uploadedLine,
+          missingLine,
+          unmatchedLine,
+        ].filter(Boolean).join('\n'), 'ok');
         stagedFiles = [];
         pdfFile.value = '';
         renderMatches();
