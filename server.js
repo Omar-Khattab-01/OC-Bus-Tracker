@@ -100,6 +100,7 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
     boardIds: ['stat_work'],
   },
 };
+const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'floating_spares', 'days_off_counter', 'stat'];
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -108,7 +109,7 @@ const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   : null;
 
 const app = express();
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '120mb' }));
 app.get('/', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
 });
@@ -1974,9 +1975,11 @@ function getBoardUpdatedAt(board, bookingBoardsData = null) {
   return boardUpdatedAt || getFallbackBookingBoardsUpdatedAt(bookingBoardsData);
 }
 
-function mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, uploadedBoardKey, updatedAt) {
-  const target = BOOKING_BOARD_UPLOAD_TARGETS[uploadedBoardKey] || {};
-  const uploadedBoardIds = new Set(target.boardIds || []);
+function mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, uploadedBoardKeys, updatedAt) {
+  const keys = Array.isArray(uploadedBoardKeys) ? uploadedBoardKeys : [uploadedBoardKeys];
+  const uploadedBoardIds = new Set(
+    keys.flatMap((key) => BOOKING_BOARD_UPLOAD_TARGETS[key]?.boardIds || [])
+  );
   const previousFallback = getFallbackBookingBoardsUpdatedAt(previousData);
   const previousById = new Map(
     (Array.isArray(previousData?.boards) ? previousData.boards : [])
@@ -3375,6 +3378,21 @@ function isAdminBookingBoardRequest(req) {
   ) && providedToken.length === BOOKING_BOARD_ADMIN_TOKEN.length;
 }
 
+function normalizeBookingBoardUploadName(name) {
+  return String(name || '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function classifyBookingBoardUploadName(name) {
+  const normalized = normalizeBookingBoardUploadName(name);
+  if (normalized.includes('floating')) return 'floating_spares';
+  if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
+  if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
+  if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
+  if (normalized.includes('spare')) return 'spares';
+  if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';
+  return '';
+}
+
 function copyBookingBoardSourcesToTemp(tempSourceDir) {
   fs.mkdirSync(tempSourceDir, { recursive: true });
   for (const target of Object.values(BOOKING_BOARD_UPLOAD_TARGETS)) {
@@ -3417,21 +3435,59 @@ async function rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile) {
   throw new Error(message);
 }
 
-async function handleBookingBoardUpload(req, res) {
+async function rebuildUploadedBookingBoards(uploadedTargets) {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-boards-'));
+  const tempSourceDir = path.join(tempRoot, 'Booking_Boards');
+  const tempOutputFile = path.join(tempRoot, 'booking_boards.json');
+  const uploadedBoardKeys = Object.keys(uploadedTargets);
+
+  try {
+    const previousData = loadBookingBoardsData();
+    copyBookingBoardSourcesToTemp(tempSourceDir);
+    for (const [boardKey, pdfBuffer] of Object.entries(uploadedTargets)) {
+      const target = BOOKING_BOARD_UPLOAD_TARGETS[boardKey];
+      fs.writeFileSync(path.join(tempSourceDir, target.filename), pdfBuffer);
+    }
+
+    const pythonBin = await rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile);
+    const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
+    const updatedAt = new Date().toISOString();
+    const mergedData = mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, uploadedBoardKeys, updatedAt);
+    bookingBoardsDataCache = mergedData;
+    bookingBoardsDataMtimeMs = -1;
+    bookingBoardsRuntimeUpdatedAt = updatedAt;
+    return {
+      boardCount: Array.isArray(mergedData?.boards) ? mergedData.boards.length : 0,
+      updatedAt,
+      runtime: pythonBin,
+    };
+  } finally {
+    try {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    } catch {}
+  }
+}
+
+function sendBookingBoardAdminUnauthorizedOrDisabled(req, res) {
   if (!BOOKING_BOARD_ADMIN_TOKEN) {
     res.status(501).json({
       ok: false,
       error: 'Booking board uploads are disabled. Set BOOKING_BOARD_ADMIN_TOKEN on the server first.',
     });
-    return;
+    return true;
   }
   if (!isAdminBookingBoardRequest(req)) {
     res.status(401).json({
       ok: false,
       error: 'Invalid admin token.',
     });
-    return;
+    return true;
   }
+  return false;
+}
+
+async function handleBookingBoardUpload(req, res) {
+  if (sendBookingBoardAdminUnauthorizedOrDisabled(req, res)) return;
 
   const boardKey = String(req.params.board || '').trim().toLowerCase();
   const target = BOOKING_BOARD_UPLOAD_TARGETS[boardKey];
@@ -3452,35 +3508,17 @@ async function handleBookingBoardUpload(req, res) {
     return;
   }
 
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-boards-'));
-  const tempSourceDir = path.join(tempRoot, 'Booking_Boards');
-  const tempOutputFile = path.join(tempRoot, 'booking_boards.json');
-  const targetPath = path.join(tempSourceDir, target.filename);
-
   try {
-    const previousData = loadBookingBoardsData();
-    copyBookingBoardSourcesToTemp(tempSourceDir);
-    fs.writeFileSync(targetPath, pdfBuffer);
-
-    const pythonBin = await rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile);
-
-    const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
-    const updatedAt = new Date().toISOString();
-    const mergedData = mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, boardKey, updatedAt);
-    bookingBoardsDataCache = mergedData;
-    bookingBoardsDataMtimeMs = -1;
-    bookingBoardsRuntimeUpdatedAt = updatedAt;
-
-    const boardCount = Array.isArray(mergedData?.boards) ? mergedData.boards.length : 0;
+    const result = await rebuildUploadedBookingBoards({ [boardKey]: pdfBuffer });
     res.json({
       ok: true,
       board: boardKey,
       label: target.label,
       filename: target.filename,
-      boardCount,
-      updatedAt,
+      boardCount: result.boardCount,
+      updatedAt: result.updatedAt,
       storage: 'runtime-memory',
-      runtime: pythonBin,
+      runtime: result.runtime,
       note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
     });
   } catch (err) {
@@ -3488,10 +3526,76 @@ async function handleBookingBoardUpload(req, res) {
       ok: false,
       error: `Failed while rebuilding ${target.label} from ${target.filename}: ${String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 900)}`,
     });
-  } finally {
-    try {
-      fs.rmSync(tempRoot, { recursive: true, force: true });
-    } catch {}
+  }
+}
+
+async function handleBookingBoardBatchUpload(req, res) {
+  if (sendBookingBoardAdminUnauthorizedOrDisabled(req, res)) return;
+
+  try {
+    const files = Array.isArray(req.body?.files) ? req.body.files : [];
+    if (!files.length) {
+      res.status(400).json({ ok: false, error: 'Choose at least one PDF file.' });
+      return;
+    }
+
+    const uploadedTargets = {};
+    const uploaded = [];
+    const unmatched = [];
+    for (const file of files) {
+      const sourceName = String(file?.name || '').trim();
+      const boardKey = classifyBookingBoardUploadName(sourceName);
+      const target = BOOKING_BOARD_UPLOAD_TARGETS[boardKey];
+      if (!target || !BOOKING_BOARD_PRIMARY_UPLOAD_KEYS.includes(boardKey)) {
+        unmatched.push(sourceName || 'Unnamed PDF');
+        continue;
+      }
+      if (uploadedTargets[boardKey]) {
+        res.status(400).json({ ok: false, error: `More than one file matched ${target.label}. Keep one PDF for that board.` });
+        return;
+      }
+      let rawData = String(file?.data || '').trim();
+      if (rawData.toLowerCase().startsWith('data:') && rawData.includes(',')) {
+        rawData = rawData.split(',', 2)[1];
+      }
+      const pdfBuffer = Buffer.from(rawData, 'base64');
+      if (!pdfBuffer.length || pdfBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+        res.status(400).json({ ok: false, error: `${sourceName || target.label} is not a valid PDF.` });
+        return;
+      }
+      uploadedTargets[boardKey] = pdfBuffer;
+      uploaded.push({
+        board: boardKey,
+        label: target.label,
+        sourceName,
+        filename: target.filename,
+      });
+    }
+
+    if (!Object.keys(uploadedTargets).length) {
+      res.status(400).json({ ok: false, error: 'None of the selected PDFs matched a booking board type.' });
+      return;
+    }
+
+    const result = await rebuildUploadedBookingBoards(uploadedTargets);
+    res.json({
+      ok: true,
+      uploaded,
+      missing: BOOKING_BOARD_PRIMARY_UPLOAD_KEYS
+        .filter((key) => !uploadedTargets[key])
+        .map((key) => ({ board: key, label: BOOKING_BOARD_UPLOAD_TARGETS[key].label })),
+      unmatched,
+      boardCount: result.boardCount,
+      updatedAt: result.updatedAt,
+      storage: 'runtime-memory',
+      runtime: result.runtime,
+      note: 'Updated in the current runtime. For permanent production updates, commit the regenerated PDFs/data or connect persistent storage.',
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: `Failed while rebuilding booking boards: ${String(err.stderr || err.message || 'Booking board rebuild failed').slice(0, 900)}`,
+    });
   }
 }
 
@@ -3499,6 +3603,7 @@ app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/booking-boards', handleBookingBoards);
+app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);

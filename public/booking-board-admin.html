@@ -153,10 +153,54 @@
       border-radius: 0 8px 8px 0;
     }
 
+    .match-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .match-row {
+      display: grid;
+      grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.4fr) minmax(0, 1.4fr);
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcff;
+      font-size: 13px;
+    }
+
+    .match-board {
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .match-source,
+    .match-target {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .match-row.matched {
+      border-color: rgba(8, 116, 67, 0.25);
+      background: rgba(8, 116, 67, 0.05);
+    }
+
+    .match-row.missing {
+      border-color: rgba(96, 112, 135, 0.22);
+    }
+
+    .match-row.warn {
+      border-color: rgba(180, 35, 24, 0.25);
+      background: rgba(180, 35, 24, 0.05);
+    }
+
     @media (max-width: 720px) {
       .main { padding: 16px; }
       .top { display: block; }
       .grid { grid-template-columns: 1fr; }
+      .match-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -165,7 +209,7 @@
     <section class="top">
       <div>
         <h1>Booking Board Admin</h1>
-        <p>Upload a replacement PDF for one board. The site will rebuild the booking board data after upload.</p>
+        <p>Upload all changed board PDFs together. The page matches each PDF to the right board before renaming and rebuilding.</p>
       </div>
       <a href="/booking-boards">View boards</a>
     </section>
@@ -174,56 +218,46 @@
       <form id="uploadForm">
         <div class="grid">
           <label>
-            Board
-            <select id="boardType" required>
-              <option value="daily">Daily Work</option>
-              <option value="weekend">Weekend Work</option>
-              <option value="spares">Spare Boards</option>
-              <option value="floating_spares">Daily and Weekly Floating Spares</option>
-              <option value="days_off_counter">Days Off Counter</option>
-              <option value="stat">Stat Work</option>
-            </select>
-          </label>
-
-          <label>
             Admin token
             <input id="adminToken" type="password" autocomplete="current-password" placeholder="BOOKING_BOARD_ADMIN_TOKEN" required>
           </label>
 
           <label>
-            PDF file
-            <input id="pdfFile" type="file" accept="application/pdf,.pdf" required>
+            PDF files
+            <input id="pdfFile" type="file" accept="application/pdf,.pdf" multiple required>
           </label>
         </div>
+        <div id="matchList" class="match-list"></div>
 
         <div class="actions">
-          <button id="uploadBtn" type="submit">Upload and rebuild</button>
+          <button id="uploadBtn" type="submit">Upload matched PDFs and rebuild</button>
         </div>
       </form>
 
       <div id="status" class="status">Ready.</div>
       <div class="note">
-        The upload replaces only the selected source PDF. The rebuild uses all five current PDFs, so upload each board that changed.
+        Matching checks the selected file names before upload. Floating Spares is matched before Spare Boards, so a floating spare PDF will not replace the normal spare board.
       </div>
     </section>
   </main>
 
   <script>
     const form = document.getElementById('uploadForm');
-    const boardType = document.getElementById('boardType');
     const adminToken = document.getElementById('adminToken');
     const pdfFile = document.getElementById('pdfFile');
     const uploadBtn = document.getElementById('uploadBtn');
     const statusEl = document.getElementById('status');
+    const matchList = document.getElementById('matchList');
 
-    const expectedFilenames = {
-      daily: '2026 Summer daily bords.pdf',
-      weekend: '2026 Bus Summer Weekend boards.pdf',
-      spares: '2026 Summer Spare,s Boards.pdf',
-      floating_spares: '2026 Summer Daily and weekly floating spares  (4) (1).pdf',
-      days_off_counter: '2026 Summer Days off Counter (3).pdf',
-      stat: '2026 Summer stat work.pdf',
-    };
+    const boardTargets = [
+      { key: 'daily', label: 'Daily Work', filename: '2026 Summer daily bords.pdf' },
+      { key: 'weekend', label: 'Weekend Work', filename: '2026 Bus Summer Weekend boards.pdf' },
+      { key: 'spares', label: 'Spare Boards', filename: '2026 Summer Spare,s Boards.pdf' },
+      { key: 'floating_spares', label: 'Daily and Weekly Floating Spares', filename: '2026 Summer Daily and weekly floating spares  (4) (1).pdf' },
+      { key: 'days_off_counter', label: 'Days Off Counter', filename: '2026 Summer Days off Counter (3).pdf' },
+      { key: 'stat', label: 'Stat Work', filename: '2026 Summer stat work.pdf' },
+    ];
+    const boardTargetsByKey = Object.fromEntries(boardTargets.map((target) => [target.key, target]));
 
     const savedToken = sessionStorage.getItem('bookingBoardAdminToken');
     if (savedToken) adminToken.value = savedToken;
@@ -233,40 +267,154 @@
       statusEl.className = `status ${mode}`.trim();
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalizeUploadName(name) {
+      return String(name || '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function classifyUploadName(name) {
+      const normalized = normalizeUploadName(name);
+      if (normalized.includes('floating')) return 'floating_spares';
+      if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
+      if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
+      if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
+      if (normalized.includes('spare')) return 'spares';
+      if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';
+      return '';
+    }
+
+    function getMatchedFiles() {
+      const files = [...(pdfFile.files || [])];
+      const matched = new Map();
+      const unmatched = [];
+      const duplicates = [];
+      for (const file of files) {
+        const boardKey = classifyUploadName(file.name);
+        if (!boardKey || !boardTargetsByKey[boardKey]) {
+          unmatched.push(file);
+          continue;
+        }
+        if (matched.has(boardKey)) {
+          duplicates.push({ boardKey, file });
+          continue;
+        }
+        matched.set(boardKey, file);
+      }
+      return { matched, unmatched, duplicates };
+    }
+
+    function renderMatches() {
+      const { matched, unmatched, duplicates } = getMatchedFiles();
+      const rows = boardTargets.map((target) => {
+        const file = matched.get(target.key);
+        return `
+          <div class="match-row ${file ? 'matched' : 'missing'}">
+            <div class="match-board">${escapeHtml(target.label)}</div>
+            <div class="match-source">${file ? escapeHtml(file.name) : 'Missing from this batch'}</div>
+            <div class="match-target">${file ? `Will rename to ${escapeHtml(target.filename)}` : 'Current PDF will stay in place'}</div>
+          </div>
+        `;
+      });
+      for (const file of unmatched) {
+        rows.push(`
+          <div class="match-row warn">
+            <div class="match-board">Not matched</div>
+            <div class="match-source">${escapeHtml(file.name)}</div>
+            <div class="match-target">Rename the file with daily, weekend, spare, floating, days off/counter, or stat.</div>
+          </div>
+        `);
+      }
+      for (const duplicate of duplicates) {
+        rows.push(`
+          <div class="match-row warn">
+            <div class="match-board">Duplicate ${escapeHtml(boardTargetsByKey[duplicate.boardKey]?.label || 'board')}</div>
+            <div class="match-source">${escapeHtml(duplicate.file.name)}</div>
+            <div class="match-target">Only one PDF per board can be uploaded in a batch.</div>
+          </div>
+        `);
+      }
+      matchList.innerHTML = rows.join('');
+      uploadBtn.disabled = duplicates.length > 0;
+      if (!matched.size && !unmatched.length && !duplicates.length) {
+        matchList.innerHTML = '';
+      }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          resolve(result.includes(',') ? result.split(',', 2)[1] : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error(`Could not read ${file.name}.`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    pdfFile.addEventListener('change', renderMatches);
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const file = pdfFile.files && pdfFile.files[0];
-      if (!file) {
-        setStatus('Choose a PDF first.', 'warn');
+      const { matched, unmatched, duplicates } = getMatchedFiles();
+      if (!matched.size) {
+        setStatus('Choose at least one matching PDF first.', 'warn');
+        return;
+      }
+      if (duplicates.length) {
+        setStatus('Remove duplicate PDFs before uploading. Use one PDF per board.', 'warn');
         return;
       }
 
       uploadBtn.disabled = true;
       sessionStorage.setItem('bookingBoardAdminToken', adminToken.value);
-      const expectedFilename = expectedFilenames[boardType.value] || file.name || 'booking-board.pdf';
-      const renamedFile = new File([file], expectedFilename, { type: 'application/pdf' });
-      setStatus(`Renaming upload to ${expectedFilename}.\nUploading PDF and rebuilding booking boards. This can take a minute...`);
+      const matchedLabels = [...matched.keys()].map((key) => boardTargetsByKey[key].label).join(', ');
+      setStatus(`Matched: ${matchedLabels}.\nReading PDFs and rebuilding booking boards once. This can take a minute...`);
 
       try {
-        const response = await fetch(`/api/admin/rebuild-booking-board?board=${encodeURIComponent(boardType.value)}`, {
+        const files = [];
+        for (const [boardKey, file] of matched.entries()) {
+          files.push({
+            board: boardKey,
+            name: file.name,
+            data: await fileToBase64(file),
+          });
+        }
+
+        const response = await fetch('/api/admin/rebuild-booking-board', {
           method: 'POST',
           headers: {
-            'content-type': 'application/pdf',
+            'content-type': 'application/json',
             'x-admin-token': adminToken.value,
-            'x-upload-filename': expectedFilename,
           },
-          body: await renamedFile.arrayBuffer(),
+          body: JSON.stringify({ files }),
         });
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'Upload failed.');
         }
-        setStatus(`Updated ${data.label} from ${data.filename}.\n${data.note || 'Booking boards rebuilt.'}`, 'ok');
+        const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
+        const missing = Array.isArray(data.missing) ? data.missing : [];
+        const unmatchedResponse = Array.isArray(data.unmatched) ? data.unmatched : unmatched.map((file) => file.name);
+        const uploadedLines = uploaded.map((item) => `Updated ${item.label}: ${item.sourceName} -> ${item.filename}`);
+        const missingLine = missing.length ? `Missing from this batch: ${missing.map((item) => item.label).join(', ')}` : 'All board PDFs were included.';
+        const unmatchedLine = unmatchedResponse.length ? `Not matched: ${unmatchedResponse.join(', ')}` : '';
+        setStatus([...uploadedLines, missingLine, unmatchedLine, data.note || 'Booking boards rebuilt.'].filter(Boolean).join('\n'), 'ok');
         pdfFile.value = '';
+        renderMatches();
       } catch (err) {
         setStatus(err.message || 'Upload failed.', 'warn');
       } finally {
         uploadBtn.disabled = false;
+        renderMatches();
       }
     });
   </script>
