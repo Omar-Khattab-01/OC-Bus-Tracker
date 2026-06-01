@@ -1733,7 +1733,7 @@
     }
 
     function normalizeBlockValue(value) {
-      return String(value || '').trim().toUpperCase();
+      return String(value || '').trim().toUpperCase().replace(/\s*-\s*/g, '-');
     }
 
     function getOttawaDateString(date = new Date()) {

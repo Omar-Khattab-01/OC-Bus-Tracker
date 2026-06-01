@@ -124,7 +124,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 function normalizeBlock(input) {
-  return String(input || '').trim().toUpperCase();
+  return String(input || '').trim().toUpperCase().replace(/\s*-\s*/g, '-');
 }
 
 function normalizeMessage(input) {
@@ -2722,7 +2722,7 @@ function parseBlockFromReq(req) {
   }
 
   const text = String(req.body?.message || '').trim();
-  const match = text.match(/\b(\d{1,3}-\d{1,3})\b/);
+  const match = text.match(/\b(\d{1,3}\s*-\s*\d{1,3})\b/);
   return normalizeBlock(match ? match[1] : text);
 }
 
@@ -2745,7 +2745,7 @@ function parseLookupTarget(req) {
   }
 
   const text = parseMessageText(req);
-  const blockMatch = text.match(/\b(\d{1,3}-\d{1,3})\b/);
+  const blockMatch = text.match(/\b(\d{1,3}\s*-\s*\d{1,3})\b/);
   if (blockMatch) {
     return { type: 'block', value: normalizeBlock(blockMatch[1]) };
   }
