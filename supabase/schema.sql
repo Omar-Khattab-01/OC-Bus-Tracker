@@ -88,7 +88,7 @@ create index if not exists bus_defect_access_email_idx
 
 create table if not exists public.bus_defect_reports (
   id uuid primary key default gen_random_uuid(),
-  bus_number text not null check (bus_number ~ '^[0-9]{1,6}$'),
+  bus_number text not null check (bus_number ~ '^[468][0-9]{3}$'),
   defect_category text not null check (
     defect_category in (
       'farebox',
@@ -114,6 +114,13 @@ create table if not exists public.bus_defect_reports (
   reported_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.bus_defect_reports
+  drop constraint if exists bus_defect_reports_bus_number_check;
+
+alter table public.bus_defect_reports
+  add constraint bus_defect_reports_bus_number_check
+  check (bus_number ~ '^[468][0-9]{3}$') not valid;
 
 drop trigger if exists bus_defect_reports_set_updated_at on public.bus_defect_reports;
 create trigger bus_defect_reports_set_updated_at

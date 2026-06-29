@@ -1758,6 +1758,9 @@
     let busDefectSchemaWarning = '';
     let selectedBusDefectNumber = '';
     let selectedBusDefectCategory = 'farebox';
+    let busExportFromDate = getCurrentMonthStartValue();
+    let busExportToDate = getOttawaDateString();
+    let busExportCategory = 'all';
     let editingBusDefectReportId = '';
     const WORK_DAYS = [
       { key: 'monday', label: 'Monday', serviceDay: 'weekday' },
@@ -1875,6 +1878,16 @@
         month: '2-digit',
         day: '2-digit',
       }).format(date);
+    }
+
+    function getCurrentMonthStartValue(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: '2-digit',
+      }).formatToParts(date);
+      const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+      return `${values.year}-${values.month}-01`;
     }
 
     function getCurrentServiceDayKey(date = new Date()) {
@@ -2406,7 +2419,11 @@
     }
 
     function normalizeBusNumber(value) {
-      return String(value || '').replace(/\D/g, '').slice(0, 6);
+      return String(value || '').replace(/\D/g, '').slice(0, 4);
+    }
+
+    function isValidBusNumber(value) {
+      return /^[468]\d{3}$/.test(normalizeBusNumber(value));
     }
 
     function formatBusNumber(value) {
@@ -2443,6 +2460,13 @@
         .join('');
     }
 
+    function renderBusExportCategoryOptions(selected = busExportCategory) {
+      return [
+        `<option value="all" ${selected === 'all' ? 'selected' : ''}>All categories</option>`,
+        ...busDefectCategories.map((item) => `<option value="${escapeAttribute(item.key)}" ${selected === item.key ? 'selected' : ''}>${escapeHtml(item.label)}</option>`),
+      ].join('');
+    }
+
     function renderBusReportStatusOptions(selected = 'open') {
       const status = normalizeBusReportStatus(selected);
       return busReportStatuses
@@ -2460,6 +2484,66 @@
         hour: '2-digit',
         minute: '2-digit',
       }).format(new Date(value));
+    }
+
+    function parseExportDateValue(value) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return null;
+      const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function dateRangeToIso(fromValue, toValue) {
+      const fromDate = parseExportDateValue(fromValue);
+      const toDate = parseExportDateValue(toValue);
+      if (!fromDate && !toDate) return null;
+      const start = fromDate && toDate && fromDate > toDate ? toDate : fromDate;
+      const endBase = fromDate && toDate && fromDate > toDate ? fromDate : toDate;
+      const range = {};
+      if (start) range.start = start.toISOString();
+      if (endBase) {
+        const end = new Date(endBase);
+        end.setDate(end.getDate() + 1);
+        range.end = end.toISOString();
+      }
+      return range;
+    }
+
+    function formatExportDateLabel(value) {
+      const date = parseExportDateValue(value);
+      if (!date) return '';
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(date);
+    }
+
+    function formatExportPeriodLabel(fromValue, toValue) {
+      const fromLabel = formatExportDateLabel(fromValue);
+      const toLabel = formatExportDateLabel(toValue);
+      if (!fromLabel && !toLabel) return 'All dates';
+      if (fromLabel && toLabel) return `${fromLabel} to ${toLabel}`;
+      if (fromLabel) return `From ${fromLabel}`;
+      return `Through ${toLabel}`;
+    }
+
+    function normalizeBusExportDateInputs() {
+      const fromDate = parseExportDateValue(busExportFromDate);
+      const toDate = parseExportDateValue(busExportToDate);
+      if (fromDate && toDate && fromDate > toDate) {
+        const previousFrom = busExportFromDate;
+        busExportFromDate = busExportToDate;
+        busExportToDate = previousFrom;
+      }
+    }
+
+    function renderBusReportMeta(report) {
+      return [
+        `Category: ${formatBusDefectCategory(report.defect_category || 'other')}`,
+        `Status: ${formatBusReportStatus(report.report_status)}`,
+      ].join(' | ');
     }
 
     function isBusSchemaError(error) {
@@ -2567,13 +2651,13 @@
         return [];
       }
       const busNumber = normalizeBusNumber(selectedBusDefectNumber);
-      if (!busNumber) {
+      if (!isValidBusNumber(busNumber)) {
         busDefectReports = [];
         return [];
       }
       const { data, error } = await withRequestTimeout(supabaseClient
         .from('bus_defect_reports')
-        .select('*')
+        .select('id, bus_number, defect_category, report_status, defect_text, reported_by_email, reported_at')
         .eq('bus_number', busNumber)
         .order('reported_at', { ascending: false }), 'Bus defect reports');
       if (error) {
@@ -2584,9 +2668,172 @@
       return busDefectReports;
     }
 
+    function buildBusDefectExportQuery(scope = 'current') {
+      let query = supabaseClient
+        .from('bus_defect_reports')
+        .select('id, bus_number, defect_category, report_status, defect_text, reported_by_email, reported_at')
+        .order('bus_number', { ascending: true })
+        .order('reported_at', { ascending: false });
+      if (scope !== 'all') query = query.eq('bus_number', normalizeBusNumber(selectedBusDefectNumber));
+      const dateRange = dateRangeToIso(busExportFromDate, busExportToDate);
+      if (dateRange?.start) query = query.gte('reported_at', dateRange.start);
+      if (dateRange?.end) query = query.lt('reported_at', dateRange.end);
+      if (busExportCategory !== 'all') query = query.eq('defect_category', busExportCategory);
+      return query;
+    }
+
+    async function fetchBusDefectReportsForExport(scope = 'current') {
+      if (!supabaseClient || !isBusDefectAdmin()) return [];
+      if (scope !== 'all' && !isValidBusNumber(selectedBusDefectNumber)) return [];
+      normalizeBusExportDateInputs();
+      const allReports = [];
+      const pageSize = 500;
+      let offset = 0;
+      while (true) {
+        const query = buildBusDefectExportQuery(scope).range(offset, offset + pageSize - 1);
+        const { data, error } = await withRequestTimeout(query, 'Bus export reports', 60000);
+        if (error) throw error;
+        const reports = Array.isArray(data) ? data : [];
+        allReports.push(...reports);
+        if (reports.length < pageSize) break;
+        offset += pageSize;
+      }
+      return allReports;
+    }
+
+    function buildBusDefectExportHtml(reports, scope = 'current') {
+      const title = scope === 'all'
+        ? 'All Bus Defect Reports'
+        : `Bus ${formatBusNumber(selectedBusDefectNumber)} Defect Reports`;
+      const periodLabel = formatExportPeriodLabel(busExportFromDate, busExportToDate);
+      const categoryLabel = busExportCategory === 'all'
+        ? 'All categories'
+        : formatBusDefectCategory(busExportCategory);
+      const generatedAt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date());
+      const grouped = reports.reduce((acc, report) => {
+        const key = formatBusNumber(report.bus_number);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(report);
+        return acc;
+      }, {});
+      const bodyHtml = Object.keys(grouped).length
+        ? Object.entries(grouped).map(([bus, items]) => `
+          <section class="bus-section">
+            <h2>Bus ${escapeHtml(bus)}</h2>
+            ${items.map((report) => `
+              <article class="report">
+                <div class="report-head">
+                  <strong>Bus ${escapeHtml(formatBusNumber(report.bus_number))}</strong>
+                  <span>${escapeHtml(formatReportDate(report.reported_at))}</span>
+                </div>
+                <div class="report-meta">Reported by ${escapeHtml(report.reported_by_email || 'Unknown')}</div>
+                <div class="report-meta">${escapeHtml(renderBusReportMeta(report))}</div>
+                <p>${escapeHtml(report.defect_text || '')}</p>
+              </article>
+            `).join('')}
+          </section>
+        `).join('')
+        : '<p>No reports found.</p>';
+      return `<!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${escapeHtml(title)}</title>
+          <style>
+            @page { margin: 0.6in; }
+            body { font-family: Arial, sans-serif; color: #111; line-height: 1.35; }
+            h1 { margin: 0; font-size: 24px; }
+            h2 { margin: 24px 0 10px; font-size: 18px; border-bottom: 1px solid #bbb; padding-bottom: 5px; }
+            .meta { color: #555; margin: 6px 0 20px; font-size: 12px; }
+            .report { border: 1px solid #ccc; border-radius: 6px; padding: 10px 12px; margin: 0 0 10px; break-inside: avoid; }
+            .report-head { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; }
+            .report-meta { color: #555; font-size: 12px; margin-top: 4px; }
+            p { white-space: pre-wrap; margin: 10px 0 0; }
+            @media print { .print-actions { display: none; } }
+            .print-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+            button { border: 1px solid #111; border-radius: 4px; padding: 9px 13px; font: inherit; background: #fff; }
+            .primary { background: #111; color: #fff; }
+            .hint { color: #555; font-size: 12px; width: 100%; }
+          </style>
+        </head>
+        <body>
+          <div class="print-actions">
+            <button class="primary" onclick="window.print()">Print / Save PDF</button>
+            <button onclick="returnToBusDefects()">Back to Bus Defects</button>
+            <button onclick="window.close()">Close Report</button>
+            <span class="hint">After printing, use Back to Bus Defects or close this report tab/window.</span>
+          </div>
+          <h1>${escapeHtml(title)}</h1>
+          <div class="meta">Generated ${escapeHtml(generatedAt)} · ${escapeHtml(periodLabel)} · ${escapeHtml(categoryLabel)} · ${escapeHtml(reports.length)} report${reports.length === 1 ? '' : 's'}</div>
+          ${bodyHtml}
+          <script>
+            function returnToBusDefects() {
+              if (window.opener && !window.opener.closed) {
+                window.opener.focus();
+                window.close();
+                return;
+              }
+              window.close();
+            }
+            setTimeout(() => window.print(), 350);
+          <\/script>
+        </body>
+        </html>`;
+    }
+
+    async function exportBusDefectReports(scope = 'current') {
+      if (!isBusDefectAdmin()) return;
+      if (scope !== 'all' && !isValidBusNumber(selectedBusDefectNumber)) {
+        statusEl.textContent = 'Enter a valid bus number first';
+        statusEl.classList.add('warn');
+        statusEl.classList.remove('ok');
+        syncMobileMenuStatus();
+        return;
+      }
+      const exportWindow = window.open('', '_blank');
+      if (!exportWindow) {
+        window.alert('Allow pop-ups, then try the export again.');
+        return;
+      }
+      exportWindow.document.open();
+      exportWindow.document.write('<!doctype html><title>Preparing PDF</title><body style="font-family:Arial,sans-serif;padding:24px;">Preparing report...</body>');
+      exportWindow.document.close();
+      try {
+        statusEl.textContent = 'Preparing PDF...';
+        syncMobileMenuStatus();
+        const reports = await fetchBusDefectReportsForExport(scope);
+        exportWindow.document.open();
+        exportWindow.document.write(buildBusDefectExportHtml(reports, scope));
+        exportWindow.document.close();
+        statusEl.textContent = 'PDF export ready';
+        statusEl.classList.add('ok');
+        statusEl.classList.remove('warn');
+        syncMobileMenuStatus();
+      } catch (error) {
+        setBusSchemaWarning(error);
+        exportWindow.document.open();
+        exportWindow.document.write(`<!doctype html><title>Export failed</title><body style="font-family:Arial,sans-serif;padding:24px;"><h1>Export failed</h1><p>${escapeHtml(busDefectSchemaWarning || error.message || 'Could not export reports.')}</p></body>`);
+        exportWindow.document.close();
+        statusEl.textContent = 'Export failed';
+        statusEl.classList.add('warn');
+        statusEl.classList.remove('ok');
+        syncMobileMenuStatus();
+      }
+    }
+
     function renderBusDefectReportList() {
       if (!normalizeBusNumber(selectedBusDefectNumber)) {
         return '<div class="notice">Enter a bus number to show its defect history.</div>';
+      }
+      if (!isValidBusNumber(selectedBusDefectNumber)) {
+        return '<div class="notice warn">Bus number must be 4 digits and start with 4, 6, or 8.</div>';
       }
       if (!busDefectReports.length) {
         return `<div class="notice">No defects reported for bus ${escapeHtml(formatBusNumber(selectedBusDefectNumber))} yet.</div>`;
@@ -2599,6 +2846,7 @@
                 <div>
                   <div class="defect-report-title">Bus ${escapeHtml(formatBusNumber(report.bus_number))} - ${escapeHtml(formatBusDefectCategory(report.defect_category || 'other'))} · ${escapeHtml(formatBusReportStatus(report.report_status))}</div>
                   <div class="subtle-text">${escapeHtml(report.reported_by_email || 'Unknown reporter')}</div>
+                  <div class="subtle-text">${escapeHtml(renderBusReportMeta(report))}</div>
                 </div>
                 <div class="defect-report-date">${escapeHtml(formatReportDate(report.reported_at))}</div>
               </div>
@@ -2620,6 +2868,10 @@
       const id = escapeAttribute(report.id || '');
       return `
         <div class="stack-form">
+          <label class="field-stack">
+            <span class="field-label">Bus Number</span>
+            <input id="editBusNumber_${id}" class="text-input" type="text" inputmode="numeric" maxlength="4" value="${escapeHtml(formatBusNumber(report.bus_number))}" placeholder="6525">
+          </label>
           <label class="field-stack">
             <span class="field-label">Defect Type</span>
             <select id="editBusCategory_${id}" class="select-input">${renderBusDefectCategoryOptions(report.defect_category || 'other')}</select>
@@ -2675,6 +2927,28 @@
                 </div>
               `).join('')
               : '<div class="subtle-text">No extra accounts have access yet.</div>'}
+          </div>
+        </section>
+        <section class="section-card">
+          <div class="field-label">Admin Export</div>
+          <p class="subtle-text">Export shared defect reports as a print-ready PDF. Choose a period, or leave both dates blank to export all dates.</p>
+          <div class="field-grid">
+            <label class="field-stack">
+              <span class="field-label">From</span>
+              <input id="busExportFromDate" class="text-input" type="date" value="${escapeHtml(busExportFromDate)}">
+            </label>
+            <label class="field-stack">
+              <span class="field-label">To</span>
+              <input id="busExportToDate" class="text-input" type="date" value="${escapeHtml(busExportToDate)}">
+            </label>
+            <label class="field-stack">
+              <span class="field-label">Category</span>
+              <select id="busExportCategory" class="select-input">${renderBusExportCategoryOptions(busExportCategory)}</select>
+            </label>
+          </div>
+          <div class="section-actions">
+            <button class="btn" type="button" data-export-bus-defects="current" ${isValidBusNumber(selectedBusDefectNumber) ? '' : 'disabled'}>Export Bus ${escapeHtml(formatBusNumber(selectedBusDefectNumber))}</button>
+            <button class="link-btn" type="button" data-export-bus-defects="all">Export All Buses</button>
           </div>
         </section>
       `;
@@ -2767,7 +3041,7 @@
                 <div class="field-label">Report Defect</div>
                 <label class="field-stack">
                   <span class="field-label">Bus Number</span>
-                  <input id="busReportNumber" class="text-input" type="text" inputmode="numeric" maxlength="6" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
+                  <input id="busReportNumber" class="text-input" type="text" inputmode="numeric" maxlength="4" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
                 </label>
                 <label class="field-stack">
                   <span class="field-label">Defect Type</span>
@@ -2793,7 +3067,7 @@
             <div class="field-grid">
               <label class="field-stack">
                 <span class="field-label">Lookup Bus</span>
-                <input id="busLookupNumber" class="text-input" type="text" inputmode="numeric" maxlength="6" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
+                <input id="busLookupNumber" class="text-input" type="text" inputmode="numeric" maxlength="4" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
               </label>
               <div class="section-actions">
                 <button id="lookupBusDefectsBtn" class="link-btn" type="button">Lookup</button>
@@ -2826,11 +3100,12 @@
       const defectCategory = document.getElementById('busDefectCategory')?.value || selectedBusDefectCategory;
       const typedDefectText = document.getElementById('busDefectText')?.value?.trim() || '';
       const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
-      if (!busNumber || !busDefectCategories.some((item) => item.key === defectCategory) || !defectText) {
+      if (!isValidBusNumber(busNumber) || !busDefectCategories.some((item) => item.key === defectCategory) || !defectText) {
         statusEl.textContent = 'Complete the defect report first';
         statusEl.classList.add('warn');
         statusEl.classList.remove('ok');
         syncMobileMenuStatus();
+        if (!isValidBusNumber(busNumber)) window.alert('Bus number must be 4 digits and start with 4, 6, or 8.');
         return;
       }
       const { error } = await withRequestTimeout(supabaseClient
@@ -2973,13 +3248,19 @@
       if (!supabaseClient || !isBusDefectAdmin()) return;
       const id = String(reportId || '').trim();
       if (!id) return;
+      const busNumber = normalizeBusNumber(document.getElementById(`editBusNumber_${id}`)?.value || selectedBusDefectNumber);
       const defectCategory = document.getElementById(`editBusCategory_${id}`)?.value || 'other';
       const reportStatus = normalizeBusReportStatus(document.getElementById(`editBusStatus_${id}`)?.value || 'open');
       const typedDefectText = document.getElementById(`editBusText_${id}`)?.value?.trim() || '';
       const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
+      if (!isValidBusNumber(busNumber)) {
+        window.alert('Bus number must be 4 digits and start with 4, 6, or 8.');
+        return;
+      }
       const { error } = await withRequestTimeout(supabaseClient
         .from('bus_defect_reports')
         .update({
+          bus_number: busNumber,
           defect_category: defectCategory,
           report_status: reportStatus,
           defect_text: defectText,
@@ -2990,6 +3271,7 @@
         return;
       }
       editingBusDefectReportId = '';
+      selectedBusDefectNumber = busNumber;
       await renderBusDefectsPage();
     }
 
@@ -4900,6 +5182,11 @@
       const deleteBtn = event.target.closest('[data-delete-bus-report]');
       if (deleteBtn) {
         await deleteBusDefectReport(deleteBtn.dataset.deleteBusReport || '');
+        return;
+      }
+      const exportBtn = event.target.closest('[data-export-bus-defects]');
+      if (exportBtn) {
+        await exportBusDefectReports(exportBtn.dataset.exportBusDefects || 'current');
       }
     });
     busDefectsView.addEventListener('change', async (event) => {
@@ -4916,6 +5203,26 @@
         await renderBusDefectsPage();
         return;
       }
+      if (event.target?.id === 'busExportFromDate') {
+        busExportFromDate = event.target.value || '';
+        normalizeBusExportDateInputs();
+        await renderBusDefectsPage();
+        return;
+      }
+      if (event.target?.id === 'busExportToDate') {
+        busExportToDate = event.target.value || '';
+        normalizeBusExportDateInputs();
+        await renderBusDefectsPage();
+        return;
+      }
+      if (event.target?.id === 'busExportCategory') {
+        const nextCategory = event.target.value || 'all';
+        busExportCategory = nextCategory === 'all' || busDefectCategories.some((item) => item.key === nextCategory)
+          ? nextCategory
+          : 'all';
+        await renderBusDefectsPage();
+        return;
+      }
       const accessRoleSelect = event.target?.closest?.('[data-update-bus-access-role]');
       if (accessRoleSelect) {
         await updateBusDefectAccessRole(accessRoleSelect.dataset.updateBusAccessRole || '', accessRoleSelect.value || 'reporter');
@@ -4927,7 +5234,7 @@
       }
     });
     busDefectsView.addEventListener('input', (event) => {
-      if (event.target?.id === 'busReportNumber' || event.target?.id === 'busLookupNumber') {
+      if (event.target?.id === 'busReportNumber' || event.target?.id === 'busLookupNumber' || /^editBusNumber_/.test(event.target?.id || '')) {
         const normalized = normalizeBusNumber(event.target.value);
         if (event.target.value !== normalized) event.target.value = normalized;
       }
