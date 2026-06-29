@@ -629,6 +629,79 @@
       gap: 14px;
     }
 
+    .defect-page-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .defect-list,
+    .defect-admin-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .defect-report {
+      border: 1px solid var(--border);
+      background: rgba(10, 14, 18, 0.72);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .defect-report-head,
+    .defect-admin-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .defect-report-title {
+      font-weight: 700;
+    }
+
+    .defect-report-date {
+      color: var(--oc-mist);
+      font-size: 12px;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .defect-report-body {
+      color: var(--oc-white);
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .defect-report-actions,
+    .defect-admin-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .defect-admin-row {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .defect-admin-row strong,
+    .defect-admin-row small {
+      display: block;
+    }
+
+    .defect-admin-row small {
+      color: var(--oc-mist);
+      margin-top: 3px;
+    }
+
     .composer {
       grid-row: 3;
       border-top: 1px solid var(--border);
@@ -1355,6 +1428,19 @@
         font-size: 13px;
       }
 
+      .defect-page-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .defect-report-head,
+      .defect-admin-row {
+        display: grid;
+      }
+
+      .defect-report-date {
+        text-align: left;
+      }
+
       .jump-btn {
         min-width: 30px;
         min-height: 30px;
@@ -1407,6 +1493,7 @@
       <div class="header-actions">
         <button id="todayWorkBtn" class="header-btn" type="button" hidden>Today's Work</button>
         <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
+        <button id="busDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
         <button id="canadaDayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/canada-day-paddles'">Canada Day</button>
         <button id="civicHolidayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/civic-holiday-paddles'">Civic Holiday</button>
@@ -1419,6 +1506,7 @@
           <button id="mobileCanadaDayPaddlesBtn" class="header-btn" type="button">Canada Day</button>
           <button id="mobileCivicHolidayPaddlesBtn" class="header-btn" type="button">Civic Holiday</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
+          <button id="mobileBusDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
           <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
           <div class="menu-section-label">Status</div>
@@ -1444,6 +1532,7 @@
       </section>
 
       <section id="todayWorkView" class="tool-page-view" hidden></section>
+      <section id="busDefectsView" class="tool-page-view" hidden></section>
 
       <section class="composer">
         <form id="chatForm">
@@ -1559,11 +1648,13 @@
     const appShell = document.querySelector('.app');
     const homeBtn = document.getElementById('homeBtn');
     const todayWorkBtn = document.getElementById('todayWorkBtn');
+    const busDefectsBtn = document.getElementById('busDefectsBtn');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileHeaderMenu = document.getElementById('mobileHeaderMenu');
     const mobileCanadaDayPaddlesBtn = document.getElementById('mobileCanadaDayPaddlesBtn');
     const mobileCivicHolidayPaddlesBtn = document.getElementById('mobileCivicHolidayPaddlesBtn');
     const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
+    const mobileBusDefectsBtn = document.getElementById('mobileBusDefectsBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
     const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
     const mobileMenuStatus = document.getElementById('mobileMenuStatus');
@@ -1576,6 +1667,7 @@
     const quickLookupMeta = document.getElementById('quickLookupMeta');
     const quickLookupActions = document.getElementById('quickLookupActions');
     const todayWorkView = document.getElementById('todayWorkView');
+    const busDefectsView = document.getElementById('busDefectsView');
     const paddleOverlay = document.getElementById('paddleOverlay');
     const paddleTitle = document.getElementById('paddleTitle');
     const paddleMeta = document.getElementById('paddleMeta');
@@ -1635,6 +1727,38 @@
     ];
     const WORK_SAME_BOTH_WEEKS_KEY = '__same_both_weeks';
     const WORK_WEEK_ONE_ANCHOR_DATE = '2026-04-20';
+    const busDefectAdminEmail = 'omar.hosam2000@gmail.com';
+    const busDefectCategories = [
+      { key: 'farebox', label: 'Farebox' },
+      { key: 'radio', label: 'Radio / Clever device' },
+      { key: 'destination_sign', label: 'Destination sign' },
+      { key: 'interior_lights', label: 'Interior lights' },
+      { key: 'exterior_lights', label: 'Exterior lights' },
+      { key: 'doors', label: 'Doors' },
+      { key: 'hvac', label: 'Heat / A/C' },
+      { key: 'wipers_washers', label: 'Wipers / washers' },
+      { key: 'mirrors', label: 'Mirrors' },
+      { key: 'seat_issue', label: 'Operator seat' },
+      { key: 'ramp_kneeler', label: 'Ramp / kneeler' },
+      { key: 'cleanliness', label: 'Cleanliness' },
+      { key: 'safety', label: 'Safety concern' },
+      { key: 'other', label: 'Other' },
+    ];
+    const busReportStatuses = [
+      { key: 'open', label: 'Open' },
+      { key: 'reported', label: 'Reported' },
+      { key: 'addressed', label: 'Addressed' },
+      { key: 'solved', label: 'Solved' },
+    ];
+    let busDefectAccessAllowed = false;
+    let busDefectAccessRole = '';
+    let busDefectAccessLoaded = false;
+    let busDefectAccessList = [];
+    let busDefectReports = [];
+    let busDefectSchemaWarning = '';
+    let selectedBusDefectNumber = '';
+    let selectedBusDefectCategory = 'farebox';
+    let editingBusDefectReportId = '';
     const WORK_DAYS = [
       { key: 'monday', label: 'Monday', serviceDay: 'weekday' },
       { key: 'tuesday', label: 'Tuesday', serviceDay: 'weekday' },
@@ -1707,20 +1831,27 @@
     }
 
     function setMainView(view) {
-      currentMainView = view === 'today-work' ? 'today-work' : 'chat';
+      currentMainView = ['today-work', 'bus-defects'].includes(view) ? view : 'chat';
       const showTodayWork = currentMainView === 'today-work';
-      document.body.classList.toggle('page-mode', showTodayWork);
-      appShell.classList.toggle('page-mode', showTodayWork);
-      chat.hidden = showTodayWork;
+      const showBusDefects = currentMainView === 'bus-defects';
+      const showPage = showTodayWork || showBusDefects;
+      document.body.classList.toggle('page-mode', showPage);
+      appShell.classList.toggle('page-mode', showPage);
+      chat.hidden = showPage;
       todayWorkView.hidden = !showTodayWork;
-      form.closest('.composer').hidden = showTodayWork;
-      homeBtn.hidden = !showTodayWork;
-      homeBtn.classList.toggle('is-active', !showTodayWork);
+      busDefectsView.hidden = !showBusDefects;
+      form.closest('.composer').hidden = showPage;
+      homeBtn.hidden = !showPage;
+      homeBtn.classList.toggle('is-active', !showPage);
       todayWorkBtn.hidden = !Boolean(readTodayWork());
       todayWorkBtn.classList.toggle('is-active', showTodayWork);
+      busDefectsBtn.hidden = !busDefectAccessAllowed;
+      busDefectsBtn.classList.toggle('is-active', showBusDefects);
+      mobileBusDefectsBtn.hidden = !busDefectAccessAllowed;
       myWorkBtn.classList.remove('is-active');
-      if (showTodayWork) {
-        todayWorkView.scrollTop = 0;
+      if (showPage) {
+        if (showTodayWork) todayWorkView.scrollTop = 0;
+        if (showBusDefects) busDefectsView.scrollTop = 0;
         window.scrollTo({ top: 0, behavior: 'auto' });
       } else {
         window.scrollTo({ top: 0, behavior: 'auto' });
@@ -2247,6 +2378,621 @@
       if (node) node.classList.add('input-error');
     }
 
+    function currentUserEmail() {
+      return String(currentUser?.email || '').trim().toLowerCase();
+    }
+
+    function normalizeEmail(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function normalizeBusAccessRole(value) {
+      return ['viewer', 'reporter', 'admin'].includes(value) ? value : 'reporter';
+    }
+
+    function formatBusAccessRole(value) {
+      const role = normalizeBusAccessRole(value);
+      if (role === 'admin') return 'Admin';
+      if (role === 'viewer') return 'Viewer';
+      return 'Reporter';
+    }
+
+    function isBusDefectAdmin() {
+      return currentUserEmail() === busDefectAdminEmail || busDefectAccessRole === 'admin';
+    }
+
+    function canReportBusDefects() {
+      return isBusDefectAdmin() || busDefectAccessRole === 'reporter';
+    }
+
+    function normalizeBusNumber(value) {
+      return String(value || '').replace(/\D/g, '').slice(0, 6);
+    }
+
+    function formatBusNumber(value) {
+      const number = normalizeBusNumber(value);
+      return number || 'Unknown';
+    }
+
+    function optionLabel(options, key, fallback = '') {
+      return options.find((item) => item.key === key)?.label || fallback || String(key || '');
+    }
+
+    function normalizeBusReportStatus(value) {
+      return busReportStatuses.some((item) => item.key === value) ? value : 'open';
+    }
+
+    function formatBusReportStatus(value) {
+      return optionLabel(busReportStatuses, normalizeBusReportStatus(value), 'Open');
+    }
+
+    function formatBusDefectCategory(value) {
+      return optionLabel(busDefectCategories, value, 'Other');
+    }
+
+    function renderBusRoleOptions(selected = 'reporter') {
+      const role = normalizeBusAccessRole(selected);
+      return ['viewer', 'reporter', 'admin']
+        .map((item) => `<option value="${item}" ${role === item ? 'selected' : ''}>${formatBusAccessRole(item)}</option>`)
+        .join('');
+    }
+
+    function renderBusDefectCategoryOptions(selected = selectedBusDefectCategory) {
+      return busDefectCategories
+        .map((item) => `<option value="${escapeAttribute(item.key)}" ${selected === item.key ? 'selected' : ''}>${escapeHtml(item.label)}</option>`)
+        .join('');
+    }
+
+    function renderBusReportStatusOptions(selected = 'open') {
+      const status = normalizeBusReportStatus(selected);
+      return busReportStatuses
+        .map((item) => `<option value="${escapeAttribute(item.key)}" ${status === item.key ? 'selected' : ''}>${escapeHtml(item.label)}</option>`)
+        .join('');
+    }
+
+    function formatReportDate(value) {
+      if (!value) return 'Unknown date';
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(value));
+    }
+
+    function isBusSchemaError(error) {
+      const message = String(error?.message || error?.details || error?.hint || '').toLowerCase();
+      return message.includes('schema cache')
+        || message.includes('bus_defect_access')
+        || message.includes('bus_defect_reports')
+        || message.includes("could not find the 'role' column")
+        || message.includes("could not find the 'defect_category' column");
+    }
+
+    function setBusSchemaWarning(error) {
+      if (!isBusSchemaError(error)) return false;
+      busDefectSchemaWarning = 'Supabase needs the Bus Defects SQL schema. Apply the updated supabase/schema.sql, then reload this page.';
+      return true;
+    }
+
+    function withRequestTimeout(request, label = 'Request', timeoutMs = 15000) {
+      return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+          reject(new Error(`${label} timed out. Check the connection and try again.`));
+        }, timeoutMs);
+        Promise.resolve(request)
+          .then((value) => {
+            window.clearTimeout(timer);
+            resolve(value);
+          })
+          .catch((error) => {
+            window.clearTimeout(timer);
+            reject(error);
+          });
+      });
+    }
+
+    async function loadBusDefectAccessState(force = false) {
+      if (!supabaseClient || !currentUser) {
+        busDefectAccessAllowed = false;
+        busDefectAccessRole = '';
+        busDefectAccessLoaded = true;
+        busDefectAccessList = [];
+        busDefectSchemaWarning = '';
+        return false;
+      }
+      if (busDefectAccessLoaded && !force) return busDefectAccessAllowed;
+      if (currentUserEmail() === busDefectAdminEmail) {
+        busDefectAccessAllowed = true;
+        busDefectAccessRole = 'admin';
+        busDefectAccessLoaded = true;
+        await loadBusDefectAccessList();
+        return true;
+      }
+
+      let data = null;
+      let error = null;
+      try {
+        ({ data, error } = await withRequestTimeout(supabaseClient
+          .from('bus_defect_access')
+          .select('role')
+          .eq('email', currentUserEmail())
+          .maybeSingle(), 'Bus defect access lookup'));
+      } catch (requestError) {
+        error = requestError;
+      }
+      if (error) {
+        setBusSchemaWarning(error);
+        busDefectAccessAllowed = false;
+        busDefectAccessRole = '';
+        busDefectAccessLoaded = true;
+        return false;
+      }
+      busDefectAccessRole = data ? normalizeBusAccessRole(data.role) : '';
+      busDefectAccessAllowed = Boolean(busDefectAccessRole);
+      busDefectAccessLoaded = true;
+      if (isBusDefectAdmin()) await loadBusDefectAccessList();
+      return busDefectAccessAllowed;
+    }
+
+    async function loadBusDefectAccessList() {
+      if (!supabaseClient || !isBusDefectAdmin()) {
+        busDefectAccessList = [];
+        return [];
+      }
+      let data = null;
+      let error = null;
+      try {
+        ({ data, error } = await withRequestTimeout(supabaseClient
+          .from('bus_defect_access')
+          .select('email, role, created_at')
+          .order('email', { ascending: true }), 'Bus defect access list'));
+      } catch (requestError) {
+        error = requestError;
+      }
+      if (error) {
+        setBusSchemaWarning(error);
+        busDefectAccessList = [];
+        return [];
+      }
+      busDefectAccessList = Array.isArray(data) ? data : [];
+      return busDefectAccessList;
+    }
+
+    async function loadBusDefectReports() {
+      if (!supabaseClient || !busDefectAccessAllowed) {
+        busDefectReports = [];
+        return [];
+      }
+      const busNumber = normalizeBusNumber(selectedBusDefectNumber);
+      if (!busNumber) {
+        busDefectReports = [];
+        return [];
+      }
+      const { data, error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_reports')
+        .select('*')
+        .eq('bus_number', busNumber)
+        .order('reported_at', { ascending: false }), 'Bus defect reports');
+      if (error) {
+        setBusSchemaWarning(error);
+        throw error;
+      }
+      busDefectReports = Array.isArray(data) ? data : [];
+      return busDefectReports;
+    }
+
+    function renderBusDefectReportList() {
+      if (!normalizeBusNumber(selectedBusDefectNumber)) {
+        return '<div class="notice">Enter a bus number to show its defect history.</div>';
+      }
+      if (!busDefectReports.length) {
+        return `<div class="notice">No defects reported for bus ${escapeHtml(formatBusNumber(selectedBusDefectNumber))} yet.</div>`;
+      }
+      return `
+        <div class="defect-list">
+          ${busDefectReports.map((report) => `
+            <article class="defect-report">
+              <div class="defect-report-head">
+                <div>
+                  <div class="defect-report-title">Bus ${escapeHtml(formatBusNumber(report.bus_number))} - ${escapeHtml(formatBusDefectCategory(report.defect_category || 'other'))} · ${escapeHtml(formatBusReportStatus(report.report_status))}</div>
+                  <div class="subtle-text">${escapeHtml(report.reported_by_email || 'Unknown reporter')}</div>
+                </div>
+                <div class="defect-report-date">${escapeHtml(formatReportDate(report.reported_at))}</div>
+              </div>
+              ${editingBusDefectReportId === report.id ? renderBusDefectReportEditForm(report) : `<div class="defect-report-body">${escapeHtml(report.defect_text || '')}</div>`}
+              ${isBusDefectAdmin() ? `
+                <div class="defect-report-actions">
+                  <button class="link-btn" type="button" data-edit-bus-report="${escapeAttribute(report.id || '')}">Edit</button>
+                  <select class="select-input" data-update-bus-report-status="${escapeAttribute(report.id || '')}">${renderBusReportStatusOptions(report.report_status)}</select>
+                  <button class="link-btn" type="button" data-delete-bus-report="${escapeAttribute(report.id || '')}">Delete</button>
+                </div>
+              ` : ''}
+            </article>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderBusDefectReportEditForm(report) {
+      const id = escapeAttribute(report.id || '');
+      return `
+        <div class="stack-form">
+          <label class="field-stack">
+            <span class="field-label">Defect Type</span>
+            <select id="editBusCategory_${id}" class="select-input">${renderBusDefectCategoryOptions(report.defect_category || 'other')}</select>
+          </label>
+          <label class="field-stack">
+            <span class="field-label">Status</span>
+            <select id="editBusStatus_${id}" class="select-input">${renderBusReportStatusOptions(report.report_status)}</select>
+          </label>
+          <label class="field-stack">
+            <span class="field-label">Details</span>
+            <textarea id="editBusText_${id}" class="text-input" rows="4">${escapeHtml(report.defect_text || '')}</textarea>
+          </label>
+          <div class="section-actions">
+            <button class="btn" type="button" data-save-bus-report="${id}">Save Report</button>
+            <button class="link-btn" type="button" data-cancel-edit-bus-report>Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBusDefectAdminPanel() {
+      if (!isBusDefectAdmin()) return '';
+      return `
+        <section class="section-card">
+          <div class="field-label">Admin Access</div>
+          <p class="subtle-text">Grant selected accounts viewer, reporter, or admin access. Pending emails become active once that account signs in.</p>
+          ${busDefectSchemaWarning ? `<div class="notice warn">${escapeHtml(busDefectSchemaWarning)}</div>` : ''}
+          <div class="field-grid">
+            <label class="field-stack">
+              <span class="field-label">Account Email</span>
+              <input id="busAccessEmail" class="text-input" type="email" autocomplete="email" placeholder="operator@example.com">
+            </label>
+            <label class="field-stack">
+              <span class="field-label">Role</span>
+              <select id="busAccessRole" class="select-input">${renderBusRoleOptions('reporter')}</select>
+            </label>
+          </div>
+          <div class="section-actions">
+            <button id="grantBusAccessBtn" class="btn" type="button">Save Access</button>
+          </div>
+          <div class="defect-admin-list">
+            ${busDefectAccessList.length
+              ? busDefectAccessList.map((item) => `
+                <div class="defect-admin-row">
+                  <span>
+                    <strong>${escapeHtml(item.email)}</strong>
+                    <small>${escapeHtml(formatBusAccessRole(item.role))}</small>
+                  </span>
+                  <span class="defect-admin-controls">
+                    <select class="select-input" data-update-bus-access-role="${escapeAttribute(item.email)}">${renderBusRoleOptions(item.role)}</select>
+                    <button class="link-btn" type="button" data-revoke-bus-access="${escapeAttribute(item.email)}">Revoke</button>
+                  </span>
+                </div>
+              `).join('')
+              : '<div class="subtle-text">No extra accounts have access yet.</div>'}
+          </div>
+        </section>
+      `;
+    }
+
+    async function renderBusDefectsPage() {
+      if (!supabaseEnabled) {
+        busDefectsView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Bus Defects</h2>
+              <p>Accounts are not configured yet.</p>
+            </div>
+          </div>
+          <div class="notice">Add Supabase first, then Bus Defects will be available.</div>
+        `;
+        return;
+      }
+      if (!currentUser) {
+        busDefectsView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Bus Defects</h2>
+              <p>Sign in to view or report bus defects.</p>
+            </div>
+          </div>
+          <section class="section-card">
+            <div class="subtle-text">This page is restricted to approved accounts.</div>
+            <div class="section-actions">
+              <button class="btn" type="button" data-open-account-modal>Open Account</button>
+            </div>
+          </section>
+        `;
+        return;
+      }
+      const allowed = await loadBusDefectAccessState();
+      if (busDefectSchemaWarning) {
+        busDefectsView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Bus Defects</h2>
+              <p>The page needs a Supabase schema update.</p>
+            </div>
+          </div>
+          <div class="notice warn">${escapeHtml(busDefectSchemaWarning)}</div>
+        `;
+        return;
+      }
+      if (!allowed) {
+        busDefectsView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Bus Defects</h2>
+              <p>This page is restricted.</p>
+            </div>
+          </div>
+          <div class="notice">Ask Omar to grant access for ${escapeHtml(currentUser.email || 'this account')}.</div>
+        `;
+        return;
+      }
+      try {
+        await loadBusDefectReports();
+      } catch (error) {
+        busDefectsView.innerHTML = `
+          <div class="page-head">
+            <div>
+              <h2>Bus Defects</h2>
+              <p>The page could not load right now.</p>
+            </div>
+          </div>
+          <div class="notice warn">${escapeHtml(busDefectSchemaWarning || error.message || 'Could not load bus defects.')}</div>
+        `;
+        return;
+      }
+      busDefectsView.innerHTML = `
+        <div class="page-head">
+          <div>
+            <h2>Bus Defects</h2>
+            <p>Approved accounts can report bus defects and review shared history by bus number.</p>
+          </div>
+          <div class="page-meta">
+            <div class="page-stat"><span class="k">Role</span><span class="v">${escapeHtml(formatBusAccessRole(busDefectAccessRole || 'viewer'))}</span></div>
+            <div class="page-stat"><span class="k">Reports</span><span class="v">${escapeHtml(busDefectReports.length)}</span></div>
+          </div>
+        </div>
+        <div class="defect-page-grid">
+          <div class="stack-form">
+            ${canReportBusDefects() ? `
+              <section class="section-card">
+                <div class="field-label">Report Defect</div>
+                <label class="field-stack">
+                  <span class="field-label">Bus Number</span>
+                  <input id="busReportNumber" class="text-input" type="text" inputmode="numeric" maxlength="6" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
+                </label>
+                <label class="field-stack">
+                  <span class="field-label">Defect Type</span>
+                  <select id="busDefectCategory" class="select-input">${renderBusDefectCategoryOptions(selectedBusDefectCategory)}</select>
+                </label>
+                <label class="field-stack">
+                  <span class="field-label">Additional Details</span>
+                  <textarea id="busDefectText" class="text-input" rows="4" placeholder="Location, symptoms, route/block, or follow-up notes"></textarea>
+                </label>
+                <div class="section-actions">
+                  <button id="submitBusDefectBtn" class="btn" type="button">Report Defect</button>
+                </div>
+              </section>
+            ` : `
+              <section class="section-card">
+                <div class="field-label">View Only</div>
+                <p class="subtle-text">Your account can view the shared bus defect history. Ask an admin for reporter access to add defects.</p>
+              </section>
+            `}
+            ${renderBusDefectAdminPanel()}
+          </div>
+          <section class="section-card">
+            <div class="field-grid">
+              <label class="field-stack">
+                <span class="field-label">Lookup Bus</span>
+                <input id="busLookupNumber" class="text-input" type="text" inputmode="numeric" maxlength="6" value="${escapeHtml(selectedBusDefectNumber)}" placeholder="6525">
+              </label>
+              <div class="section-actions">
+                <button id="lookupBusDefectsBtn" class="link-btn" type="button">Lookup</button>
+              </div>
+            </div>
+            <div style="margin-top:14px;">${renderBusDefectReportList()}</div>
+          </section>
+        </div>
+      `;
+    }
+
+    async function openBusDefectsPage() {
+      closePaddleModal();
+      closeShuttleModal();
+      closeAccountModal();
+      document.body.style.overflow = '';
+      setMainView('bus-defects');
+      statusEl.textContent = 'Loading defects...';
+      syncMobileMenuStatus();
+      await renderBusDefectsPage();
+      statusEl.textContent = 'Bus Defects ready';
+      statusEl.classList.add('ok');
+      statusEl.classList.remove('warn');
+      syncMobileMenuStatus();
+    }
+
+    async function submitBusDefectReport() {
+      if (!supabaseClient || !currentUser || !canReportBusDefects()) return;
+      const busNumber = normalizeBusNumber(document.getElementById('busReportNumber')?.value || selectedBusDefectNumber);
+      const defectCategory = document.getElementById('busDefectCategory')?.value || selectedBusDefectCategory;
+      const typedDefectText = document.getElementById('busDefectText')?.value?.trim() || '';
+      const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
+      if (!busNumber || !busDefectCategories.some((item) => item.key === defectCategory) || !defectText) {
+        statusEl.textContent = 'Complete the defect report first';
+        statusEl.classList.add('warn');
+        statusEl.classList.remove('ok');
+        syncMobileMenuStatus();
+        return;
+      }
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_reports')
+        .insert({
+          bus_number: busNumber,
+          defect_category: defectCategory,
+          report_status: 'open',
+          defect_text: defectText,
+          reported_by: currentUser.id,
+          reported_by_email: currentUser.email || '',
+        }), 'Bus defect submit');
+      if (error) {
+        setBusSchemaWarning(error);
+        statusEl.textContent = 'Report failed';
+        statusEl.classList.add('warn');
+        statusEl.classList.remove('ok');
+        syncMobileMenuStatus();
+        window.alert(busDefectSchemaWarning || error.message || 'Could not save the defect.');
+        return;
+      }
+      selectedBusDefectNumber = busNumber;
+      selectedBusDefectCategory = defectCategory;
+      await renderBusDefectsPage();
+      statusEl.textContent = 'Defect reported';
+      statusEl.classList.add('ok');
+      statusEl.classList.remove('warn');
+      syncMobileMenuStatus();
+    }
+
+    async function grantBusDefectAccess() {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const email = normalizeEmail(document.getElementById('busAccessEmail')?.value || '');
+      const role = normalizeBusAccessRole(document.getElementById('busAccessRole')?.value || 'reporter');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        statusEl.textContent = 'Enter a valid email';
+        statusEl.classList.add('warn');
+        statusEl.classList.remove('ok');
+        syncMobileMenuStatus();
+        return;
+      }
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_access')
+        .upsert({ email, role, granted_by: currentUser.id }, { onConflict: 'email' }), 'Bus access save');
+      if (error) {
+        setBusSchemaWarning(error);
+        window.alert(busDefectSchemaWarning || error.message || 'Could not grant access.');
+        return;
+      }
+      busDefectSchemaWarning = '';
+      if (email === currentUserEmail()) {
+        busDefectAccessRole = role;
+        busDefectAccessAllowed = true;
+      }
+      await loadBusDefectAccessList();
+      await renderBusDefectsPage();
+      statusEl.textContent = 'Access saved';
+      statusEl.classList.add('ok');
+      statusEl.classList.remove('warn');
+      syncMobileMenuStatus();
+    }
+
+    async function updateBusDefectAccessRole(email, role) {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const normalizedEmail = normalizeEmail(email);
+      const normalizedRole = normalizeBusAccessRole(role);
+      if (!normalizedEmail) return;
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_access')
+        .update({ role: normalizedRole, granted_by: currentUser.id })
+        .eq('email', normalizedEmail), 'Bus role update');
+      if (error) {
+        setBusSchemaWarning(error);
+        window.alert(busDefectSchemaWarning || error.message || 'Could not update access.');
+        return;
+      }
+      if (normalizedEmail === currentUserEmail()) {
+        busDefectAccessRole = normalizedRole;
+        busDefectAccessAllowed = true;
+      }
+      await loadBusDefectAccessList();
+      await renderBusDefectsPage();
+    }
+
+    async function revokeBusDefectAccess(email) {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const normalizedEmail = normalizeEmail(email);
+      if (!normalizedEmail) return;
+      const confirmed = await openConfirmModal(`Revoke Bus Defects access for ${normalizedEmail}?`, 'Bus Defects access');
+      if (!confirmed) return;
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_access')
+        .delete()
+        .eq('email', normalizedEmail), 'Bus access revoke');
+      if (error) {
+        window.alert(error.message || 'Could not revoke access.');
+        return;
+      }
+      if (normalizedEmail === currentUserEmail()) {
+        busDefectAccessAllowed = false;
+        busDefectAccessRole = '';
+      }
+      await loadBusDefectAccessList();
+      await renderBusDefectsPage();
+    }
+
+    async function updateBusDefectReportStatus(reportId, status) {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const id = String(reportId || '').trim();
+      if (!id) return;
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_reports')
+        .update({ report_status: normalizeBusReportStatus(status) })
+        .eq('id', id), 'Bus status update');
+      if (error) {
+        window.alert(error.message || 'Could not update report status.');
+        return;
+      }
+      await renderBusDefectsPage();
+    }
+
+    async function deleteBusDefectReport(reportId) {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const id = String(reportId || '').trim();
+      if (!id) return;
+      const confirmed = await openConfirmModal('Delete this defect report? This cannot be undone.', 'Bus Defects report');
+      if (!confirmed) return;
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_reports')
+        .delete()
+        .eq('id', id), 'Bus report delete');
+      if (error) {
+        window.alert(error.message || 'Could not delete the report.');
+        return;
+      }
+      await renderBusDefectsPage();
+    }
+
+    async function saveBusDefectReportEdit(reportId) {
+      if (!supabaseClient || !isBusDefectAdmin()) return;
+      const id = String(reportId || '').trim();
+      if (!id) return;
+      const defectCategory = document.getElementById(`editBusCategory_${id}`)?.value || 'other';
+      const reportStatus = normalizeBusReportStatus(document.getElementById(`editBusStatus_${id}`)?.value || 'open');
+      const typedDefectText = document.getElementById(`editBusText_${id}`)?.value?.trim() || '';
+      const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
+      const { error } = await withRequestTimeout(supabaseClient
+        .from('bus_defect_reports')
+        .update({
+          defect_category: defectCategory,
+          report_status: reportStatus,
+          defect_text: defectText,
+        })
+        .eq('id', id), 'Bus report edit');
+      if (error) {
+        window.alert(error.message || 'Could not update report.');
+        return;
+      }
+      editingBusDefectReportId = '';
+      await renderBusDefectsPage();
+    }
+
     function renderQuickLookup() {
       updateAccountButton();
       const todayWork = ensureTodayWorkRecord();
@@ -2352,12 +3098,16 @@
         mobileAccountBtn.textContent = 'Accounts Off';
         todayWorkBtn.hidden = !hasTodayWork;
         myWorkBtn.hidden = true;
+        busDefectsBtn.hidden = true;
+        mobileBusDefectsBtn.hidden = true;
         return;
       }
       accountBtn.textContent = currentUser ? 'Settings' : 'Account';
       mobileAccountBtn.textContent = accountBtn.textContent;
       todayWorkBtn.hidden = !hasTodayWork;
       myWorkBtn.hidden = !currentUser;
+      busDefectsBtn.hidden = !busDefectAccessAllowed;
+      mobileBusDefectsBtn.hidden = !busDefectAccessAllowed;
     }
 
     async function openTodaysWork() {
@@ -3107,11 +3857,23 @@
     async function handleSession(session) {
       const wasSignedIn = Boolean(currentUser);
       currentUser = session?.user || null;
+      busDefectAccessLoaded = false;
+      busDefectAccessAllowed = false;
+      busDefectAccessRole = '';
+      busDefectAccessList = [];
+      busDefectReports = [];
+      busDefectSchemaWarning = '';
       if (!wasSignedIn && currentUser) {
         clearChatHistory();
       }
+      if (currentUser && supabaseClient) {
+        await loadBusDefectAccessState(true);
+      }
       updateAccountButton();
       await loadProfile();
+      if (currentMainView === 'bus-defects') {
+        await renderBusDefectsPage();
+      }
       await restoreTodayWorkOnLoad();
     }
 
@@ -3931,6 +4693,7 @@
     homeBtn.addEventListener('click', () => setMainView('chat'));
     todayWorkBtn.addEventListener('click', openTodaysWork);
     myWorkBtn.addEventListener('click', openMyWorkModal);
+    busDefectsBtn.addEventListener('click', openBusDefectsPage);
     accountBtn.addEventListener('click', openAccountModal);
     clearChatBtn.addEventListener('click', clearChatHistory);
     mobileMenuBtn.addEventListener('click', (event) => {
@@ -3948,6 +4711,10 @@
     mobileShuttlesPageBtn.addEventListener('click', () => {
       closeMobileMenu();
       window.location.href = '/shuttles';
+    });
+    mobileBusDefectsBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      openBusDefectsPage();
     });
     mobileAccountBtn.addEventListener('click', () => {
       closeMobileMenu();
@@ -4089,6 +4856,81 @@
       const target = event.target.closest('[data-show-map]');
       if (!target) return;
       openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
+    });
+    busDefectsView.addEventListener('click', async (event) => {
+      const openAccountModalBtn = event.target.closest('[data-open-account-modal]');
+      if (openAccountModalBtn) {
+        openAccountModal();
+        return;
+      }
+      if (event.target.closest('#lookupBusDefectsBtn')) {
+        selectedBusDefectNumber = normalizeBusNumber(document.getElementById('busLookupNumber')?.value || selectedBusDefectNumber);
+        await renderBusDefectsPage();
+        return;
+      }
+      if (event.target.closest('#submitBusDefectBtn')) {
+        await submitBusDefectReport();
+        return;
+      }
+      if (event.target.closest('#grantBusAccessBtn')) {
+        await grantBusDefectAccess();
+        return;
+      }
+      const revokeBtn = event.target.closest('[data-revoke-bus-access]');
+      if (revokeBtn) {
+        await revokeBusDefectAccess(revokeBtn.dataset.revokeBusAccess || '');
+        return;
+      }
+      const editBtn = event.target.closest('[data-edit-bus-report]');
+      if (editBtn) {
+        editingBusDefectReportId = editBtn.dataset.editBusReport || '';
+        await renderBusDefectsPage();
+        return;
+      }
+      const saveBtn = event.target.closest('[data-save-bus-report]');
+      if (saveBtn) {
+        await saveBusDefectReportEdit(saveBtn.dataset.saveBusReport || '');
+        return;
+      }
+      if (event.target.closest('[data-cancel-edit-bus-report]')) {
+        editingBusDefectReportId = '';
+        await renderBusDefectsPage();
+        return;
+      }
+      const deleteBtn = event.target.closest('[data-delete-bus-report]');
+      if (deleteBtn) {
+        await deleteBusDefectReport(deleteBtn.dataset.deleteBusReport || '');
+      }
+    });
+    busDefectsView.addEventListener('change', async (event) => {
+      if (event.target?.id === 'busDefectCategory') {
+        selectedBusDefectCategory = event.target.value || selectedBusDefectCategory;
+        return;
+      }
+      if (event.target?.id === 'busReportNumber') {
+        selectedBusDefectNumber = normalizeBusNumber(event.target.value || selectedBusDefectNumber);
+        return;
+      }
+      if (event.target?.id === 'busLookupNumber') {
+        selectedBusDefectNumber = normalizeBusNumber(event.target.value || selectedBusDefectNumber);
+        await renderBusDefectsPage();
+        return;
+      }
+      const accessRoleSelect = event.target?.closest?.('[data-update-bus-access-role]');
+      if (accessRoleSelect) {
+        await updateBusDefectAccessRole(accessRoleSelect.dataset.updateBusAccessRole || '', accessRoleSelect.value || 'reporter');
+        return;
+      }
+      const reportStatusSelect = event.target?.closest?.('[data-update-bus-report-status]');
+      if (reportStatusSelect) {
+        await updateBusDefectReportStatus(reportStatusSelect.dataset.updateBusReportStatus || '', reportStatusSelect.value || 'open');
+      }
+    });
+    busDefectsView.addEventListener('input', (event) => {
+      if (event.target?.id === 'busReportNumber' || event.target?.id === 'busLookupNumber') {
+        const normalized = normalizeBusNumber(event.target.value);
+        if (event.target.value !== normalized) event.target.value = normalized;
+      }
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !paddleOverlay.hidden) {
