@@ -702,6 +702,45 @@
       margin-top: 3px;
     }
 
+    .date-input-combo {
+      position: relative;
+      display: block;
+    }
+
+    .date-input-combo .text-input {
+      padding-right: 54px;
+    }
+
+    .date-picker-button,
+    .date-picker-native {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      width: 48px;
+      height: calc(100% - 2px);
+      border: 0;
+      border-left: 1px solid var(--border);
+      border-radius: 0 11px 11px 0;
+    }
+
+    .date-picker-button {
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--warn);
+      pointer-events: none;
+    }
+
+    .date-picker-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .date-picker-native {
+      opacity: 0;
+      cursor: pointer;
+    }
+
     .composer {
       grid-row: 3;
       border-top: 1px solid var(--border);
@@ -2498,7 +2537,8 @@
     }
 
     function dateTimeInputsToIso(dateInputId, timeInputId) {
-      const dateValue = String(document.getElementById(dateInputId)?.value || '').trim() || getOttawaDateString();
+      const rawDateValue = String(document.getElementById(dateInputId)?.value || '').trim();
+      const dateValue = typedBusDateToDateValue(rawDateValue) || rawDateValue || getOttawaDateString();
       const timeValue = String(document.getElementById(timeInputId)?.value || '').trim() || getOttawaTimeValue();
       const resolvedTime = /^\d{2}:\d{2}$/.test(timeValue) ? timeValue : getOttawaTimeValue();
       const date = new Date(`${dateValue}T${resolvedTime}`);
@@ -2517,6 +2557,51 @@
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return getOttawaTimeValue();
       return getOttawaTimeValue(date);
+    }
+
+    function formatTypedBusDateInput(value) {
+      const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+      return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
+    }
+
+    function isValidDateParts(year, month, day) {
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function typedBusDateToDateValue(value) {
+      const digits = String(value || '').replace(/\D/g, '');
+      if (digits.length !== 8) return '';
+      const month = Number(digits.slice(0, 2));
+      const day = Number(digits.slice(2, 4));
+      const year = Number(digits.slice(4, 8));
+      if (!isValidDateParts(year, month, day)) return '';
+      return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function dateValueToTypedBusDate(value) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return '';
+      return `${match[2]}-${match[3]}-${match[1]}`;
+    }
+
+    function renderBusTypedDatePicker(inputId, typedValue = '') {
+      const pickerId = `${inputId}Picker`;
+      const pickerValue = typedBusDateToDateValue(typedValue);
+      return `
+        <div class="date-input-combo">
+          <input id="${escapeAttribute(inputId)}" class="text-input" type="text" inputmode="numeric" maxlength="10" data-bus-date-input data-bus-date-picker-id="${escapeAttribute(pickerId)}" placeholder="MM-DD-YYYY" value="${escapeHtml(typedValue)}">
+          <span class="date-picker-button" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+              <path d="M16 2v4M8 2v4M3 10h18"></path>
+            </svg>
+          </span>
+          <input id="${escapeAttribute(pickerId)}" class="date-picker-native" type="date" data-bus-date-picker-for="${escapeAttribute(inputId)}" aria-label="Choose reported to control date" value="${escapeHtml(pickerValue)}">
+        </div>
+      `;
     }
 
     function parseExportDateValue(value) {
@@ -2918,7 +3003,7 @@
           <div class="field-grid">
             <label class="field-stack">
               <span class="field-label">Reported to Control Date</span>
-              <input id="editBusControlDate_${id}" class="text-input" type="date" value="${escapeHtml(isoToDateInputValue(report.control_reported_at || report.reported_at))}">
+              ${renderBusTypedDatePicker(`editBusControlDate_${id}`, dateValueToTypedBusDate(isoToDateInputValue(report.control_reported_at || report.reported_at)))}
             </label>
             <label class="field-stack">
               <span class="field-label">Reported to Control Time</span>
@@ -3095,7 +3180,7 @@
                 <div class="field-grid">
                   <label class="field-stack">
                     <span class="field-label">Reported to Control Date</span>
-                    <input id="busControlReportedDate" class="text-input" type="date" placeholder="Today if blank">
+                    ${renderBusTypedDatePicker('busControlReportedDate')}
                   </label>
                   <label class="field-stack">
                     <span class="field-label">Reported to Control Time</span>
@@ -5249,6 +5334,12 @@
       }
     });
     busDefectsView.addEventListener('change', async (event) => {
+      const datePicker = event.target?.closest?.('[data-bus-date-picker-for]');
+      if (datePicker) {
+        const dateInput = document.getElementById(datePicker.dataset.busDatePickerFor || '');
+        if (dateInput) dateInput.value = dateValueToTypedBusDate(datePicker.value || '');
+        return;
+      }
       if (event.target?.id === 'busDefectCategory') {
         selectedBusDefectCategory = event.target.value || selectedBusDefectCategory;
         return;
@@ -5296,6 +5387,14 @@
       if (event.target?.id === 'busReportNumber' || event.target?.id === 'busLookupNumber' || /^editBusNumber_/.test(event.target?.id || '')) {
         const normalized = normalizeBusNumber(event.target.value);
         if (event.target.value !== normalized) event.target.value = normalized;
+        return;
+      }
+      const dateInput = event.target?.closest?.('[data-bus-date-input]');
+      if (dateInput) {
+        const formatted = formatTypedBusDateInput(dateInput.value);
+        if (dateInput.value !== formatted) dateInput.value = formatted;
+        const picker = document.getElementById(dateInput.dataset.busDatePickerId || '');
+        if (picker) picker.value = typedBusDateToDateValue(dateInput.value);
       }
     });
     document.addEventListener('keydown', (event) => {
