@@ -108,12 +108,26 @@ create table if not exists public.bus_defect_reports (
     )
   ),
   report_status text not null default 'open' check (report_status in ('open', 'reported', 'addressed', 'solved')),
+  control_reported_at timestamptz not null default timezone('utc', now()),
   defect_text text not null check (length(trim(defect_text)) > 0),
   reported_by uuid references auth.users(id) on delete set null,
   reported_by_email text,
   reported_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.bus_defect_reports
+  add column if not exists control_reported_at timestamptz;
+
+update public.bus_defect_reports
+set control_reported_at = coalesce(control_reported_at, reported_at, timezone('utc', now()))
+where control_reported_at is null;
+
+alter table public.bus_defect_reports
+  alter column control_reported_at set default timezone('utc', now());
+
+alter table public.bus_defect_reports
+  alter column control_reported_at set not null;
 
 alter table public.bus_defect_reports
   drop constraint if exists bus_defect_reports_bus_number_check;

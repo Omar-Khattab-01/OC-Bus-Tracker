@@ -2486,6 +2486,39 @@
       }).format(new Date(value));
     }
 
+    function getOttawaTimeValue(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(date);
+      const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+      return `${values.hour}:${values.minute}`;
+    }
+
+    function dateTimeInputsToIso(dateInputId, timeInputId) {
+      const dateValue = String(document.getElementById(dateInputId)?.value || '').trim() || getOttawaDateString();
+      const timeValue = String(document.getElementById(timeInputId)?.value || '').trim() || getOttawaTimeValue();
+      const resolvedTime = /^\d{2}:\d{2}$/.test(timeValue) ? timeValue : getOttawaTimeValue();
+      const date = new Date(`${dateValue}T${resolvedTime}`);
+      return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+    }
+
+    function isoToDateInputValue(value) {
+      if (!value) return getOttawaDateString();
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return getOttawaDateString();
+      return getOttawaDateString(date);
+    }
+
+    function isoToTimeInputValue(value) {
+      if (!value) return getOttawaTimeValue();
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return getOttawaTimeValue();
+      return getOttawaTimeValue(date);
+    }
+
     function parseExportDateValue(value) {
       const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (!match) return null;
@@ -2543,6 +2576,7 @@
       return [
         `Category: ${formatBusDefectCategory(report.defect_category || 'other')}`,
         `Status: ${formatBusReportStatus(report.report_status)}`,
+        `Control: ${formatReportDate(report.control_reported_at || report.reported_at)}`,
       ].join(' | ');
     }
 
@@ -2552,6 +2586,7 @@
         || message.includes('bus_defect_access')
         || message.includes('bus_defect_reports')
         || message.includes("could not find the 'role' column")
+        || message.includes("could not find the 'control_reported_at' column")
         || message.includes("could not find the 'defect_category' column");
     }
 
@@ -2657,7 +2692,7 @@
       }
       const { data, error } = await withRequestTimeout(supabaseClient
         .from('bus_defect_reports')
-        .select('id, bus_number, defect_category, report_status, defect_text, reported_by_email, reported_at')
+        .select('id, bus_number, defect_category, control_reported_at, report_status, defect_text, reported_by_email, reported_at')
         .eq('bus_number', busNumber)
         .order('reported_at', { ascending: false }), 'Bus defect reports');
       if (error) {
@@ -2671,7 +2706,7 @@
     function buildBusDefectExportQuery(scope = 'current') {
       let query = supabaseClient
         .from('bus_defect_reports')
-        .select('id, bus_number, defect_category, report_status, defect_text, reported_by_email, reported_at')
+        .select('id, bus_number, defect_category, control_reported_at, report_status, defect_text, reported_by_email, reported_at')
         .order('bus_number', { ascending: true })
         .order('reported_at', { ascending: false });
       if (scope !== 'all') query = query.eq('bus_number', normalizeBusNumber(selectedBusDefectNumber));
@@ -2880,6 +2915,16 @@
             <span class="field-label">Status</span>
             <select id="editBusStatus_${id}" class="select-input">${renderBusReportStatusOptions(report.report_status)}</select>
           </label>
+          <div class="field-grid">
+            <label class="field-stack">
+              <span class="field-label">Reported to Control Date</span>
+              <input id="editBusControlDate_${id}" class="text-input" type="date" value="${escapeHtml(isoToDateInputValue(report.control_reported_at || report.reported_at))}">
+            </label>
+            <label class="field-stack">
+              <span class="field-label">Reported to Control Time</span>
+              <input id="editBusControlTime_${id}" class="text-input" type="time" value="${escapeHtml(isoToTimeInputValue(report.control_reported_at || report.reported_at))}">
+            </label>
+          </div>
           <label class="field-stack">
             <span class="field-label">Details</span>
             <textarea id="editBusText_${id}" class="text-input" rows="4">${escapeHtml(report.defect_text || '')}</textarea>
@@ -3047,6 +3092,16 @@
                   <span class="field-label">Defect Type</span>
                   <select id="busDefectCategory" class="select-input">${renderBusDefectCategoryOptions(selectedBusDefectCategory)}</select>
                 </label>
+                <div class="field-grid">
+                  <label class="field-stack">
+                    <span class="field-label">Reported to Control Date</span>
+                    <input id="busControlReportedDate" class="text-input" type="date" placeholder="Today if blank">
+                  </label>
+                  <label class="field-stack">
+                    <span class="field-label">Reported to Control Time</span>
+                    <input id="busControlReportedTime" class="text-input" type="time" placeholder="Now if blank">
+                  </label>
+                </div>
                 <label class="field-stack">
                   <span class="field-label">Additional Details</span>
                   <textarea id="busDefectText" class="text-input" rows="4" placeholder="Location, symptoms, route/block, or follow-up notes"></textarea>
@@ -3098,6 +3153,7 @@
       if (!supabaseClient || !currentUser || !canReportBusDefects()) return;
       const busNumber = normalizeBusNumber(document.getElementById('busReportNumber')?.value || selectedBusDefectNumber);
       const defectCategory = document.getElementById('busDefectCategory')?.value || selectedBusDefectCategory;
+      const controlReportedAt = dateTimeInputsToIso('busControlReportedDate', 'busControlReportedTime');
       const typedDefectText = document.getElementById('busDefectText')?.value?.trim() || '';
       const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
       if (!isValidBusNumber(busNumber) || !busDefectCategories.some((item) => item.key === defectCategory) || !defectText) {
@@ -3113,6 +3169,7 @@
         .insert({
           bus_number: busNumber,
           defect_category: defectCategory,
+          control_reported_at: controlReportedAt,
           report_status: 'open',
           defect_text: defectText,
           reported_by: currentUser.id,
@@ -3250,6 +3307,7 @@
       if (!id) return;
       const busNumber = normalizeBusNumber(document.getElementById(`editBusNumber_${id}`)?.value || selectedBusDefectNumber);
       const defectCategory = document.getElementById(`editBusCategory_${id}`)?.value || 'other';
+      const controlReportedAt = dateTimeInputsToIso(`editBusControlDate_${id}`, `editBusControlTime_${id}`);
       const reportStatus = normalizeBusReportStatus(document.getElementById(`editBusStatus_${id}`)?.value || 'open');
       const typedDefectText = document.getElementById(`editBusText_${id}`)?.value?.trim() || '';
       const defectText = typedDefectText || formatBusDefectCategory(defectCategory);
@@ -3262,6 +3320,7 @@
         .update({
           bus_number: busNumber,
           defect_category: defectCategory,
+          control_reported_at: controlReportedAt,
           report_status: reportStatus,
           defect_text: defectText,
         })
