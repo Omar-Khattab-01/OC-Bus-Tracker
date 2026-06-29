@@ -9,6 +9,14 @@ from pypdf import PdfReader
 ROOT = Path(__file__).resolve().parents[1]
 PADDLES_DIR = ROOT / "paddles"
 OUTPUT_PATH = ROOT / "data" / "paddles.index.json"
+SERVICE_DAYS = (
+    "weekday",
+    "saturday",
+    "sunday",
+    "easter_monday",
+    "canada_day",
+    "civic_holiday",
+)
 
 PADDLE_VARIANTS = {
     "current": {
@@ -107,35 +115,49 @@ PADDLE_VARIANTS = {
         "label": "Summer paddles",
         "activation_date": "2026-06-29",
         "sources": {
-            "June29/Weekdays(5-01 to 53-05).pdf": {
+            "Summer/Summer Daily (5-01 to 53-05).pdf": {
                 "source_id": "june29_weekday_low",
                 "label": "Weekdays 5-01 to 53-05",
                 "service_day": "weekday",
                 "category": "regular",
             },
-            "June29/Weekdays(56-01 to 899-01).pdf": {
+            "Summer/Summer Daily(56-01 to 899-04).pdf": {
                 "source_id": "june29_weekday_high",
-                "label": "Weekdays 56-01 to 899-01",
+                "label": "Weekdays 56-01 to 899-04",
                 "service_day": "weekday",
                 "category": "regular",
             },
-            "June29/ExpressAnd900s(AM & PM).pdf": {
+            "Summer/Summer (AM PM).pdf": {
                 "source_id": "june29_weekday_express_900",
-                "label": "Express and 900 series (AM and PM)",
+                "label": "Summer AM/PM 900 and 901",
                 "service_day": "weekday",
                 "category": "express_900",
             },
-            "June29/Saturdays.pdf": {
+            "Summer/Summer Saturday .pdf": {
                 "source_id": "june29_saturday_main",
                 "label": "Saturday paddles",
                 "service_day": "saturday",
                 "category": "regular",
             },
-            "June29/Sundays.pdf": {
+            "Summer/Summer Sunday.pdf": {
                 "source_id": "june29_sunday_main",
                 "label": "Sunday paddles",
                 "service_day": "sunday",
                 "category": "regular",
+            },
+            "Summer/Canada Day.pdf": {
+                "source_id": "june29_canada_day",
+                "label": "Canada Day paddles",
+                "service_day": "canada_day",
+                "category": "holiday",
+                "service_header": "Canada Day",
+            },
+            "Summer/CIVHP26.pdf": {
+                "source_id": "june29_civic_holiday",
+                "label": "Civic Holiday paddles",
+                "service_day": "civic_holiday",
+                "category": "holiday",
+                "service_header": "Civic Holiday",
             },
         },
     },
@@ -510,26 +532,32 @@ def normalize_continuation_page_text(text: str) -> str:
 
 
 def build_index():
-    runs_by_service = {
-        "weekday": {},
-        "saturday": {},
-        "sunday": {},
-        "easter_monday": {},
-    }
-    runs_by_variant = {}
-    source_summaries = {}
+    existing_index = {}
+    if OUTPUT_PATH.exists():
+        with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
+            existing_index = json.load(fh)
+
+    runs_by_variant = json.loads(json.dumps(existing_index.get("variants", {})))
+    source_summaries = json.loads(json.dumps(existing_index.get("sources", {})))
 
     for variant_id, variant_meta in PADDLE_VARIANTS.items():
-        runs_by_variant[variant_id] = {
-            "label": variant_meta["label"],
-            "activation_date": variant_meta.get("activation_date"),
-            "service_days": {
-                "weekday": {},
-                "saturday": {},
-                "sunday": {},
-                "easter_monday": {},
-            },
-        }
+        available_sources = [
+            filename
+            for filename in variant_meta["sources"]
+            if (PADDLES_DIR / filename).exists()
+        ]
+        if available_sources or variant_id not in runs_by_variant:
+            runs_by_variant[variant_id] = {
+                "label": variant_meta["label"],
+                "activation_date": variant_meta.get("activation_date"),
+                "service_days": {service_day: {} for service_day in SERVICE_DAYS},
+            }
+        else:
+            runs_by_variant[variant_id]["label"] = variant_meta["label"]
+            runs_by_variant[variant_id]["activation_date"] = variant_meta.get("activation_date")
+            runs_by_variant[variant_id].setdefault("service_days", {})
+            for service_day in SERVICE_DAYS:
+                runs_by_variant[variant_id]["service_days"].setdefault(service_day, {})
 
         for filename, base_source_meta in variant_meta["sources"].items():
             source_meta = {
@@ -538,6 +566,9 @@ def build_index():
                 "variant_label": variant_meta["label"],
             }
             pdf_path = PADDLES_DIR / filename
+            if not pdf_path.exists():
+                continue
+
             reader = PdfReader(str(pdf_path))
             parsed_count = 0
 
@@ -565,8 +596,6 @@ def build_index():
 
                 service_day = source_meta["service_day"]
                 runs_by_variant[variant_id]["service_days"][service_day][parsed["paddle_id"]] = parsed
-                if variant_id == "current":
-                    runs_by_service[service_day][parsed["paddle_id"]] = parsed
                 parsed_count += 1
                 idx = next_idx
 
@@ -576,6 +605,19 @@ def build_index():
                 "pages": len(reader.pages),
                 "parsed_runs": parsed_count,
             }
+
+    latest_default_variant_by_service_day = {
+        "weekday": "june29",
+        "saturday": "june29",
+        "sunday": "june29",
+        "easter_monday": "current",
+        "canada_day": "june29",
+        "civic_holiday": "june29",
+    }
+    runs_by_service = {service_day: {} for service_day in SERVICE_DAYS}
+    for service_day, variant_id in latest_default_variant_by_service_day.items():
+        variant = runs_by_variant.get(variant_id) or {}
+        runs_by_service[service_day] = (variant.get("service_days") or {}).get(service_day, {}) or {}
 
     return {
         "generated_by": "tools/build_paddle_index.py",
@@ -594,11 +636,15 @@ def main():
     saturday_runs = len(data["service_days"]["saturday"])
     sunday_runs = len(data["service_days"]["sunday"])
     easter_monday_runs = len(data["service_days"]["easter_monday"])
+    canada_day_runs = len(data["service_days"]["canada_day"])
+    civic_holiday_runs = len(data["service_days"]["civic_holiday"])
     print(f"Wrote {OUTPUT_PATH}")
     print(f"weekday runs: {weekday_runs}")
     print(f"saturday runs: {saturday_runs}")
     print(f"sunday runs: {sunday_runs}")
     print(f"easter monday runs: {easter_monday_runs}")
+    print(f"canada day runs: {canada_day_runs}")
+    print(f"civic holiday runs: {civic_holiday_runs}")
 
 
 if __name__ == "__main__":

@@ -46,7 +46,12 @@ const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY |
 const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
 const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
 const APRIL19_PADDLE_SWITCH_DATE = '2026-04-19';
+const SUMMER_WEEKDAY_PADDLE_SWITCH_DATE = '2026-06-29';
+const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
+const SUMMER_SUNDAY_PADDLE_SWITCH_DATE = '2026-06-28';
 const SUMMER_PADDLE_VARIANT_ID = 'june29';
+const REGULAR_PADDLE_SERVICE_DAYS = ['weekday', 'saturday', 'sunday'];
+const SPECIAL_PADDLE_SERVICE_DAYS = ['easter_monday', 'canada_day', 'civic_holiday'];
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -151,13 +156,15 @@ function normalizeServiceDay(input) {
   if (value === 'saturday' || value === 'sat') return 'saturday';
   if (value === 'sunday' || value === 'sun') return 'sunday';
   if (value === 'easter monday' || value === 'easter_monday') return 'easter_monday';
+  if (value === 'canada day' || value === 'canada_day') return 'canada_day';
+  if (value === 'civic holiday' || value === 'civic_holiday') return 'civic_holiday';
   return '';
 }
 
 function formatServiceDayLabel(day) {
   const value = String(day || '').replace(/_/g, ' ').trim();
   if (!value) return 'Today';
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return value.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function parseRequestedShuttleDay(text) {
@@ -295,6 +302,12 @@ function getServiceDayKeyForDate(date = new Date()) {
   if (ottawaIso === '2026-04-06') {
     return 'easter_monday';
   }
+  if (ottawaIso === '2026-07-01') {
+    return 'canada_day';
+  }
+  if (ottawaIso === '2026-08-03') {
+    return 'civic_holiday';
+  }
 
   const weekday = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Toronto',
@@ -310,9 +323,36 @@ function getOttawaServiceDayKey() {
   return getServiceDayKeyForDate(new Date());
 }
 
+function addDays(date, days) {
+  return new Date(date.getTime() + days * 24 * 3600 * 1000);
+}
+
+function getReferenceDateForServiceDay(serviceDay, referenceDate = new Date()) {
+  if (serviceDay === 'canada_day') return new Date('2026-07-01T12:00:00-04:00');
+  if (serviceDay === 'civic_holiday') return new Date('2026-08-03T12:00:00-04:00');
+  if (serviceDay === 'easter_monday') return new Date('2026-04-06T12:00:00-04:00');
+  for (let offset = 0; offset < 14; offset += 1) {
+    const candidate = addDays(referenceDate, offset);
+    if (getServiceDayKeyForDate(candidate) === serviceDay) {
+      return candidate;
+    }
+  }
+  return referenceDate;
+}
+
 function isEasterMondayOptionVisible(referenceDate = new Date()) {
   const ottawaIso = getOttawaDateString(referenceDate);
   return ottawaIso === '2026-04-05' || ottawaIso === '2026-04-06';
+}
+
+function isCanadaDayOptionVisible(referenceDate = new Date()) {
+  const ottawaIso = getOttawaDateString(referenceDate);
+  return ottawaIso === '2026-06-30' || ottawaIso === '2026-07-01';
+}
+
+function isCivicHolidayOptionVisible(referenceDate = new Date()) {
+  const ottawaIso = getOttawaDateString(referenceDate);
+  return ottawaIso === '2026-08-02' || ottawaIso === '2026-08-03';
 }
 
 function timeToSeconds(value) {
@@ -1417,9 +1457,23 @@ function isApril19PaddleVariantActive(referenceDate = new Date()) {
   return getOttawaDateString(referenceDate) >= APRIL19_PADDLE_SWITCH_DATE;
 }
 
+function isSummerPaddleVariantActive(referenceDate = new Date()) {
+  return getOttawaDateString(referenceDate) >= SUMMER_WEEKDAY_PADDLE_SWITCH_DATE;
+}
+
+function isSummerPaddleVariantActiveForServiceDay(referenceDate = new Date(), serviceDay = '') {
+  const ottawaDate = getOttawaDateString(referenceDate);
+  if (serviceDay === 'sunday') return ottawaDate >= SUMMER_SUNDAY_PADDLE_SWITCH_DATE;
+  if (serviceDay === 'saturday') return ottawaDate >= SUMMER_SATURDAY_PADDLE_SWITCH_DATE;
+  return ottawaDate >= SUMMER_WEEKDAY_PADDLE_SWITCH_DATE;
+}
+
 function getDefaultPaddleVariantIdForDate(referenceDate = new Date(), serviceDay = '') {
   if (serviceDay === 'easter_monday') return 'current';
-  return isApril19PaddleVariantActive(referenceDate) ? 'april19' : 'current';
+  if (serviceDay === 'canada_day' || serviceDay === 'civic_holiday') return SUMMER_PADDLE_VARIANT_ID;
+  if (isSummerPaddleVariantActiveForServiceDay(referenceDate, serviceDay)) return SUMMER_PADDLE_VARIANT_ID;
+  if (isApril19PaddleVariantActive(referenceDate)) return 'april19';
+  return 'current';
 }
 
 function getPaddleDisplayVariantLabel(referenceDate = new Date(), variantId = '', serviceDay = '') {
@@ -1445,8 +1499,8 @@ function getPinnedVariantServiceDaysForPaddle(paddleId, variantId) {
   if (!paddleId || !variantId) return [];
 
   const currentServiceDay = getOttawaServiceDayKey();
-  const orderedDays = [currentServiceDay, 'weekday', 'saturday', 'sunday']
-    .filter((value, index, list) => ['weekday', 'saturday', 'sunday'].includes(value) && list.indexOf(value) === index);
+  const orderedDays = [currentServiceDay, ...REGULAR_PADDLE_SERVICE_DAYS, ...SPECIAL_PADDLE_SERVICE_DAYS]
+    .filter((value, index, list) => [...REGULAR_PADDLE_SERVICE_DAYS, ...SPECIAL_PADDLE_SERVICE_DAYS].includes(value) && list.indexOf(value) === index);
 
   return orderedDays.filter((serviceDay) => getPinnedPaddleRunForDay(serviceDay, paddleId, variantId));
 }
@@ -1493,6 +1547,7 @@ function getPaddleRunForDay(serviceDay, paddleId, options = {}) {
   const preferredVariantId = options.variantId || getDefaultPaddleVariantIdForDate(referenceDate, serviceDay);
   const preferredRun = getPaddleRunForVariant(preferredVariantId, serviceDay, paddleId);
   if (preferredRun) return preferredRun;
+  if (preferredVariantId === SUMMER_PADDLE_VARIANT_ID) return null;
 
   if (preferredVariantId !== 'current') {
     const fallbackCurrent = getPaddleRunForVariant('current', serviceDay, paddleId);
@@ -1501,6 +1556,10 @@ function getPaddleRunForDay(serviceDay, paddleId, options = {}) {
   if (preferredVariantId !== 'april19') {
     const fallbackApril19 = getPaddleRunForVariant('april19', serviceDay, paddleId);
     if (fallbackApril19) return fallbackApril19;
+  }
+  if (preferredVariantId !== SUMMER_PADDLE_VARIANT_ID) {
+    const fallbackSummer = getPaddleRunForVariant(SUMMER_PADDLE_VARIANT_ID, serviceDay, paddleId);
+    if (fallbackSummer) return fallbackSummer;
   }
 
   const index = loadPaddleIndex();
@@ -1525,7 +1584,7 @@ function getPaddleOptionsForBlock(block) {
       buttonLabel = variantId === 'april19'
         ? `${formatServiceDayLabel(serviceDay)} (Spring)`
         : `${formatServiceDayLabel(serviceDay)}`;
-    } else if (variantId !== currentDefaultVariantId && serviceDay !== 'easter_monday') {
+    } else if (variantId !== currentDefaultVariantId && !REGULAR_PADDLE_SERVICE_DAYS.includes(serviceDay) && serviceDay !== 'easter_monday') {
       buttonLabel = `${formatServiceDayLabel(serviceDay)} (${variantLabel || variantId})`;
     }
     options.push({
@@ -1540,16 +1599,17 @@ function getPaddleOptionsForBlock(block) {
     });
   };
 
-  for (const serviceDay of ['weekday', 'saturday', 'sunday']) {
+  for (const serviceDay of REGULAR_PADDLE_SERVICE_DAYS) {
+    const serviceReferenceDate = getReferenceDateForServiceDay(serviceDay, referenceDate);
     if (beforeSwitch) {
       addOption(serviceDay, getPaddleRunForVariant('current', serviceDay, paddleId), 'current');
       addOption(serviceDay, getPaddleRunForVariant('april19', serviceDay, paddleId), 'april19');
     } else {
       const preferredRun = getPaddleRunForDay(serviceDay, paddleId, {
-        referenceDate,
-        variantId: getDefaultPaddleVariantIdForDate(referenceDate, serviceDay),
+        referenceDate: serviceReferenceDate,
+        variantId: getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay),
       });
-      addOption(serviceDay, preferredRun, preferredRun?.variant_id || getDefaultPaddleVariantIdForDate(referenceDate, serviceDay));
+      addOption(serviceDay, preferredRun, preferredRun?.variant_id || getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay));
     }
   }
 
@@ -1559,6 +1619,18 @@ function getPaddleOptionsForBlock(block) {
       variantId: 'current',
     }), 'current');
   }
+  if (isCanadaDayOptionVisible(referenceDate)) {
+    addOption('canada_day', getPaddleRunForDay('canada_day', paddleId, {
+      referenceDate,
+      variantId: SUMMER_PADDLE_VARIANT_ID,
+    }), SUMMER_PADDLE_VARIANT_ID);
+  }
+  if (isCivicHolidayOptionVisible(referenceDate)) {
+    addOption('civic_holiday', getPaddleRunForDay('civic_holiday', paddleId, {
+      referenceDate,
+      variantId: SUMMER_PADDLE_VARIANT_ID,
+    }), SUMMER_PADDLE_VARIANT_ID);
+  }
 
   const currentServiceDay = getOttawaServiceDayKey();
   const baseOrder = new Map([
@@ -1566,6 +1638,8 @@ function getPaddleOptionsForBlock(block) {
     ['saturday', 1],
     ['sunday', 2],
     ['easter_monday', 3],
+    ['canada_day', 4],
+    ['civic_holiday', 5],
   ]);
   const seen = new Set();
   return options.filter((option) => {
@@ -1658,12 +1732,13 @@ function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
   const now = new Date();
   const explicitDay = normalizeServiceDay(requestedDay);
   const explicitVariantId = String(requestedVariant || '').trim().toLowerCase();
+  const explicitReferenceDate = explicitDay ? getReferenceDateForServiceDay(explicitDay, now) : now;
   const currentResolved = resolvePaddleRunForCurrentContext(paddleId);
   const resolvedExplicitVariantId = explicitDay
-    ? (explicitVariantId || getDefaultPaddleVariantIdForDate(now, explicitDay))
+    ? (explicitVariantId || getDefaultPaddleVariantIdForDate(explicitReferenceDate, explicitDay))
     : '';
   const explicitRun = explicitDay
-    ? getPaddleRunForDay(explicitDay, paddleId, { referenceDate: now, variantId: resolvedExplicitVariantId })
+    ? getPaddleRunForDay(explicitDay, paddleId, { referenceDate: explicitReferenceDate, variantId: resolvedExplicitVariantId })
     : null;
   const resolved = explicitDay
     ? {
@@ -1719,7 +1794,7 @@ function buildPinnedVariantPaddleResponse(block, variantId, requestedDay = '') {
   const explicitServiceDay = normalizeServiceDay(requestedDay);
   const availableServiceDays = getPinnedVariantServiceDaysForPaddle(paddleId, variantId);
   const serviceDay = explicitServiceDay || availableServiceDays[0] || '';
-  if (!serviceDay || !['weekday', 'saturday', 'sunday'].includes(serviceDay)) {
+  if (!serviceDay || ![...REGULAR_PADDLE_SERVICE_DAYS, ...SPECIAL_PADDLE_SERVICE_DAYS].includes(serviceDay)) {
     return null;
   }
 
@@ -1798,6 +1873,30 @@ function formatSummerBookingReply(paddle) {
     ? `${Number(blockMatch[1])}-${Number(blockMatch[2])}`
     : String(paddle.block || '').trim();
   return `Here are the paddles for ${displayBlock} for the summer.`;
+}
+
+function formatCanadaDayPaddleReply(paddle) {
+  if (!paddle) {
+    return 'No Canada Day paddle was found for that block.';
+  }
+
+  const blockMatch = String(paddle.block || '').match(/^(\d{1,3})-(\d{1,3})$/);
+  const displayBlock = blockMatch
+    ? `${Number(blockMatch[1])}-${Number(blockMatch[2])}`
+    : String(paddle.block || '').trim();
+  return `Here is the Canada Day paddle for ${displayBlock}.`;
+}
+
+function formatCivicHolidayPaddleReply(paddle) {
+  if (!paddle) {
+    return 'No Civic Holiday paddle was found for that block.';
+  }
+
+  const blockMatch = String(paddle.block || '').match(/^(\d{1,3})-(\d{1,3})$/);
+  const displayBlock = blockMatch
+    ? `${Number(blockMatch[1])}-${Number(blockMatch[2])}`
+    : String(paddle.block || '').trim();
+  return `Here is the Civic Holiday paddle for ${displayBlock}.`;
 }
 
 function normalizeBookingBoardTaken(entry = {}) {
@@ -3216,6 +3315,94 @@ async function handleSummerBooking(req, res) {
   }
 }
 
+async function handleCanadaDayPaddles(req, res) {
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+
+  try {
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock).catch(() => null);
+    const block = canonicalBlock || rawBlock;
+    const paddle = buildPinnedVariantPaddleResponse(block, SUMMER_PADDLE_VARIANT_ID, 'canada_day');
+    if (!paddle) {
+      res.status(404).json({
+        ok: false,
+        error: `Canada Day paddle not found for ${rawBlock}.`,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      mode: 'canada-day-paddles',
+      block: paddle.block,
+      reply: formatCanadaDayPaddleReply(paddle),
+      paddleOptions: [{
+        serviceDay: 'canada_day',
+        sourceId: paddle.sourceId || null,
+        sourceLabel: paddle.sourceLabel || null,
+        effective: paddle.effective || null,
+        variantId: paddle.variantId || SUMMER_PADDLE_VARIANT_ID,
+        variantLabel: paddle.variantLabel || null,
+        displayVariantLabel: paddle.displayVariantLabel || null,
+        buttonLabel: 'Canada Day',
+      }],
+      paddle,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
+async function handleCivicHolidayPaddles(req, res) {
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+
+  try {
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock).catch(() => null);
+    const block = canonicalBlock || rawBlock;
+    const paddle = buildPinnedVariantPaddleResponse(block, SUMMER_PADDLE_VARIANT_ID, 'civic_holiday');
+    if (!paddle) {
+      res.status(404).json({
+        ok: false,
+        error: `Civic Holiday paddle not found for ${rawBlock}.`,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      mode: 'civic-holiday-paddles',
+      block: paddle.block,
+      reply: formatCivicHolidayPaddleReply(paddle),
+      paddleOptions: [{
+        serviceDay: 'civic_holiday',
+        sourceId: paddle.sourceId || null,
+        sourceLabel: paddle.sourceLabel || null,
+        effective: paddle.effective || null,
+        variantId: paddle.variantId || SUMMER_PADDLE_VARIANT_ID,
+        variantLabel: paddle.variantLabel || null,
+        displayVariantLabel: paddle.displayVariantLabel || null,
+        buttonLabel: 'Civic Holiday',
+      }],
+      paddle,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleBookingBoards(req, res) {
   try {
     const requestedBoardId = String(req.query.board || '').trim();
@@ -3602,11 +3789,20 @@ async function handleBookingBoardBatchUpload(req, res) {
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
-app.get('/api/booking-boards', handleBookingBoards);
+app.get('/api/booking-boards', (_req, res) => {
+  res.status(404).json({
+    ok: false,
+    error: 'Booking Boards are temporarily unavailable.',
+  });
+});
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
+app.get('/api/canada-day-paddles', handleCanadaDayPaddles);
+app.post('/api/canada-day-paddles', handleCanadaDayPaddles);
+app.get('/api/civic-holiday-paddles', handleCivicHolidayPaddles);
+app.post('/api/civic-holiday-paddles', handleCivicHolidayPaddles);
 app.get('/api/shuttle', handleShuttle);
 app.get('/api/shuttles', handleShuttlesCatalog);
 app.get('/api/gtfs-lookup', handleGtfsLookup);
@@ -3652,8 +3848,14 @@ app.get('/summer-booking', (_req, res) => {
 app.get('/summer-paddles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
+app.get('/canada-day-paddles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
+app.get('/civic-holiday-paddles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
 app.get('/booking-boards', (_req, res) => {
-  sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
+  res.status(404).send('Booking Boards are temporarily unavailable.');
 });
 app.get('/booking-board-admin', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-board-admin.html'));

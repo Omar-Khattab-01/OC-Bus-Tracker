@@ -39,6 +39,8 @@ function getOttawaDateParts(date = new Date()) {
 function getServiceDayKeyForDate(date = new Date()) {
   const { weekday, month, day } = getOttawaDateParts(date);
   if (month === 4 && day === 6) return 'easter_monday';
+  if (month === 7 && day === 1) return 'canada_day';
+  if (month === 8 && day === 3) return 'civic_holiday';
   if (weekday === 'saturday') return 'saturday';
   if (weekday === 'sunday') return 'sunday';
   return 'weekday';

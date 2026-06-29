@@ -1223,7 +1223,8 @@
       .header-actions > .status,
       .header-actions > #clearChatBtn,
       .header-actions > #accountBtn,
-      .header-actions > #summerBookingBtn {
+      .header-actions > #canadaDayPaddlesBtn,
+      .header-actions > #civicHolidayPaddlesBtn {
         display: none;
       }
 
@@ -1407,16 +1408,16 @@
         <button id="todayWorkBtn" class="header-btn" type="button" hidden>Today's Work</button>
         <button id="myWorkBtn" class="header-btn" type="button" hidden>My Work</button>
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
-        <button id="summerBookingBtn" class="header-btn" type="button" onclick="window.location.href='/summer-paddles'">Summer Paddles</button>
-        <button id="bookingBoardsBtn" class="header-btn" type="button" onclick="window.location.href='/booking-boards'">Booking Boards</button>
+        <button id="canadaDayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/canada-day-paddles'">Canada Day</button>
+        <button id="civicHolidayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/civic-holiday-paddles'">Civic Holiday</button>
         <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <button id="mobileMenuBtn" class="header-btn mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileHeaderMenu">Menu</button>
         <div id="mobileHeaderMenu" class="mobile-menu" hidden>
           <div class="menu-section-label">Navigation</div>
-          <button id="mobileSummerBookingBtn" class="header-btn" type="button">Summer Paddles</button>
-          <button id="mobileBookingBoardsBtn" class="header-btn" type="button">Booking Boards</button>
+          <button id="mobileCanadaDayPaddlesBtn" class="header-btn" type="button">Canada Day</button>
+          <button id="mobileCivicHolidayPaddlesBtn" class="header-btn" type="button">Civic Holiday</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
           <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
@@ -1560,8 +1561,8 @@
     const todayWorkBtn = document.getElementById('todayWorkBtn');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileHeaderMenu = document.getElementById('mobileHeaderMenu');
-    const mobileSummerBookingBtn = document.getElementById('mobileSummerBookingBtn');
-    const mobileBookingBoardsBtn = document.getElementById('mobileBookingBoardsBtn');
+    const mobileCanadaDayPaddlesBtn = document.getElementById('mobileCanadaDayPaddlesBtn');
+    const mobileCivicHolidayPaddlesBtn = document.getElementById('mobileCivicHolidayPaddlesBtn');
     const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
     const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
@@ -3936,13 +3937,13 @@
       event.stopPropagation();
       toggleMobileMenu();
     });
-    mobileSummerBookingBtn.addEventListener('click', () => {
+    mobileCanadaDayPaddlesBtn.addEventListener('click', () => {
       closeMobileMenu();
-      window.location.href = '/summer-paddles';
+      window.location.href = '/canada-day-paddles';
     });
-    mobileBookingBoardsBtn.addEventListener('click', () => {
+    mobileCivicHolidayPaddlesBtn.addEventListener('click', () => {
       closeMobileMenu();
-      window.location.href = '/booking-boards';
+      window.location.href = '/civic-holiday-paddles';
     });
     mobileShuttlesPageBtn.addEventListener('click', () => {
       closeMobileMenu();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Summer Paddles</title>
+  <title>Paddle Lookup</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -662,13 +662,12 @@
       <div class="brand">
         <div class="badge">OC</div>
         <div class="title">
-          <h1>Summer Paddles</h1>
-          <p>June 29 summer paddles only</p>
+          <h1 id="pageTitle">Paddle Lookup</h1>
+          <p id="pageSubtitle">Loading paddle lookup</p>
         </div>
       </div>
       <div class="header-actions">
         <a class="header-link" href="/">Back to Live Lookup</a>
-        <a class="header-link" href="/booking-boards">Booking Boards</a>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <div id="status" class="status">Ready</div>
       </div>
@@ -681,12 +680,12 @@
 
       <section class="composer">
         <form id="chatForm">
-          <input id="messageInput" class="input" autocomplete="off" placeholder="Type a block like 44-07" aria-label="Summer paddle block lookup" />
+          <input id="messageInput" class="input" autocomplete="off" placeholder="Type a block like 44-07" aria-label="Paddle block lookup" />
           <button id="sendBtn" class="btn" type="submit">Search</button>
         </form>
         <div class="hint">
           <span>Use format <strong>route-block</strong>, e.g. <strong>44-7</strong> or <strong>44-07</strong>.</span>
-          <span>This page returns June 29 summer paddle details only.</span>
+          <span id="pageHint">This page returns June 29 summer paddle details only.</span>
         </div>
       </section>
     </div>
@@ -710,6 +709,9 @@
     const form = document.getElementById('chatForm');
     const input = document.getElementById('messageInput');
     const chat = document.getElementById('chat');
+    const pageTitle = document.getElementById('pageTitle');
+    const pageSubtitle = document.getElementById('pageSubtitle');
+    const pageHint = document.getElementById('pageHint');
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
@@ -718,9 +720,58 @@
     const paddleMeta = document.getElementById('paddleMeta');
     const paddleBody = document.getElementById('paddleBody');
     const closePaddleBtn = document.getElementById('closePaddleBtn');
-    const defaultChatMarkup = `
-      <div class="message bot">Check the summer paddle to review your recovery time and the service details you need. Enter a block like <strong>44-07</strong>.</div>
-    `;
+    const isCanadaDayPage = window.location.pathname.includes('canada-day');
+    const isCivicHolidayPage = window.location.pathname.includes('civic-holiday');
+    const pageConfig = isCivicHolidayPage
+      ? {
+          title: 'Civic Holiday Paddles',
+          subtitle: 'August 3 Civic Holiday paddles only',
+          intro: 'Check the Civic Holiday paddle to review your recovery time and the service details you need. Enter a block like <strong>44-07</strong>.',
+          hint: 'This page returns Civic Holiday paddle details only.',
+          apiPath: '/api/civic-holiday-paddles',
+          summaryMain: 'Civic Holiday Paddle',
+          summarySub: 'Showing the Civic Holiday paddle data for block',
+          fallbackSourceLabel: 'Civic Holiday paddles',
+          fallbackButtonLabel: 'Civic Holiday',
+          loadingStatus: 'Loading Civic Holiday paddle...',
+          readyStatus: 'Civic Holiday paddle ready',
+          notFoundLabel: 'Civic Holiday paddle',
+        }
+      : isCanadaDayPage
+      ? {
+          title: 'Canada Day Paddles',
+          subtitle: 'July 1 Canada Day paddles only',
+          intro: 'Check the Canada Day paddle to review your recovery time and the service details you need. Enter a block like <strong>44-07</strong>.',
+          hint: 'This page returns Canada Day paddle details only.',
+          apiPath: '/api/canada-day-paddles',
+          summaryMain: 'Canada Day Paddle',
+          summarySub: 'Showing the Canada Day paddle data for block',
+          fallbackSourceLabel: 'Canada Day paddles',
+          fallbackButtonLabel: 'Canada Day',
+          loadingStatus: 'Loading Canada Day paddle...',
+          readyStatus: 'Canada Day paddle ready',
+          notFoundLabel: 'Canada Day paddle',
+        }
+      : {
+          title: 'Summer Paddles',
+          subtitle: 'June 29 summer paddles only',
+          intro: 'Check the summer paddle to review your recovery time and the service details you need. Enter a block like <strong>44-07</strong>.',
+          hint: 'This page returns June 29 summer paddle details only.',
+          apiPath: '/api/summer-booking',
+          summaryMain: null,
+          summarySub: 'Showing the June 29 paddle data for block',
+          fallbackSourceLabel: 'Summer paddles',
+          fallbackButtonLabel: 'Summer Paddle',
+          loadingStatus: 'Loading summer paddle...',
+          readyStatus: 'Summer paddle ready',
+          notFoundLabel: 'Summer paddle',
+        };
+    pageTitle.textContent = pageConfig.title;
+    pageSubtitle.textContent = pageConfig.subtitle;
+    pageHint.textContent = pageConfig.hint;
+    document.title = pageConfig.title;
+    const defaultChatMarkup = `<div class="message bot">${pageConfig.intro}</div>`;
+    chat.innerHTML = defaultChatMarkup;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -816,8 +867,8 @@
       return `
         <section class="summary-card">
           <div class="summary-title">Schedule View</div>
-          <div class="summary-main">${escapeHtml(formatServiceDayLabel(data.serviceDay))} Summer Paddle</div>
-          <div class="summary-sub">Showing the June 29 paddle data for block ${escapeHtml(data.block)}.</div>
+          <div class="summary-main">${escapeHtml(pageConfig.summaryMain || `${formatServiceDayLabel(data.serviceDay)} Summer Paddle`)}</div>
+          <div class="summary-sub">${escapeHtml(pageConfig.summarySub)} ${escapeHtml(data.block)}.</div>
         </section>
       `;
     }
@@ -908,7 +959,7 @@
 
     function openPaddleModal(data) {
       paddleTitle.textContent = `Paddle ${data.block}`;
-      const paddleSourceLabel = data.displayVariantLabel || data.variantLabel || data.sourceLabel || 'Summer paddles';
+      const paddleSourceLabel = data.displayVariantLabel || data.variantLabel || data.sourceLabel || pageConfig.fallbackSourceLabel;
       paddleMeta.textContent = `${data.serviceDay} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
       paddleBody.innerHTML = buildPaddleDetailHtml(data);
       paddleOverlay.hidden = false;
@@ -932,7 +983,7 @@
       try {
         const params = new URLSearchParams({ block: String(block || '') });
         if (day) params.set('day', String(day));
-        const response = await fetch(`/api/summer-booking?${params.toString()}`);
+        const response = await fetch(`${pageConfig.apiPath}?${params.toString()}`);
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'Paddle lookup failed');
@@ -952,13 +1003,13 @@
       wrap.className = 'bot-actions';
       const paddleOptions = Array.isArray(options) && options.length
         ? options
-        : [{ serviceDay: '', buttonLabel: 'Summer Paddle' }];
+        : [{ serviceDay: '', buttonLabel: pageConfig.fallbackButtonLabel }];
 
       for (const option of paddleOptions) {
         const button = document.createElement('button');
         button.className = 'link-btn';
         button.type = 'button';
-        button.textContent = option.buttonLabel || (option.serviceDay ? `${formatServiceDayLabel(option.serviceDay)} Paddle` : 'Summer Paddle');
+        button.textContent = option.buttonLabel || (option.serviceDay ? `${formatServiceDayLabel(option.serviceDay)} Paddle` : pageConfig.fallbackButtonLabel);
         button.addEventListener('click', () => showPaddle(block, option.serviceDay || ''));
         wrap.appendChild(button);
       }
@@ -968,7 +1019,7 @@
     }
 
     async function sendMessage(message) {
-      statusEl.textContent = 'Loading summer paddle...';
+      statusEl.textContent = pageConfig.loadingStatus;
       statusEl.classList.remove('warn');
       sendBtn.disabled = true;
 
@@ -976,7 +1027,7 @@
       const loadingBubble = addLoadingMessage();
 
       try {
-        const response = await fetch('/api/summer-booking', {
+        const response = await fetch(pageConfig.apiPath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
@@ -990,7 +1041,7 @@
         loadingBubble.remove();
         addMessage(data.reply, 'bot');
         addPaddleActions(data.block, data.paddleOptions || []);
-        statusEl.textContent = 'Summer paddle ready';
+        statusEl.textContent = pageConfig.readyStatus;
       } catch (err) {
         loadingBubble.remove();
         addMessage(err.message || 'Unexpected error.', 'bot');
