@@ -169,35 +169,35 @@
       background: var(--panel);
     }
 
-    .page-btn {
-      min-width: 42px;
-      padding: 8px 10px;
-    }
-
-    .page-field {
-      width: 76px;
-      min-width: 0;
-      text-align: center;
-      border-radius: 10px;
-      padding: 8px 9px;
-    }
-
-    .page-count {
-      color: var(--oc-mist);
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
     .pdf-stage {
       width: 100%;
       height: 100%;
       overflow: auto;
       background: #1c222b;
       padding: 14px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      display: block;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .pdf-page {
+      width: min(100%, 980px);
+      margin: 0 auto 16px;
+      scroll-margin-top: 14px;
+    }
+
+    .pdf-page-label {
+      color: var(--oc-mist);
+      font-size: 12px;
+      margin: 0 0 6px;
+      text-align: center;
+    }
+
+    .pdf-page-content {
+      min-height: inherit;
+      display: grid;
+      place-items: center;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .pdf-canvas {
@@ -276,12 +276,19 @@
       .header { align-items: flex-start; flex-direction: column; }
       .header-actions { width: 100%; }
       .main {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto minmax(76vh, 1fr);
+        display: block;
       }
       .side {
         border-right: 0;
         border-bottom: 1px solid var(--border);
+      }
+
+      .viewer {
+        height: 76vh;
+      }
+
+      .pdf-stage {
+        height: 100%;
       }
       .input,
       .select,
@@ -291,14 +298,6 @@
 
       .search-row .btn {
         width: 100%;
-      }
-
-      .toolbar .btn {
-        width: auto;
-      }
-
-      .toolbar .page-field {
-        width: 72px;
       }
 
       .toolbar {
@@ -352,10 +351,6 @@
 
       <section class="viewer">
         <div class="toolbar">
-          <button id="prevPageBtn" class="btn page-btn" type="button">Prev</button>
-          <input id="pageInput" class="input page-field" type="number" min="1" value="1" aria-label="PDF page" />
-          <span id="pageCount" class="page-count">/ -</span>
-          <button id="nextPageBtn" class="btn page-btn" type="button">Next</button>
           <span id="viewerStatus" class="status">Opening PDF...</span>
         </div>
         <div id="pdfStage" class="pdf-stage">
@@ -376,10 +371,6 @@
     const docStatus = document.getElementById('docStatus');
     const downloadBtn = document.getElementById('downloadBtn');
     const pdfStage = document.getElementById('pdfStage');
-    const prevPageBtn = document.getElementById('prevPageBtn');
-    const nextPageBtn = document.getElementById('nextPageBtn');
-    const pageInput = document.getElementById('pageInput');
-    const pageCount = document.getElementById('pageCount');
     const pageTitle = document.getElementById('pageTitle');
     const pageSubtitle = document.getElementById('pageSubtitle');
     const searchForm = document.getElementById('searchForm');
@@ -393,7 +384,10 @@
     let activePdfTask = null;
     let activePdfUrl = '';
     let currentPage = 1;
-    let renderToken = 0;
+    let renderedPages = new Set();
+    let renderingPages = new Set();
+    let pageObserver = null;
+    let scrollTimer = null;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -411,15 +405,6 @@
 
     function showViewerMessage(message, isError = false) {
       pdfStage.innerHTML = `<div class="viewer-message" style="color:${isError ? '#ffcf9e' : 'var(--oc-mist)'}">${escapeHtml(message)}</div>`;
-    }
-
-    function updatePageControls() {
-      const total = activePdf?.numPages || activeDoc?.pageCount || 0;
-      pageInput.value = String(currentPage || 1);
-      pageInput.max = total ? String(total) : '';
-      pageCount.textContent = total ? `/ ${total}` : '/ -';
-      prevPageBtn.disabled = !total || currentPage <= 1;
-      nextPageBtn.disabled = !total || currentPage >= total;
     }
 
     function getPdfUrl(doc) {
@@ -444,19 +429,56 @@
       return activePdf;
     }
 
-    async function renderPage(page) {
-      if (!activeDoc) return;
-      const token = renderToken += 1;
+    function resetScrollViewer() {
+      if (pageObserver) {
+        pageObserver.disconnect();
+        pageObserver = null;
+      }
+      renderedPages = new Set();
+      renderingPages = new Set();
+      pdfStage.innerHTML = '';
+      pdfStage.scrollTop = 0;
+    }
+
+    function getPageShell(pageNumber) {
+      return pdfStage.querySelector(`.pdf-page[data-page="${pageNumber}"]`);
+    }
+
+    function updateViewerStatus(pageNumber = currentPage) {
+      const total = activePdf?.numPages || activeDoc?.pageCount || 0;
+      viewerStatus.textContent = total
+        ? `Viewing page ${pageNumber} of ${total}`
+        : `Viewing ${activeDoc?.title || 'PDF'}`;
+    }
+
+    function updateCurrentPageFromScroll() {
+      const pages = Array.from(pdfStage.querySelectorAll('.pdf-page'));
+      if (!pages.length) return;
+      const stageTop = pdfStage.getBoundingClientRect().top;
+      let bestPage = currentPage;
+      let bestDistance = Infinity;
+      for (const page of pages) {
+        const rect = page.getBoundingClientRect();
+        const distance = Math.abs(rect.top - stageTop - 10);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestPage = Number(page.dataset.page || 1) || 1;
+        }
+      }
+      currentPage = bestPage;
+      updateViewerStatus(bestPage);
+    }
+
+    async function renderPageIntoShell(pageNumber) {
+      if (!activeDoc || !activePdf || renderedPages.has(pageNumber) || renderingPages.has(pageNumber)) return;
+      const shell = getPageShell(pageNumber);
+      if (!shell) return;
+      const content = shell.querySelector('.pdf-page-content');
+      renderingPages.add(pageNumber);
       try {
-        const pdf = await ensurePdfLoaded(activeDoc);
-        const total = pdf.numPages || activeDoc.pageCount || 1;
-        currentPage = Math.min(Math.max(1, Number(page) || 1), total);
-        updatePageControls();
-        viewerStatus.textContent = `Rendering page ${currentPage} of ${total}`;
-        const pdfPage = await pdf.getPage(currentPage);
-        if (token !== renderToken) return;
+        const pdfPage = await activePdf.getPage(pageNumber);
         const baseViewport = pdfPage.getViewport({ scale: 1 });
-        const stageWidth = Math.max(280, pdfStage.clientWidth - 28);
+        const stageWidth = Math.max(280, Math.min(content.clientWidth || pdfStage.clientWidth - 28, 980));
         const scale = Math.min(2.2, Math.max(0.65, stageWidth / baseViewport.width));
         const viewport = pdfPage.getViewport({ scale });
         const canvas = document.createElement('canvas');
@@ -469,28 +491,80 @@
         canvas.style.height = `${Math.floor(viewport.height)}px`;
         context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
         await pdfPage.render({ canvasContext: context, viewport }).promise;
-        if (token !== renderToken) return;
-        pdfStage.innerHTML = '';
-        pdfStage.appendChild(canvas);
-        pdfStage.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-        viewerStatus.textContent = `Viewing page ${currentPage} of ${total}`;
-        updatePageControls();
+        content.innerHTML = '';
+        content.appendChild(canvas);
+        shell.style.minHeight = `${Math.ceil(viewport.height + 28)}px`;
+        renderedPages.add(pageNumber);
       } catch (err) {
-        showViewerMessage(err.message || 'PDF unavailable.', true);
-        viewerStatus.textContent = 'PDF unavailable';
+        content.innerHTML = `<div class="viewer-message" style="color:#ffcf9e">${escapeHtml(err.message || 'Page unavailable.')}</div>`;
+      } finally {
+        renderingPages.delete(pageNumber);
       }
     }
 
+    async function buildScrollablePages(page = 1) {
+      const pdf = await ensurePdfLoaded(activeDoc);
+      resetScrollViewer();
+      const total = pdf.numPages || activeDoc.pageCount || 1;
+      const firstPage = await pdf.getPage(1);
+      const firstViewport = firstPage.getViewport({ scale: 1 });
+      const availableWidth = Math.max(280, Math.min(pdfStage.clientWidth - 28, 980));
+      const pageHeight = Math.ceil((availableWidth / firstViewport.width) * firstViewport.height + 28);
+      const fragment = document.createDocumentFragment();
+      for (let pageNumber = 1; pageNumber <= total; pageNumber += 1) {
+        const shell = document.createElement('section');
+        shell.className = 'pdf-page';
+        shell.dataset.page = String(pageNumber);
+        shell.style.minHeight = `${pageHeight}px`;
+        shell.innerHTML = `
+          <div class="pdf-page-label">Page ${pageNumber}</div>
+          <div class="pdf-page-content" style="min-height:${Math.max(160, pageHeight - 24)}px">
+            <div class="empty">Loading page ${pageNumber}...</div>
+          </div>
+        `;
+        fragment.appendChild(shell);
+      }
+      pdfStage.appendChild(fragment);
+      pageObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          renderPageIntoShell(Number(entry.target.dataset.page || 1) || 1);
+        }
+      }, { root: pdfStage, rootMargin: '900px 0px', threshold: 0.01 });
+      pdfStage.querySelectorAll('.pdf-page').forEach((shell) => pageObserver.observe(shell));
+      await scrollToPage(page, false);
+    }
+
+    async function scrollToPage(page, smooth = true) {
+      const total = activePdf?.numPages || activeDoc?.pageCount || 1;
+      const pageNumber = Math.min(Math.max(1, Number(page) || 1), total);
+      currentPage = pageNumber;
+      const shell = getPageShell(pageNumber);
+      if (shell) {
+        const targetTop = Math.max(0, shell.offsetTop - pdfStage.offsetTop);
+        pdfStage.scrollTo({ top: targetTop, left: 0, behavior: smooth ? 'smooth' : 'auto' });
+      }
+      await renderPageIntoShell(pageNumber);
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+      const updatedShell = getPageShell(pageNumber);
+      if (updatedShell) {
+        const updatedTop = Math.max(0, updatedShell.offsetTop - pdfStage.offsetTop);
+        pdfStage.scrollTo({ top: updatedTop, left: 0, behavior: 'auto' });
+      }
+      updateViewerStatus(pageNumber);
+    }
+
     async function setActiveDoc(docId, page = 1) {
-      activeDoc = documents.find((doc) => doc.id === docId) || documents[0] || null;
+      const nextDoc = documents.find((doc) => doc.id === docId) || documents[0] || null;
+      const docChanged = !activeDoc || !nextDoc || activeDoc.id !== nextDoc.id;
+      activeDoc = nextDoc;
       if (!activeDoc) {
         docStatus.textContent = 'No PDFs are available.';
         return;
       }
       docSelect.value = activeDoc.id;
       const pageNumber = Math.max(1, Number(page) || 1);
-      const basePdfUrl = new URL(activeDoc.url, window.location.origin);
-      downloadBtn.href = `${basePdfUrl.pathname}${basePdfUrl.search}`;
+      downloadBtn.href = `/api/fall-pdf-download?doc=${encodeURIComponent(activeDoc.id)}`;
       downloadBtn.setAttribute('download', `${activeDoc.title}.pdf`);
       pageTitle.textContent = activeDoc.title;
       pageSubtitle.textContent = `${activeDoc.kind} PDF${activeDoc.pageCount ? ` · ${activeDoc.pageCount} pages` : ''}`;
@@ -499,7 +573,11 @@
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('doc', activeDoc.id);
       window.history.replaceState(null, '', nextUrl);
-      await renderPage(pageNumber);
+      if (docChanged || !activePdf) {
+        await buildScrollablePages(pageNumber);
+      } else {
+        await scrollToPage(pageNumber, false);
+      }
     }
 
     function renderResults(results) {
@@ -569,21 +647,13 @@
       setActiveDoc(activeDoc.id, button.dataset.page);
     });
 
-    prevPageBtn.addEventListener('click', () => {
-      if (currentPage > 1) renderPage(currentPage - 1);
-    });
-
-    nextPageBtn.addEventListener('click', () => {
-      const total = activePdf?.numPages || activeDoc?.pageCount || 0;
-      if (total && currentPage < total) renderPage(currentPage + 1);
-    });
-
-    pageInput.addEventListener('change', () => {
-      renderPage(pageInput.value);
-    });
-
     window.addEventListener('resize', () => {
-      if (activeDoc && activePdf) renderPage(currentPage);
+      if (activeDoc && activePdf) buildScrollablePages(currentPage);
+    });
+
+    pdfStage.addEventListener('scroll', () => {
+      if (scrollTimer) window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(updateCurrentPageFromScroll, 80);
     });
 
     loadDocuments().catch((err) => {

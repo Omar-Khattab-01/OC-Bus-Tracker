@@ -2115,6 +2115,12 @@ function listFallPdfDocuments() {
   })).filter((doc) => doc.id && doc.url);
 }
 
+function getFallPdfDocument(docId) {
+  const data = loadFallPdfSearchIndex();
+  const documents = Array.isArray(data?.documents) ? data.documents : [];
+  return documents.find((doc) => String(doc.id || '').trim() === docId) || null;
+}
+
 function normalizePdfSearchText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
@@ -4004,12 +4010,35 @@ function handleFallPdfSearch(req, res) {
   }
 }
 
+function handleFallPdfDownload(req, res) {
+  try {
+    const docId = String(req.query.doc || '').trim();
+    const doc = getFallPdfDocument(docId);
+    if (!doc) {
+      res.status(404).send('Fall PDF not found.');
+      return;
+    }
+    const relativePath = String(doc.path || '').trim();
+    const filePath = path.resolve(__dirname, relativePath);
+    if (!filePath.startsWith(path.resolve(__dirname) + path.sep) || !fs.existsSync(filePath)) {
+      res.status(404).send('Fall PDF file not found.');
+      return;
+    }
+    const filename = `${String(doc.title || 'Fall PDF').replace(/[^\w .-]+/g, '').trim() || 'Fall PDF'}.pdf`;
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.download(filePath, filename);
+  } catch (err) {
+    res.status(500).send(`Fall PDF download failed: ${err.message || 'Unknown error'}`);
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/booking-boards', handleBookingBoards);
 app.get('/api/fall-pdf-docs', handleFallPdfDocuments);
 app.get('/api/fall-pdf-search', handleFallPdfSearch);
+app.get('/api/fall-pdf-download', handleFallPdfDownload);
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
