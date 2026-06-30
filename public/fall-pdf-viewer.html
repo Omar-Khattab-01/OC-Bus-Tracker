@@ -342,12 +342,17 @@
       }
       docSelect.value = activeDoc.id;
       const pageNumber = Math.max(1, Number(page) || 1);
-      const pdfUrl = `${activeDoc.url}?jump=${pageNumber}&load=${pdfLoadCounter += 1}#page=${pageNumber}`;
+      const basePdfUrl = new URL(activeDoc.url, window.location.origin);
+      const viewerPdfUrl = new URL(basePdfUrl.href);
+      viewerPdfUrl.searchParams.set('jump', String(pageNumber));
+      viewerPdfUrl.searchParams.set('load', String(pdfLoadCounter += 1));
+      viewerPdfUrl.hash = `page=${pageNumber}`;
+      const pdfUrl = `${viewerPdfUrl.pathname}${viewerPdfUrl.search}${viewerPdfUrl.hash}`;
       const nextFrame = pdfFrame.cloneNode(false);
       nextFrame.src = pdfUrl;
       pdfFrame.replaceWith(nextFrame);
       pdfFrame = nextFrame;
-      downloadBtn.href = activeDoc.url;
+      downloadBtn.href = `${basePdfUrl.pathname}${basePdfUrl.search}`;
       downloadBtn.setAttribute('download', `${activeDoc.title}.pdf`);
       pageTitle.textContent = activeDoc.title;
       pageSubtitle.textContent = `${activeDoc.kind} PDF${activeDoc.pageCount ? ` · ${activeDoc.pageCount} pages` : ''}`;
