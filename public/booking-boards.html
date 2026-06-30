@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Booking Boards</title>
+  <title>Fall Booking Board</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -996,14 +996,13 @@
       <div class="brand">
         <div class="badge">OC</div>
         <div class="title">
-          <h1>Booking Boards</h1>
-          <p>Review summer paddle work, see which pieces are taken, and open the linked summer paddle for the exact work portion.</p>
+          <h1>Fall Booking Board</h1>
+          <p>Review fall booking work, see which pieces are taken, and open the linked fall paddle for the exact work portion.</p>
         </div>
       </div>
       <div class="header-actions">
-        <a class="header-link" href="/">Back to Lookup</a>
-        <a class="header-link" href="/canada-day-paddles">Canada Day</a>
-        <a class="header-link" href="/civic-holiday-paddles">Civic Holiday</a>
+        <a class="header-link" href="/">Back to Bus Lookup</a>
+        <a class="header-link" href="/fall-paddles">Fall Paddles</a>
         <button id="refreshBtn" class="header-btn" type="button">Refresh</button>
         <div id="status" class="status">Loading</div>
       </div>
@@ -1012,8 +1011,8 @@
     <div class="main">
       <section class="page-head">
         <div>
-          <h2>Booking Boards</h2>
-          <p>Select a board set, review each available or taken shift, and open the matching June 29 summer paddle. When only part of the paddle is being worked, that portion is highlighted for quick review.</p>
+          <h2>Fall Booking Board</h2>
+          <p>Select a board set, review each available or taken shift, and open the matching fall booking paddle. When only part of the paddle is being worked, that portion is highlighted for quick review.</p>
         </div>
         <div id="metaStrip" class="meta-strip"></div>
       </section>
@@ -1057,8 +1056,8 @@
     let selectedGeneralSpareSection = '';
     let selectedDaysOffCounter = 'day_work';
     let selectedSpareGroup = 'daily';
-    let selectedStatBoard = 'canada-day';
-    let selectedStatWorkBoard = 'canada-day';
+    let selectedStatBoard = '';
+    let selectedStatWorkBoard = '';
     const boardFilters = {};
     let filterRenderTimer = null;
 
@@ -1424,8 +1423,8 @@
       return `
         <section class="summary-card">
           <div class="summary-title">Schedule View</div>
-          <div class="summary-main">${escapeHtml(titleCase(paddle.serviceDay))} Summer Paddle</div>
-          <div class="summary-sub">Showing the June 29 paddle data for block ${blockText}.${pieceCount ? ` Highlighting ${pieceCount} booked ${pieceCount === 1 ? 'piece' : 'pieces'}.` : ''}</div>
+          <div class="summary-main">${escapeHtml(titleCase(paddle.serviceDay))} Fall Paddle</div>
+          <div class="summary-sub">Showing the fall booking paddle data for block ${blockText}.${pieceCount ? ` Highlighting ${pieceCount} booked ${pieceCount === 1 ? 'piece' : 'pieces'}.` : ''}</div>
         </section>
       `;
     }
@@ -1512,7 +1511,7 @@
 
     function openPaddleModal(paddle, selectedPieces) {
       paddleTitle.textContent = `Paddle ${paddle.block}`;
-      const label = paddle.displayVariantLabel || paddle.variantLabel || paddle.sourceLabel || 'Summer paddles';
+      const label = paddle.displayVariantLabel || paddle.variantLabel || paddle.sourceLabel || 'Fall paddles';
       paddleMeta.textContent = `${paddle.serviceDay} service | ${label}${paddle.effective ? ` | effective ${paddle.effective}` : ''}`;
       paddleBody.innerHTML = buildPaddleDetailHtml(paddle, selectedPieces);
       paddleOverlay.hidden = false;
@@ -1591,9 +1590,12 @@
       ];
 
       const categorizeStatSection = (section) => {
+        const key = String(section?.holidayKey || '').trim();
+        if (key) return key;
         const title = String(section?.title || '').toLowerCase();
-        if (title.includes('canada day')) return 'canada-day';
-        if (title.includes('august civic')) return 'august-civic';
+        if (title.includes('labour')) return 'labour-day';
+        if (title.includes('thanksgiving')) return 'thanksgiving';
+        if (title.includes('remembrance')) return 'remembrance-day';
         return 'other';
       };
 
@@ -1684,14 +1686,21 @@
 
       let statDefinitions = [];
       if (activeGroup?.key === 'stat') {
-        statDefinitions = [
-          { key: 'canada-day', title: 'Canada Day' },
-          { key: 'august-civic', title: 'August Civic' },
-        ].filter((item) => groupSections.some((section) => categorizeStatSection(section) === item.key));
+        statDefinitions = Array.from(new Map(
+          groupSections.map((section) => {
+            const key = categorizeStatSection(section);
+            return [key, {
+              key,
+              title: String(section?.holidayLabel || section?.title || key).trim(),
+            }];
+          })
+        ).values()).filter((item) => item.key && item.key !== 'other');
         if (!statDefinitions.some((item) => item.key === selectedStatBoard)) {
-          selectedStatBoard = statDefinitions[0]?.key || 'canada-day';
+          selectedStatBoard = statDefinitions[0]?.key || '';
         }
-        groupSections = groupSections.filter((section) => categorizeStatSection(section) === selectedStatBoard);
+        if (selectedStatBoard) {
+          groupSections = groupSections.filter((section) => categorizeStatSection(section) === selectedStatBoard);
+        }
       }
 
       const availableTotal = groupSections.reduce((sum, section) => sum + (section.availableTotal || 0), 0);
@@ -1798,19 +1807,24 @@
 
     function renderStatWorkBoard(board) {
       const entries = Array.isArray(board?.entries) ? board.entries : [];
-      const statDefinitions = [
-        { key: 'canada-day', title: 'Canada Day' },
-        { key: 'august-civic', title: 'August Civic' },
-      ].filter((item) => entries.some((entry) => String(entry.holidayKey || '') === item.key));
+      const statDefinitions = Array.from(new Map(
+        entries
+          .map((entry) => ({
+            key: String(entry.holidayKey || '').trim(),
+            title: String(entry.holidayLabel || '').trim(),
+          }))
+          .filter((item) => item.key)
+          .map((item) => [item.key, item])
+      ).values());
 
       if (!statDefinitions.some((item) => item.key === selectedStatWorkBoard)) {
-        selectedStatWorkBoard = statDefinitions[0]?.key || 'canada-day';
+        selectedStatWorkBoard = statDefinitions[0]?.key || '';
       }
 
       const baseEntries = entries.filter((entry) => (
         !entry.taken
         && entry.pieceCount > 0
-        && String(entry.holidayKey || '') === selectedStatWorkBoard
+        && (!selectedStatWorkBoard || String(entry.holidayKey || '') === selectedStatWorkBoard)
       ));
       const filterKey = `stat-${selectedStatWorkBoard}`;
       const filters = getBoardFilters(filterKey);
@@ -2181,10 +2195,10 @@
         if (['weekday', 'saturday', 'sunday'].includes(serviceDay)) {
           params.set('day', serviceDay);
         }
-        const response = await fetch(`/api/summer-booking?${params.toString()}`);
+        const response = await fetch(`/api/fall-booking?${params.toString()}`);
         const data = await response.json();
         if (!response.ok || !data.ok || !data.paddle) {
-          throw new Error(data.error || 'Summer paddle not found for this piece.');
+          throw new Error(data.error || 'Fall booking paddle not found for this piece.');
         }
         openPaddleModal(data.paddle, selectedPieces);
         statusEl.textContent = `${board?.title || 'Booking board'} ready`;
@@ -2192,7 +2206,7 @@
       } catch (err) {
         statusEl.textContent = 'Error';
         statusEl.classList.add('warn');
-        alert(err.message || 'Summer paddle lookup failed.');
+        alert(err.message || 'Fall booking paddle lookup failed.');
       }
     }
 
@@ -2217,13 +2231,13 @@
       }
       const statBoardButton = event.target.closest('[data-stat-board]');
         if (statBoardButton) {
-          selectedStatBoard = String(statBoardButton.dataset.statBoard || 'canada-day').trim() || 'canada-day';
+          selectedStatBoard = String(statBoardButton.dataset.statBoard || '').trim();
           renderBoardEntries(boardState.board);
           return;
         }
         const statWorkBoardButton = event.target.closest('[data-stat-work-board]');
         if (statWorkBoardButton) {
-          selectedStatWorkBoard = String(statWorkBoardButton.dataset.statWorkBoard || 'canada-day').trim() || 'canada-day';
+          selectedStatWorkBoard = String(statWorkBoardButton.dataset.statWorkBoard || '').trim();
           renderBoardEntries(boardState.board);
           return;
         }

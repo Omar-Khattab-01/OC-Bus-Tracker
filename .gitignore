@@ -1,5 +1,7 @@
 node_modules/
 .DS_Store
+__pycache__/
+*.pyc
 *.png
 !assets/screenshots/*.png
 paddles/

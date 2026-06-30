@@ -161,6 +161,42 @@ PADDLE_VARIANTS = {
             },
         },
     },
+    "fall": {
+        "label": "Fall paddles",
+        "activation_date": "2026-08-31",
+        "sources": {
+            "Fall Booking/Fall Paddles/DailyFall(5-01 to 56-09).pdf": {
+                "source_id": "fall_weekday_low",
+                "label": "Fall weekdays 5-01 to 56-09",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "Fall Booking/Fall Paddles/DailyFall(57-01 to 724-15).pdf": {
+                "source_id": "fall_weekday_high",
+                "label": "Fall weekdays 57-01 to 724-15",
+                "service_day": "weekday",
+                "category": "regular",
+            },
+            "Fall Booking/Fall Paddles/DailyFall(AM PM).pdf": {
+                "source_id": "fall_weekday_am_pm",
+                "label": "Fall AM/PM paddles",
+                "service_day": "weekday",
+                "category": "express_900",
+            },
+            "Fall Booking/Fall Paddles/FallPaddlesSaturday.pdf": {
+                "source_id": "fall_saturday_main",
+                "label": "Fall Saturday paddles",
+                "service_day": "saturday",
+                "category": "regular",
+            },
+            "Fall Booking/Fall Paddles/FallPaddleSunday.pdf": {
+                "source_id": "fall_sunday_main",
+                "label": "Fall Sunday paddles",
+                "service_day": "sunday",
+                "category": "regular",
+            },
+        },
+    },
 }
 
 INSTRUCTION_PREFIXES = (
@@ -328,12 +364,40 @@ def parse_stop_times(section_lines):
 
 
 def format_direction_text(lines):
-    cleaned = [clean_line(line) for line in lines if clean_line(line)]
+    cleaned = [
+        clean_line(line)
+        for line in lines
+        if clean_line(line) and not re.fullmatch(r"\d+", clean_line(line))
+    ]
     if not cleaned:
         return None
     text = " ".join(cleaned).strip()
     text = re.sub(r"^Type:\s*\S+\s+", "", text)
+    text = re.sub(r"\b(Garage)(\d{1,2}:\d{2})\b", r"\1 \2", text)
+    text = re.sub(r"(\d{1,2}:\d{2})\s+\d+\s*$", r"\1", text)
     return text.strip() or None
+
+
+def clean_direction_text(text):
+    if not text:
+        return text
+    value = clean_line(text)
+    value = re.sub(r"\b(Garage)(\d{1,2}:\d{2})\b", r"\1 \2", value)
+    value = re.sub(r"(\d{1,2}:\d{2})\s+\d+\s*$", r"\1", value)
+    value = re.sub(r"^\d+(?=\()", "", value)
+    return value.strip() or None
+
+
+def clean_run_direction_text(run):
+    if not isinstance(run, dict):
+        return run
+    for trip in run.get("trips") or []:
+        if not isinstance(trip, dict):
+            continue
+        for key in ("start_directions", "next_directions", "notes"):
+            if trip.get(key):
+                trip[key] = clean_direction_text(trip[key])
+    return run
 
 
 def split_trip_section(section_lines):
@@ -531,6 +595,13 @@ def normalize_continuation_page_text(text: str) -> str:
     return "\n".join(cleaned)
 
 
+def resolve_paddle_source_path(filename: str) -> Path:
+    paddle_path = PADDLES_DIR / filename
+    if paddle_path.exists():
+        return paddle_path
+    return ROOT / filename
+
+
 def build_index():
     existing_index = {}
     if OUTPUT_PATH.exists():
@@ -544,7 +615,7 @@ def build_index():
         available_sources = [
             filename
             for filename in variant_meta["sources"]
-            if (PADDLES_DIR / filename).exists()
+            if resolve_paddle_source_path(filename).exists()
         ]
         if available_sources or variant_id not in runs_by_variant:
             runs_by_variant[variant_id] = {
@@ -565,7 +636,7 @@ def build_index():
                 "variant_id": variant_id,
                 "variant_label": variant_meta["label"],
             }
-            pdf_path = PADDLES_DIR / filename
+            pdf_path = resolve_paddle_source_path(filename)
             if not pdf_path.exists():
                 continue
 
@@ -585,7 +656,7 @@ def build_index():
                     next_text = reader.pages[next_idx].extract_text() or ""
                     if has_paddle_header(next_text):
                         break
-                    if clean_line(next_text):
+                    if clean_line(next_text) and not re.fullmatch(r"\d+", clean_line(next_text)):
                         combined_text += "\n" + normalize_continuation_page_text(next_text)
                     next_idx += 1
 
@@ -618,6 +689,15 @@ def build_index():
     for service_day, variant_id in latest_default_variant_by_service_day.items():
         variant = runs_by_variant.get(variant_id) or {}
         runs_by_service[service_day] = (variant.get("service_days") or {}).get(service_day, {}) or {}
+
+    for variant in runs_by_variant.values():
+        for runs in (variant.get("service_days") or {}).values():
+            for run in (runs or {}).values():
+                clean_run_direction_text(run)
+
+    for runs in runs_by_service.values():
+        for run in (runs or {}).values():
+            clean_run_direction_text(run)
 
     return {
         "generated_by": "tools/build_paddle_index.py",

@@ -10,8 +10,20 @@ from pathlib import Path
 from pypdf import PdfReader
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_DIR = Path(os.environ.get("BOOKING_BOARDS_SOURCE_DIR") or ROOT / "Booking_Boards")
+DEFAULT_FALL_SOURCE_DIR = ROOT / "Fall Booking" / "Booking Boards"
+SOURCE_DIR = Path(os.environ.get("BOOKING_BOARDS_SOURCE_DIR") or (
+    DEFAULT_FALL_SOURCE_DIR if DEFAULT_FALL_SOURCE_DIR.exists() else ROOT / "Booking_Boards"
+))
 OUTPUT_FILE = Path(os.environ.get("BOOKING_BOARDS_OUTPUT_FILE") or ROOT / "data" / "booking_boards.json")
+DAILY_BOARD_FILENAME = os.environ.get("BOOKING_DAILY_BOARD_FILENAME") or (
+    "2026 Fall Daily boards TRIP .pdf" if (SOURCE_DIR / "2026 Fall Daily boards TRIP .pdf").exists() else "2026 Summer daily bords.pdf"
+)
+WEEKEND_BOARD_FILENAME = os.environ.get("BOOKING_WEEKEND_BOARD_FILENAME") or (
+    "2026 Fall Weekend boards TRIP.pdf" if (SOURCE_DIR / "2026 Fall Weekend boards TRIP.pdf").exists() else "2026 Bus Summer Weekend boards.pdf"
+)
+STAT_BOARD_FILENAME = os.environ.get("BOOKING_STAT_BOARD_FILENAME") or (
+    "2026 Fall stat boards TRIP.pdf" if (SOURCE_DIR / "2026 Fall stat boards TRIP.pdf").exists() else "2026 Summer stat work.pdf"
+)
 
 TIME_RE = re.compile(r"\b\d{2}:\d{2}\b")
 BLOCK_RE = re.compile(r"\b\d{1,3}-\d{2}\b")
@@ -296,13 +308,13 @@ def parse_daily_board(pdf_path: Path):
     daily_section_headers = {"Daily Open Work", "Mixed Odd Work", "Mixed Relief Work"}
 
     def parse_spare_summary(line: str):
-        match = re.fullmatch(r"(General Spare|Holiday Spares|Vacation Spares)\s+(\d+)\s+(\d+)\s+(\d+)", line)
+        match = re.fullmatch(r"(General Spare|Holiday Spare|Holiday Spares|Vacation Spares)\s+(\d+)\s+(\d+)\s+(\d+)", line)
         if not match:
             return None
         title, available, booked, limit = match.groups()
         return {
             "id": re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-"),
-            "title": "Vacation Spares" if title == "Holiday Spares" else title,
+            "title": "Vacation Spares" if title in {"Holiday Spare", "Holiday Spares"} else title,
             "limit": int(limit),
             "booked": int(booked),
             "available": int(available),
@@ -736,6 +748,8 @@ def parse_stat_board(pdf_path: Path):
     entries = []
     current = None
     pending_route = ""
+    holiday_key = ""
+    holiday_label = ""
 
     def normalize_stat_holiday(line: str):
         normalized = line.lower()
@@ -743,6 +757,12 @@ def parse_stat_board(pdf_path: Path):
             return "canada-day", "Canada Day"
         if "august civic" in normalized:
             return "august-civic", "August Civic"
+        if "labour day" in normalized or "labor day" in normalized:
+            return "labour-day", "Labour Day"
+        if "thanksgiving" in normalized:
+            return "thanksgiving", "Thanksgiving"
+        if "remembrance" in normalized:
+            return "remembrance-day", "Remembrance Day"
         return "", ""
 
     def flush_current():
@@ -753,8 +773,6 @@ def parse_stat_board(pdf_path: Path):
         pending_route = ""
 
     for page in pages:
-        holiday_key = ""
-        holiday_label = ""
         for line in page["lines"]:
             parsed_holiday_key, parsed_holiday_label = normalize_stat_holiday(line)
             if parsed_holiday_key:
@@ -944,21 +962,27 @@ def with_board_updated_at(board: dict, pdf_path: Path):
 
 
 def main():
-    daily_pdf = SOURCE_DIR / "2026 Summer daily bords.pdf"
-    weekend_pdf = SOURCE_DIR / "2026 Bus Summer Weekend boards.pdf"
+    daily_pdf = SOURCE_DIR / DAILY_BOARD_FILENAME
+    weekend_pdf = SOURCE_DIR / WEEKEND_BOARD_FILENAME
     days_off_pdf = SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"
     spares_pdf = SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"
     floating_spares_pdf = SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
-    stat_pdf = SOURCE_DIR / "2026 Summer stat work.pdf"
+    stat_pdf = SOURCE_DIR / STAT_BOARD_FILENAME
     boards = []
-    boards.append(with_board_updated_at(parse_daily_board(daily_pdf), daily_pdf))
-    boards.append(with_board_updated_at(parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf))
-    boards.append(with_board_updated_at(parse_days_off_counter(days_off_pdf), days_off_pdf))
-    boards.append(with_board_updated_at(parse_spares_board(spares_pdf), spares_pdf))
-    boards.append(with_board_updated_at(parse_spares_board(floating_spares_pdf, "floating_spares", "Daily and Weekly Floating Spares"), floating_spares_pdf))
-    boards.append(with_board_updated_at(parse_stat_board(stat_pdf), stat_pdf))
+    if daily_pdf.exists():
+        boards.append(with_board_updated_at(parse_daily_board(daily_pdf), daily_pdf))
+    if weekend_pdf.exists():
+        boards.append(with_board_updated_at(parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf))
+    if days_off_pdf.exists():
+        boards.append(with_board_updated_at(parse_days_off_counter(days_off_pdf), days_off_pdf))
+    if spares_pdf.exists():
+        boards.append(with_board_updated_at(parse_spares_board(spares_pdf), spares_pdf))
+    if floating_spares_pdf.exists():
+        boards.append(with_board_updated_at(parse_spares_board(floating_spares_pdf, "floating_spares", "Daily and Weekly Floating Spares"), floating_spares_pdf))
+    if stat_pdf.exists():
+        boards.append(with_board_updated_at(parse_stat_board(stat_pdf), stat_pdf))
     payload = {
-        "generatedFrom": "Booking_Boards PDFs",
+        "generatedFrom": str(SOURCE_DIR.relative_to(ROOT) if SOURCE_DIR.is_relative_to(ROOT) else SOURCE_DIR),
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "boards": boards,
     }

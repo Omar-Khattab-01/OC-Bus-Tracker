@@ -50,6 +50,7 @@ const SUMMER_WEEKDAY_PADDLE_SWITCH_DATE = '2026-06-29';
 const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
 const SUMMER_SUNDAY_PADDLE_SWITCH_DATE = '2026-06-28';
 const SUMMER_PADDLE_VARIANT_ID = 'june29';
+const FALL_PADDLE_VARIANT_ID = 'fall';
 const REGULAR_PADDLE_SERVICE_DAYS = ['weekday', 'saturday', 'sunday'];
 const SPECIAL_PADDLE_SERVICE_DAYS = ['easter_monday', 'canada_day', 'civic_holiday'];
 
@@ -118,6 +119,22 @@ app.use(express.json({ limit: '120mb' }));
 app.get('/', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
 });
+app.use('/fall-paddles/files', express.static(path.join(__dirname, 'Fall Booking', 'Fall Paddles'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    }
+  },
+}));
+app.use('/fall-paddles/headways', express.static(path.join(__dirname, 'Fall Booking', 'Headways'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    }
+  },
+}));
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
@@ -1875,6 +1892,18 @@ function formatSummerBookingReply(paddle) {
   return `Here are the paddles for ${displayBlock} for the summer.`;
 }
 
+function formatFallBookingReply(paddle) {
+  if (!paddle) {
+    return 'No fall booking paddle was found for that block.';
+  }
+
+  const blockMatch = String(paddle.block || '').match(/^(\d{1,3})-(\d{1,3})$/);
+  const displayBlock = blockMatch
+    ? `${Number(blockMatch[1])}-${Number(blockMatch[2])}`
+    : String(paddle.block || '').trim();
+  return `Here are the paddles for ${displayBlock} for the fall booking.`;
+}
+
 function formatCanadaDayPaddleReply(paddle) {
   if (!paddle) {
     return 'No Canada Day paddle was found for that block.';
@@ -3315,6 +3344,44 @@ async function handleSummerBooking(req, res) {
   }
 }
 
+async function handleFallBooking(req, res) {
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+
+  try {
+    const requestedDay = normalizeServiceDay(req.query.day || parseRequestedShuttleDay(parseMessageText(req)));
+    const canonicalBlock = await resolveCanonicalBlock(rawBlock).catch(() => null);
+    const block = canonicalBlock || rawBlock;
+    const paddleOptions = getPinnedVariantPaddleOptionsForBlock(block, FALL_PADDLE_VARIANT_ID);
+    const selectedDay = requestedDay || paddleOptions[0]?.serviceDay || '';
+    const paddle = buildPinnedVariantPaddleResponse(block, FALL_PADDLE_VARIANT_ID, selectedDay);
+    if (!paddle) {
+      res.status(404).json({
+        ok: false,
+        error: `Fall booking paddle not found for ${rawBlock}.`,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      mode: 'fall-booking',
+      block: paddle.block,
+      reply: formatFallBookingReply(paddle),
+      paddleOptions,
+      paddle,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const code = Number(err.code);
+    const status = code === 400 ? 400 : code === 404 ? 404 : 500;
+    res.status(status).json({
+      ok: false,
+      error: String(err.message || 'Unexpected error').slice(0, 500),
+    });
+  }
+}
+
 async function handleCanadaDayPaddles(req, res) {
   const rawBlock = parseBlockFromReq(req);
   if (!validateBlockOrSend(rawBlock, res)) return;
@@ -3789,16 +3856,13 @@ async function handleBookingBoardBatchUpload(req, res) {
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
-app.get('/api/booking-boards', (_req, res) => {
-  res.status(404).json({
-    ok: false,
-    error: 'Booking Boards are temporarily unavailable.',
-  });
-});
+app.get('/api/booking-boards', handleBookingBoards);
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
+app.get('/api/fall-booking', handleFallBooking);
+app.post('/api/fall-booking', handleFallBooking);
 app.get('/api/canada-day-paddles', handleCanadaDayPaddles);
 app.post('/api/canada-day-paddles', handleCanadaDayPaddles);
 app.get('/api/civic-holiday-paddles', handleCivicHolidayPaddles);
@@ -3854,8 +3918,11 @@ app.get('/canada-day-paddles', (_req, res) => {
 app.get('/civic-holiday-paddles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
+app.get('/fall-paddles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
 app.get('/booking-boards', (_req, res) => {
-  res.status(404).send('Booking Boards are temporarily unavailable.');
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
 });
 app.get('/booking-board-admin', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-board-admin.html'));

@@ -271,6 +271,41 @@
       align-items: center;
     }
 
+    .pdf-message {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 7px 9px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      line-height: 1.2;
+      white-space: normal;
+    }
+
+    .pdf-title {
+      font-weight: 700;
+      font-size: 12px;
+      margin: 0 2px 0 0;
+      white-space: nowrap;
+    }
+
+    .pdf-sub {
+      display: none;
+    }
+
+    .pdf-message .bot-actions {
+      gap: 6px;
+      flex: 1 1 auto;
+    }
+
+    .pdf-message .link-btn {
+      padding: 5px 7px;
+      font-size: 11px;
+      line-height: 1.1;
+    }
+
     .link-btn {
       padding: 10px 14px;
       font-size: 13px;
@@ -668,6 +703,7 @@
       </div>
       <div class="header-actions">
         <a class="header-link" href="/">Back to Live Lookup</a>
+        <a id="fallBookingLink" class="header-link" href="/booking-boards" hidden>Fall Booking Board</a>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <div id="status" class="status">Ready</div>
       </div>
@@ -712,6 +748,7 @@
     const pageTitle = document.getElementById('pageTitle');
     const pageSubtitle = document.getElementById('pageSubtitle');
     const pageHint = document.getElementById('pageHint');
+    const fallBookingLink = document.getElementById('fallBookingLink');
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
@@ -722,7 +759,36 @@
     const closePaddleBtn = document.getElementById('closePaddleBtn');
     const isCanadaDayPage = window.location.pathname.includes('canada-day');
     const isCivicHolidayPage = window.location.pathname.includes('civic-holiday');
-    const pageConfig = isCivicHolidayPage
+    const isFallPaddlesPage = window.location.pathname.includes('fall-paddles');
+    const pageConfig = isFallPaddlesPage
+      ? {
+          title: 'Fall Paddles',
+          subtitle: 'Fall booking paddles only',
+          intro: 'Check a fall booking paddle before it is live. Enter a block like <strong>44-07</strong>.',
+          hint: 'This page returns fall booking paddle details only.',
+          apiPath: '/api/fall-booking',
+          summaryMain: null,
+          summarySub: 'Showing the fall booking paddle data for block',
+          fallbackSourceLabel: 'Fall paddles',
+          fallbackButtonLabel: 'Fall Paddle',
+          loadingStatus: 'Loading fall paddle...',
+          readyStatus: 'Fall paddle ready',
+          notFoundLabel: 'Fall paddle',
+          paddleName: 'Fall Paddle',
+          pdfLinks: [
+            { label: 'Wkdy 5-56', href: '/fall-paddles/files/DailyFall(5-01%20to%2056-09).pdf' },
+            { label: 'Wkdy 57-724', href: '/fall-paddles/files/DailyFall(57-01%20to%20724-15).pdf' },
+            { label: 'AM/PM', href: '/fall-paddles/files/DailyFall(AM%20PM).pdf' },
+            { label: 'Sat', href: '/fall-paddles/files/FallPaddlesSaturday.pdf' },
+            { label: 'Sun', href: '/fall-paddles/files/FallPaddleSunday.pdf' },
+          ],
+          headwayLinks: [
+            { label: 'Daily', href: '/fall-paddles/headways/DailyFallHeadways.pdf' },
+            { label: 'Sat', href: '/fall-paddles/headways/FallHeadwaysSaturday.pdf' },
+            { label: 'Sun', href: '/fall-paddles/headways/FallHeadwaysSundays.pdf' },
+          ],
+        }
+      : isCivicHolidayPage
       ? {
           title: 'Civic Holiday Paddles',
           subtitle: 'August 3 Civic Holiday paddles only',
@@ -736,6 +802,7 @@
           loadingStatus: 'Loading Civic Holiday paddle...',
           readyStatus: 'Civic Holiday paddle ready',
           notFoundLabel: 'Civic Holiday paddle',
+          paddleName: 'Paddle',
         }
       : isCanadaDayPage
       ? {
@@ -751,6 +818,7 @@
           loadingStatus: 'Loading Canada Day paddle...',
           readyStatus: 'Canada Day paddle ready',
           notFoundLabel: 'Canada Day paddle',
+          paddleName: 'Paddle',
         }
       : {
           title: 'Summer Paddles',
@@ -765,12 +833,31 @@
           loadingStatus: 'Loading summer paddle...',
           readyStatus: 'Summer paddle ready',
           notFoundLabel: 'Summer paddle',
+          paddleName: 'Summer Paddle',
         };
     pageTitle.textContent = pageConfig.title;
     pageSubtitle.textContent = pageConfig.subtitle;
     pageHint.textContent = pageConfig.hint;
     document.title = pageConfig.title;
-    const defaultChatMarkup = `<div class="message bot">${pageConfig.intro}</div>`;
+    fallBookingLink.hidden = !isFallPaddlesPage;
+    function buildPdfLinksMarkup() {
+      const linkGroups = [
+        { title: 'Paddles', links: pageConfig.pdfLinks },
+        { title: 'Headways', links: pageConfig.headwayLinks },
+      ].filter((group) => Array.isArray(group.links) && group.links.length);
+      if (!linkGroups.length) return '';
+      return `
+        <div class="message bot pdf-message">
+          ${linkGroups.map((group) => `
+            <span class="pdf-title">${escapeHtml(group.title)}</span>
+            ${group.links.map((item) => `
+              <a class="link-btn" href="${escapeHtml(item.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a>
+            `).join('')}
+          `).join('')}
+        </div>
+      `;
+    }
+    const defaultChatMarkup = `${buildPdfLinksMarkup()}<div class="message bot">${pageConfig.intro}</div>`;
     chat.innerHTML = defaultChatMarkup;
 
     function escapeHtml(value) {
@@ -867,7 +954,7 @@
       return `
         <section class="summary-card">
           <div class="summary-title">Schedule View</div>
-          <div class="summary-main">${escapeHtml(pageConfig.summaryMain || `${formatServiceDayLabel(data.serviceDay)} Summer Paddle`)}</div>
+          <div class="summary-main">${escapeHtml(pageConfig.summaryMain || `${formatServiceDayLabel(data.serviceDay)} ${pageConfig.paddleName || 'Paddle'}`)}</div>
           <div class="summary-sub">${escapeHtml(pageConfig.summarySub)} ${escapeHtml(data.block)}.</div>
         </section>
       `;

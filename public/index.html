@@ -1336,7 +1336,9 @@
       .header-actions > #clearChatBtn,
       .header-actions > #accountBtn,
       .header-actions > #canadaDayPaddlesBtn,
-      .header-actions > #civicHolidayPaddlesBtn {
+      .header-actions > #civicHolidayPaddlesBtn,
+      .header-actions > #fallPaddlesBtn,
+      .header-actions > #fallBookingBoardBtn {
         display: none;
       }
 
@@ -1536,6 +1538,8 @@
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
         <button id="canadaDayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/canada-day-paddles'">Canada Day</button>
         <button id="civicHolidayPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/civic-holiday-paddles'">Civic Holiday</button>
+        <button id="fallPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/fall-paddles'">Fall Paddles</button>
+        <button id="fallBookingBoardBtn" class="header-btn" type="button" onclick="window.location.href='/booking-boards'">Fall Booking Board</button>
         <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
@@ -1544,6 +1548,8 @@
           <div class="menu-section-label">Navigation</div>
           <button id="mobileCanadaDayPaddlesBtn" class="header-btn" type="button">Canada Day</button>
           <button id="mobileCivicHolidayPaddlesBtn" class="header-btn" type="button">Civic Holiday</button>
+          <button id="mobileFallPaddlesBtn" class="header-btn" type="button">Fall Paddles</button>
+          <button id="mobileFallBookingBoardBtn" class="header-btn" type="button">Fall Booking Board</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileBusDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
@@ -1692,6 +1698,8 @@
     const mobileHeaderMenu = document.getElementById('mobileHeaderMenu');
     const mobileCanadaDayPaddlesBtn = document.getElementById('mobileCanadaDayPaddlesBtn');
     const mobileCivicHolidayPaddlesBtn = document.getElementById('mobileCivicHolidayPaddlesBtn');
+    const mobileFallPaddlesBtn = document.getElementById('mobileFallPaddlesBtn');
+    const mobileFallBookingBoardBtn = document.getElementById('mobileFallBookingBoardBtn');
     const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
     const mobileBusDefectsBtn = document.getElementById('mobileBusDefectsBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
@@ -5133,6 +5141,14 @@
     mobileCivicHolidayPaddlesBtn.addEventListener('click', () => {
       closeMobileMenu();
       window.location.href = '/civic-holiday-paddles';
+    });
+    mobileFallPaddlesBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/fall-paddles';
+    });
+    mobileFallBookingBoardBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/booking-boards';
     });
     mobileShuttlesPageBtn.addEventListener('click', () => {
       closeMobileMenu();
