@@ -169,11 +169,51 @@
       background: var(--panel);
     }
 
-    .pdf-frame {
+    .page-btn {
+      min-width: 42px;
+      padding: 8px 10px;
+    }
+
+    .page-field {
+      width: 76px;
+      min-width: 0;
+      text-align: center;
+      border-radius: 10px;
+      padding: 8px 9px;
+    }
+
+    .page-count {
+      color: var(--oc-mist);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pdf-stage {
       width: 100%;
       height: 100%;
-      border: 0;
+      overflow: auto;
       background: #1c222b;
+      padding: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .pdf-canvas {
+      max-width: 100%;
+      height: auto;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .viewer-message {
+      width: min(520px, 100%);
+      color: var(--oc-mist);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--panel);
     }
 
     .panel {
@@ -237,7 +277,7 @@
       .header-actions { width: 100%; }
       .main {
         grid-template-columns: 1fr;
-        grid-template-rows: auto minmax(70vh, 1fr);
+        grid-template-rows: auto minmax(76vh, 1fr);
       }
       .side {
         border-right: 0;
@@ -245,9 +285,26 @@
       }
       .input,
       .select,
-      .btn,
       .link-btn {
         width: 100%;
+      }
+
+      .search-row .btn {
+        width: 100%;
+      }
+
+      .toolbar .btn {
+        width: auto;
+      }
+
+      .toolbar .page-field {
+        width: 72px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
       }
     }
   </style>
@@ -295,20 +352,34 @@
 
       <section class="viewer">
         <div class="toolbar">
+          <button id="prevPageBtn" class="btn page-btn" type="button">Prev</button>
+          <input id="pageInput" class="input page-field" type="number" min="1" value="1" aria-label="PDF page" />
+          <span id="pageCount" class="page-count">/ -</span>
+          <button id="nextPageBtn" class="btn page-btn" type="button">Next</button>
           <span id="viewerStatus" class="status">Opening PDF...</span>
         </div>
-        <iframe id="pdfFrame" class="pdf-frame" title="Fall PDF"></iframe>
+        <div id="pdfStage" class="pdf-stage">
+          <div class="viewer-message">Loading PDF...</div>
+        </div>
       </section>
     </div>
   </main>
 
-  <script>
+  <script type="module">
+    import * as pdfjsLib from '/vendor/pdfjs/pdf.mjs';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.mjs';
+
     const params = new URLSearchParams(window.location.search);
     const initialDocId = params.get('doc') || '';
     const docSelect = document.getElementById('docSelect');
     const docStatus = document.getElementById('docStatus');
     const downloadBtn = document.getElementById('downloadBtn');
-    let pdfFrame = document.getElementById('pdfFrame');
+    const pdfStage = document.getElementById('pdfStage');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const pageInput = document.getElementById('pageInput');
+    const pageCount = document.getElementById('pageCount');
     const pageTitle = document.getElementById('pageTitle');
     const pageSubtitle = document.getElementById('pageSubtitle');
     const searchForm = document.getElementById('searchForm');
@@ -318,7 +389,11 @@
     const resultsEl = document.getElementById('results');
     let documents = [];
     let activeDoc = null;
-    let pdfLoadCounter = 0;
+    let activePdf = null;
+    let activePdfTask = null;
+    let activePdfUrl = '';
+    let currentPage = 1;
+    let renderToken = 0;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -334,7 +409,79 @@
       searchStatus.style.color = isError ? '#ffcf9e' : '';
     }
 
-    function setActiveDoc(docId, page = 1) {
+    function showViewerMessage(message, isError = false) {
+      pdfStage.innerHTML = `<div class="viewer-message" style="color:${isError ? '#ffcf9e' : 'var(--oc-mist)'}">${escapeHtml(message)}</div>`;
+    }
+
+    function updatePageControls() {
+      const total = activePdf?.numPages || activeDoc?.pageCount || 0;
+      pageInput.value = String(currentPage || 1);
+      pageInput.max = total ? String(total) : '';
+      pageCount.textContent = total ? `/ ${total}` : '/ -';
+      prevPageBtn.disabled = !total || currentPage <= 1;
+      nextPageBtn.disabled = !total || currentPage >= total;
+    }
+
+    function getPdfUrl(doc) {
+      const basePdfUrl = new URL(doc.url, window.location.origin);
+      return `${basePdfUrl.pathname}${basePdfUrl.search}`;
+    }
+
+    async function ensurePdfLoaded(doc) {
+      const pdfUrl = getPdfUrl(doc);
+      if (activePdf && activePdfUrl === pdfUrl) return activePdf;
+      if (activePdfTask) {
+        try {
+          activePdfTask.destroy();
+        } catch {}
+      }
+      activePdf = null;
+      activePdfUrl = pdfUrl;
+      showViewerMessage('Loading PDF...');
+      viewerStatus.textContent = `Loading ${doc.title}`;
+      activePdfTask = pdfjsLib.getDocument(pdfUrl);
+      activePdf = await activePdfTask.promise;
+      return activePdf;
+    }
+
+    async function renderPage(page) {
+      if (!activeDoc) return;
+      const token = renderToken += 1;
+      try {
+        const pdf = await ensurePdfLoaded(activeDoc);
+        const total = pdf.numPages || activeDoc.pageCount || 1;
+        currentPage = Math.min(Math.max(1, Number(page) || 1), total);
+        updatePageControls();
+        viewerStatus.textContent = `Rendering page ${currentPage} of ${total}`;
+        const pdfPage = await pdf.getPage(currentPage);
+        if (token !== renderToken) return;
+        const baseViewport = pdfPage.getViewport({ scale: 1 });
+        const stageWidth = Math.max(280, pdfStage.clientWidth - 28);
+        const scale = Math.min(2.2, Math.max(0.65, stageWidth / baseViewport.width));
+        const viewport = pdfPage.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-canvas';
+        const context = canvas.getContext('2d');
+        const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+        await pdfPage.render({ canvasContext: context, viewport }).promise;
+        if (token !== renderToken) return;
+        pdfStage.innerHTML = '';
+        pdfStage.appendChild(canvas);
+        pdfStage.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        viewerStatus.textContent = `Viewing page ${currentPage} of ${total}`;
+        updatePageControls();
+      } catch (err) {
+        showViewerMessage(err.message || 'PDF unavailable.', true);
+        viewerStatus.textContent = 'PDF unavailable';
+      }
+    }
+
+    async function setActiveDoc(docId, page = 1) {
       activeDoc = documents.find((doc) => doc.id === docId) || documents[0] || null;
       if (!activeDoc) {
         docStatus.textContent = 'No PDFs are available.';
@@ -343,15 +490,6 @@
       docSelect.value = activeDoc.id;
       const pageNumber = Math.max(1, Number(page) || 1);
       const basePdfUrl = new URL(activeDoc.url, window.location.origin);
-      const viewerPdfUrl = new URL(basePdfUrl.href);
-      viewerPdfUrl.searchParams.set('jump', String(pageNumber));
-      viewerPdfUrl.searchParams.set('load', String(pdfLoadCounter += 1));
-      viewerPdfUrl.hash = `page=${pageNumber}`;
-      const pdfUrl = `${viewerPdfUrl.pathname}${viewerPdfUrl.search}${viewerPdfUrl.hash}`;
-      const nextFrame = pdfFrame.cloneNode(false);
-      nextFrame.src = pdfUrl;
-      pdfFrame.replaceWith(nextFrame);
-      pdfFrame = nextFrame;
       downloadBtn.href = `${basePdfUrl.pathname}${basePdfUrl.search}`;
       downloadBtn.setAttribute('download', `${activeDoc.title}.pdf`);
       pageTitle.textContent = activeDoc.title;
@@ -361,6 +499,7 @@
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('doc', activeDoc.id);
       window.history.replaceState(null, '', nextUrl);
+      await renderPage(pageNumber);
     }
 
     function renderResults(results) {
@@ -384,7 +523,7 @@
       docSelect.innerHTML = documents.map((doc) => `
         <option value="${escapeHtml(doc.id)}">${escapeHtml(doc.title)}</option>
       `).join('');
-      setActiveDoc(initialDocId);
+      await setActiveDoc(initialDocId);
     }
 
     async function searchPdf(query) {
@@ -403,7 +542,7 @@
       const results = Array.isArray(data.results) ? data.results : [];
       renderResults(results);
       if (results.length) {
-        setActiveDoc(activeDoc.id, results[0].page);
+        await setActiveDoc(activeDoc.id, results[0].page);
       }
       setStatus(`${results.length} ${results.length === 1 ? 'match' : 'matches'} for "${term}"${results.length ? ` · opened page ${results[0].page}` : ''}.`);
     }
@@ -428,6 +567,23 @@
       const button = event.target.closest('[data-page]');
       if (!button || !activeDoc) return;
       setActiveDoc(activeDoc.id, button.dataset.page);
+    });
+
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) renderPage(currentPage - 1);
+    });
+
+    nextPageBtn.addEventListener('click', () => {
+      const total = activePdf?.numPages || activeDoc?.pageCount || 0;
+      if (total && currentPage < total) renderPage(currentPage + 1);
+    });
+
+    pageInput.addEventListener('change', () => {
+      renderPage(pageInput.value);
+    });
+
+    window.addEventListener('resize', () => {
+      if (activeDoc && activePdf) renderPage(currentPage);
     });
 
     loadDocuments().catch((err) => {
