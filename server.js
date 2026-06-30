@@ -26,6 +26,7 @@ const {
 } = require('./data/shuttles');
 const execFileAsync = promisify(execFile);
 const BOOKING_BOARDS_DATA_FILE = path.join(__dirname, 'data', 'booking_boards.json');
+const FALL_PDF_SEARCH_INDEX_FILE = path.join(__dirname, 'data', 'fall_pdf_search_index.json');
 const BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Booking_Boards');
 const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking_boards.py');
 const PYTHON_BIN = String(process.env.PYTHON_BIN || '').trim();
@@ -34,6 +35,8 @@ const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN |
 let bookingBoardsDataCache = null;
 let bookingBoardsDataMtimeMs = 0;
 let bookingBoardsRuntimeUpdatedAt = '';
+let fallPdfSearchIndexCache = null;
+let fallPdfSearchIndexMtimeMs = 0;
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
@@ -118,6 +121,9 @@ const app = express();
 app.use(express.json({ limit: '120mb' }));
 app.get('/', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
+});
+app.get('/fall-pdf-viewer', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'fall-pdf-viewer.html'));
 });
 app.use('/fall-paddles/files', express.static(path.join(__dirname, 'Fall Booking', 'Fall Paddles'), {
   setHeaders: (res, filePath) => {
@@ -2088,6 +2094,102 @@ function loadBookingBoardsData() {
   return bookingBoardsDataCache;
 }
 
+function loadFallPdfSearchIndex() {
+  const stat = fs.statSync(FALL_PDF_SEARCH_INDEX_FILE);
+  if (fallPdfSearchIndexCache && fallPdfSearchIndexMtimeMs === stat.mtimeMs) {
+    return fallPdfSearchIndexCache;
+  }
+  fallPdfSearchIndexCache = JSON.parse(fs.readFileSync(FALL_PDF_SEARCH_INDEX_FILE, 'utf8'));
+  fallPdfSearchIndexMtimeMs = stat.mtimeMs;
+  return fallPdfSearchIndexCache;
+}
+
+function listFallPdfDocuments() {
+  const data = loadFallPdfSearchIndex();
+  return (Array.isArray(data?.documents) ? data.documents : []).map((doc) => ({
+    id: String(doc.id || '').trim(),
+    title: String(doc.title || '').trim(),
+    kind: String(doc.kind || '').trim(),
+    url: String(doc.url || '').trim(),
+    pageCount: Array.isArray(doc.pages) ? doc.pages.length : 0,
+  })).filter((doc) => doc.id && doc.url);
+}
+
+function normalizePdfSearchText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function buildFallPdfSearchTerms(query) {
+  const normalizedQuery = normalizePdfSearchText(query);
+  const terms = [normalizedQuery];
+  const blockMatch = normalizedQuery.match(/^(\d{1,3})\s*-\s*(\d{1,3})$/);
+  if (blockMatch) {
+    terms.push(`${blockMatch[1].padStart(3, '0')}${blockMatch[2].padStart(3, '0')}`);
+  }
+  if (/^\d{1,6}$/.test(normalizedQuery)) {
+    terms.push(normalizedQuery.padStart(6, '0'));
+  }
+  return Array.from(new Set(
+    terms
+      .map((term) => term.trim())
+      .filter(Boolean)
+  ));
+}
+
+function buildPdfSearchSnippet(text, query, tokens, matchedTerm = '') {
+  const normalized = normalizePdfSearchText(text);
+  const lowerText = normalized.toLowerCase();
+  const lowerQuery = String(matchedTerm || query || '').toLowerCase();
+  let index = lowerText.indexOf(lowerQuery);
+  if (index < 0) {
+    index = tokens
+      .map((token) => lowerText.indexOf(token))
+      .filter((position) => position >= 0)
+      .sort((a, b) => a - b)[0] ?? 0;
+  }
+  const start = Math.max(0, index - 90);
+  const end = Math.min(normalized.length, index + Math.max(lowerQuery.length, 40) + 120);
+  const prefix = start > 0 ? '...' : '';
+  const suffix = end < normalized.length ? '...' : '';
+  return `${prefix}${normalized.slice(start, end)}${suffix}`;
+}
+
+function searchFallPdfDocument(docId, query) {
+  const data = loadFallPdfSearchIndex();
+  const documents = Array.isArray(data?.documents) ? data.documents : [];
+  const doc = documents.find((item) => String(item.id || '').trim() === docId);
+  if (!doc) return { doc: null, results: [] };
+
+  const normalizedQuery = normalizePdfSearchText(query);
+  const searchTerms = buildFallPdfSearchTerms(normalizedQuery);
+  const tokens = normalizedQuery
+    .toLowerCase()
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  if (!normalizedQuery || !tokens.length) return { doc, results: [], normalizedQuery, searchTerms };
+
+  const lowerSearchTerms = searchTerms.map((term) => term.toLowerCase());
+  const pages = Array.isArray(doc.pages) ? doc.pages : [];
+  const results = [];
+  for (const page of pages) {
+    const text = normalizePdfSearchText(page?.text);
+    const lowerText = text.toLowerCase();
+    const matchedTerm = lowerSearchTerms.find((term) => lowerText.includes(term)) || '';
+    const exactMatch = Boolean(matchedTerm);
+    const tokenMatch = tokens.every((token) => lowerText.includes(token));
+    if (!exactMatch && !tokenMatch) continue;
+    results.push({
+      page: Number(page?.page || 0) || 0,
+      snippet: buildPdfSearchSnippet(text, normalizedQuery, tokens, matchedTerm),
+      matchType: exactMatch ? 'exact' : 'all_terms',
+      matchedTerm: searchTerms[lowerSearchTerms.indexOf(matchedTerm)] || '',
+    });
+    if (results.length >= 40) break;
+  }
+  return { doc, results, normalizedQuery, searchTerms };
+}
+
 function getFallbackBookingBoardsUpdatedAt(bookingBoardsData = null) {
   const generatedAt = String(bookingBoardsData?.updatedAt || bookingBoardsData?.generatedAt || '').trim();
   if (generatedAt) return generatedAt;
@@ -3853,10 +3955,61 @@ async function handleBookingBoardBatchUpload(req, res) {
   }
 }
 
+function handleFallPdfDocuments(_req, res) {
+  try {
+    res.json({ ok: true, documents: listFallPdfDocuments() });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: `Failed to load Fall PDF list: ${err.message || 'Unknown error'}`,
+    });
+  }
+}
+
+function handleFallPdfSearch(req, res) {
+  try {
+    const docId = String(req.query.doc || '').trim();
+    const query = String(req.query.q || '').trim();
+    if (!docId) {
+      res.status(400).json({ ok: false, error: 'Choose a PDF first.' });
+      return;
+    }
+    if (!query) {
+      const doc = listFallPdfDocuments().find((item) => item.id === docId) || null;
+      res.json({ ok: true, doc, query, results: [] });
+      return;
+    }
+    const { doc, results } = searchFallPdfDocument(docId, query);
+    if (!doc) {
+      res.status(404).json({ ok: false, error: 'Fall PDF not found.' });
+      return;
+    }
+    res.json({
+      ok: true,
+      doc: {
+        id: String(doc.id || '').trim(),
+        title: String(doc.title || '').trim(),
+        kind: String(doc.kind || '').trim(),
+        url: String(doc.url || '').trim(),
+        pageCount: Array.isArray(doc.pages) ? doc.pages.length : 0,
+      },
+      query,
+      results,
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: `Fall PDF search failed: ${err.message || 'Unknown error'}`,
+    });
+  }
+}
+
 app.get('/api/track', handleLookup);
 app.post('/api/chat', handleChat);
 app.get('/api/paddle', handlePaddle);
 app.get('/api/booking-boards', handleBookingBoards);
+app.get('/api/fall-pdf-docs', handleFallPdfDocuments);
+app.get('/api/fall-pdf-search', handleFallPdfSearch);
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);

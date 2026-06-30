@@ -776,16 +776,16 @@
           notFoundLabel: 'Fall paddle',
           paddleName: 'Fall Paddle',
           pdfLinks: [
-            { label: 'Wkdy 5-56', href: '/fall-paddles/files/DailyFall(5-01%20to%2056-09).pdf' },
-            { label: 'Wkdy 57-724', href: '/fall-paddles/files/DailyFall(57-01%20to%20724-15).pdf' },
-            { label: 'AM/PM', href: '/fall-paddles/files/DailyFall(AM%20PM).pdf' },
-            { label: 'Sat', href: '/fall-paddles/files/FallPaddlesSaturday.pdf' },
-            { label: 'Sun', href: '/fall-paddles/files/FallPaddleSunday.pdf' },
+            { label: 'Wkdy 5-56', doc: 'fall_weekday_low' },
+            { label: 'Wkdy 57-724', doc: 'fall_weekday_high' },
+            { label: 'AM/PM', doc: 'fall_am_pm' },
+            { label: 'Sat', doc: 'fall_saturday' },
+            { label: 'Sun', doc: 'fall_sunday' },
           ],
           headwayLinks: [
-            { label: 'Daily', href: '/fall-paddles/headways/DailyFallHeadways.pdf' },
-            { label: 'Sat', href: '/fall-paddles/headways/FallHeadwaysSaturday.pdf' },
-            { label: 'Sun', href: '/fall-paddles/headways/FallHeadwaysSundays.pdf' },
+            { label: 'Daily', doc: 'fall_headways_daily' },
+            { label: 'Sat', doc: 'fall_headways_saturday' },
+            { label: 'Sun', doc: 'fall_headways_sunday' },
           ],
         }
       : isCivicHolidayPage
@@ -840,6 +840,11 @@
     pageHint.textContent = pageConfig.hint;
     document.title = pageConfig.title;
     fallBookingLink.hidden = !isFallPaddlesPage;
+    function buildPdfViewerHref(item) {
+      if (item.doc) return `/fall-pdf-viewer?doc=${encodeURIComponent(item.doc)}`;
+      return item.href || '#';
+    }
+
     function buildPdfLinksMarkup() {
       const linkGroups = [
         { title: 'Paddles', links: pageConfig.pdfLinks },
@@ -851,7 +856,7 @@
           ${linkGroups.map((group) => `
             <span class="pdf-title">${escapeHtml(group.title)}</span>
             ${group.links.map((item) => `
-              <a class="link-btn" href="${escapeHtml(item.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a>
+              <a class="link-btn" href="${escapeHtml(buildPdfViewerHref(item))}">${escapeHtml(item.label)}</a>
             `).join('')}
           `).join('')}
         </div>

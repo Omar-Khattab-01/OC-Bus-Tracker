@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fall PDF Viewer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+    :root {
+      --oc-red: #da291c;
+      --oc-red-dark: #b82015;
+      --oc-white: #f8fafc;
+      --oc-mist: #d7dde6;
+      --panel: rgba(18, 24, 31, 0.88);
+      --panel-strong: rgba(29, 37, 47, 0.96);
+      --border: rgba(255, 255, 255, 0.15);
+      --accent: #9ec2ff;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--oc-white);
+      font-family: 'IBM Plex Sans', sans-serif;
+      background:
+        radial-gradient(circle at 12% -8%, rgba(218, 41, 28, 0.28) 0%, transparent 34%),
+        linear-gradient(180deg, #151a21 0%, #0e1318 100%);
+      padding: 14px;
+    }
+
+    .app {
+      width: min(1280px, 100%);
+      min-height: calc(100vh - 28px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(17, 22, 29, 0.82);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(110deg, rgba(218, 41, 28, 0.16), rgba(15, 17, 21, 0.35));
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: linear-gradient(145deg, var(--oc-red), var(--oc-red-dark));
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(26px, 5vw, 40px);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--oc-mist);
+      font-size: 13px;
+    }
+
+    .header-actions,
+    .toolbar,
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .link-btn,
+    .btn,
+    .select,
+    .input {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--oc-white);
+      font: inherit;
+    }
+
+    .link-btn,
+    .btn {
+      padding: 9px 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .link-btn:hover,
+    .btn:hover {
+      border-color: rgba(158, 194, 255, 0.48);
+      background: rgba(158, 194, 255, 0.12);
+    }
+
+    .select,
+    .input {
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .select {
+      min-width: min(320px, 100%);
+      border-radius: 12px;
+      background: #101720;
+    }
+
+    .input {
+      min-width: min(360px, 100%);
+      flex: 1 1 260px;
+      border-radius: 12px;
+      background: rgba(11, 16, 22, 0.82);
+    }
+
+    .main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    }
+
+    .side {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      border-right: 1px solid var(--border);
+      background: rgba(12, 17, 23, 0.46);
+    }
+
+    .viewer {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      background: #0b1015;
+    }
+
+    .toolbar {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .pdf-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #1c222b;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      margin: 0 0 9px;
+      font-weight: 700;
+    }
+
+    .status {
+      color: var(--oc-mist);
+      font-size: 13px;
+      margin: 8px 0 0;
+    }
+
+    .results {
+      display: grid;
+      gap: 8px;
+    }
+
+    .result {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--panel-strong);
+      color: var(--oc-white);
+      cursor: pointer;
+    }
+
+    .result strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--accent);
+    }
+
+    .result span {
+      display: block;
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .empty {
+      color: var(--oc-mist);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 8px; }
+      .app { min-height: calc(100vh - 16px); }
+      .header { align-items: flex-start; flex-direction: column; }
+      .header-actions { width: 100%; }
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(70vh, 1fr);
+      }
+      .side {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .input,
+      .select,
+      .btn,
+      .link-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="badge">OC</div>
+        <div>
+          <h1 id="pageTitle">Fall PDF Viewer</h1>
+          <p id="pageSubtitle" class="subtitle">Search, open, or download a Fall PDF.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="link-btn" href="/fall-paddles">Back to Fall Paddles</a>
+        <a id="downloadBtn" class="link-btn" href="#" download>Download PDF</a>
+      </div>
+    </header>
+
+    <div class="main">
+      <aside class="side">
+        <section class="panel">
+          <p class="panel-title">PDF</p>
+          <select id="docSelect" class="select" aria-label="Choose Fall PDF"></select>
+          <p id="docStatus" class="status">Loading PDFs...</p>
+        </section>
+
+        <section class="panel">
+          <p class="panel-title">Lookup in PDF</p>
+          <form id="searchForm" class="search-row">
+            <input id="searchInput" class="input" autocomplete="off" placeholder="Search 045004, 45-4, time, stop..." />
+            <button class="btn" type="submit">Search</button>
+          </form>
+          <p id="searchStatus" class="status">Enter text to search this PDF.</p>
+        </section>
+
+        <section class="panel">
+          <p class="panel-title">Results</p>
+          <div id="results" class="results">
+            <div class="empty">Search results will appear here.</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="viewer">
+        <div class="toolbar">
+          <span id="viewerStatus" class="status">Opening PDF...</span>
+        </div>
+        <iframe id="pdfFrame" class="pdf-frame" title="Fall PDF"></iframe>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const initialDocId = params.get('doc') || '';
+    const docSelect = document.getElementById('docSelect');
+    const docStatus = document.getElementById('docStatus');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let pdfFrame = document.getElementById('pdfFrame');
+    const pageTitle = document.getElementById('pageTitle');
+    const pageSubtitle = document.getElementById('pageSubtitle');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const searchStatus = document.getElementById('searchStatus');
+    const viewerStatus = document.getElementById('viewerStatus');
+    const resultsEl = document.getElementById('results');
+    let documents = [];
+    let activeDoc = null;
+    let pdfLoadCounter = 0;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function setStatus(message, isError = false) {
+      searchStatus.textContent = message;
+      searchStatus.style.color = isError ? '#ffcf9e' : '';
+    }
+
+    function setActiveDoc(docId, page = 1) {
+      activeDoc = documents.find((doc) => doc.id === docId) || documents[0] || null;
+      if (!activeDoc) {
+        docStatus.textContent = 'No PDFs are available.';
+        return;
+      }
+      docSelect.value = activeDoc.id;
+      const pageNumber = Math.max(1, Number(page) || 1);
+      const pdfUrl = `${activeDoc.url}?jump=${pageNumber}&load=${pdfLoadCounter += 1}#page=${pageNumber}`;
+      const nextFrame = pdfFrame.cloneNode(false);
+      nextFrame.src = pdfUrl;
+      pdfFrame.replaceWith(nextFrame);
+      pdfFrame = nextFrame;
+      downloadBtn.href = activeDoc.url;
+      downloadBtn.setAttribute('download', `${activeDoc.title}.pdf`);
+      pageTitle.textContent = activeDoc.title;
+      pageSubtitle.textContent = `${activeDoc.kind} PDF${activeDoc.pageCount ? ` · ${activeDoc.pageCount} pages` : ''}`;
+      docStatus.textContent = activeDoc.pageCount ? `${activeDoc.pageCount} pages` : 'Ready';
+      viewerStatus.textContent = `Viewing ${activeDoc.title}`;
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set('doc', activeDoc.id);
+      window.history.replaceState(null, '', nextUrl);
+    }
+
+    function renderResults(results) {
+      if (!results.length) {
+        resultsEl.innerHTML = '<div class="empty">No matches found in this PDF.</div>';
+        return;
+      }
+      resultsEl.innerHTML = results.map((result) => `
+        <button class="result" type="button" data-page="${Number(result.page) || 1}">
+          <strong>Page ${Number(result.page) || 1}</strong>
+          <span>${escapeHtml(result.snippet || '')}</span>
+        </button>
+      `).join('');
+    }
+
+    async function loadDocuments() {
+      const response = await fetch('/api/fall-pdf-docs');
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Could not load Fall PDFs.');
+      documents = Array.isArray(data.documents) ? data.documents : [];
+      docSelect.innerHTML = documents.map((doc) => `
+        <option value="${escapeHtml(doc.id)}">${escapeHtml(doc.title)}</option>
+      `).join('');
+      setActiveDoc(initialDocId);
+    }
+
+    async function searchPdf(query) {
+      if (!activeDoc) return;
+      const term = String(query || '').trim();
+      if (!term) {
+        setStatus('Enter text to search this PDF.');
+        resultsEl.innerHTML = '<div class="empty">Search results will appear here.</div>';
+        return;
+      }
+      setStatus('Searching...');
+      const url = `/api/fall-pdf-search?doc=${encodeURIComponent(activeDoc.id)}&q=${encodeURIComponent(term)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Search failed.');
+      const results = Array.isArray(data.results) ? data.results : [];
+      renderResults(results);
+      if (results.length) {
+        setActiveDoc(activeDoc.id, results[0].page);
+      }
+      setStatus(`${results.length} ${results.length === 1 ? 'match' : 'matches'} for "${term}"${results.length ? ` · opened page ${results[0].page}` : ''}.`);
+    }
+
+    docSelect.addEventListener('change', () => {
+      setActiveDoc(docSelect.value);
+      searchInput.value = '';
+      setStatus('Enter text to search this PDF.');
+      resultsEl.innerHTML = '<div class="empty">Search results will appear here.</div>';
+    });
+
+    searchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await searchPdf(searchInput.value);
+      } catch (err) {
+        setStatus(err.message || 'Search failed.', true);
+      }
+    });
+
+    resultsEl.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-page]');
+      if (!button || !activeDoc) return;
+      setActiveDoc(activeDoc.id, button.dataset.page);
+    });
+
+    loadDocuments().catch((err) => {
+      docStatus.textContent = err.message || 'Could not load Fall PDFs.';
+      viewerStatus.textContent = 'PDF unavailable';
+      setStatus(err.message || 'Could not load Fall PDFs.', true);
+    });
+  </script>
+</body>
+</html>
