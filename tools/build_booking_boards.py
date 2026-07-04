@@ -24,6 +24,11 @@ WEEKEND_BOARD_FILENAME = os.environ.get("BOOKING_WEEKEND_BOARD_FILENAME") or (
 STAT_BOARD_FILENAME = os.environ.get("BOOKING_STAT_BOARD_FILENAME") or (
     "2026 Fall stat boards TRIP.pdf" if (SOURCE_DIR / "2026 Fall stat boards TRIP.pdf").exists() else "2026 Summer stat work.pdf"
 )
+SPARES_BOARD_FILENAME = os.environ.get("BOOKING_SPARES_BOARD_FILENAME") or (
+    "2026 Fall Daily and weekend spare update.pdf"
+    if (SOURCE_DIR / "2026 Fall Daily and weekend spare update.pdf").exists()
+    else "2026 Summer Spare,s Boards.pdf"
+)
 
 TIME_RE = re.compile(r"\b\d{2}:\d{2}\b")
 BLOCK_RE = re.compile(r"\b\d{1,3}-\d{2}\b")
@@ -965,7 +970,7 @@ def main():
     daily_pdf = SOURCE_DIR / DAILY_BOARD_FILENAME
     weekend_pdf = SOURCE_DIR / WEEKEND_BOARD_FILENAME
     days_off_pdf = SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"
-    spares_pdf = SOURCE_DIR / "2026 Summer Spare,s Boards.pdf"
+    spares_pdf = SOURCE_DIR / SPARES_BOARD_FILENAME
     floating_spares_pdf = SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
     stat_pdf = SOURCE_DIR / STAT_BOARD_FILENAME
     boards = []
