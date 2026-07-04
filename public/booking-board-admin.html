@@ -231,7 +231,7 @@
     <section class="top">
       <div>
         <h1>Booking Board Admin</h1>
-        <p>Upload all changed board PDFs together. The page matches each PDF to the right board before renaming and rebuilding.</p>
+        <p>Upload changed Fall board PDFs together. The page matches each PDF to the right board before renaming and rebuilding.</p>
       </div>
     </section>
 
@@ -258,7 +258,7 @@
 
       <div id="status" class="status">Ready.</div>
       <div class="note">
-        Matching checks the selected file names before upload. Floating Spares is matched before Spare Boards, so a floating spare PDF will not replace the normal spare board.
+        Matching checks the selected file names before upload. Spare PDFs are matched before Daily or Weekend, so the combined daily and weekend spare update goes to the spare board.
       </div>
     </section>
   </main>
@@ -274,12 +274,10 @@
     let stagedFiles = [];
 
     const boardTargets = [
-      { key: 'daily', label: 'Daily Work', filename: '2026 Summer daily bords.pdf' },
-      { key: 'weekend', label: 'Weekend Work', filename: '2026 Bus Summer Weekend boards.pdf' },
-      { key: 'spares', label: 'Spare Boards', filename: '2026 Summer Spare,s Boards.pdf' },
-      { key: 'floating_spares', label: 'Daily and Weekly Floating Spares', filename: '2026 Summer Daily and weekly floating spares  (4) (1).pdf' },
-      { key: 'days_off_counter', label: 'Days Off Counter', filename: '2026 Summer Days off Counter (3).pdf' },
-      { key: 'stat', label: 'Stat Work', filename: '2026 Summer stat work.pdf' },
+      { key: 'daily', label: 'Fall Daily Work', filename: '2026 Fall Daily boards TRIP .pdf' },
+      { key: 'weekend', label: 'Fall Weekend Work', filename: '2026 Fall Weekend boards TRIP.pdf' },
+      { key: 'spares', label: 'Fall Spare Boards', filename: '2026 Fall Daily and weekend spare update.pdf' },
+      { key: 'stat', label: 'Fall Stat Work', filename: '2026 Fall stat boards TRIP.pdf' },
     ];
     const boardTargetsByKey = Object.fromEntries(boardTargets.map((target) => [target.key, target]));
 
@@ -306,11 +304,9 @@
 
     function classifyUploadName(name) {
       const normalized = normalizeUploadName(name);
-      if (normalized.includes('floating')) return 'floating_spares';
-      if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
-      if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
-      if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
       if (normalized.includes('spare')) return 'spares';
+      if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
+      if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
       if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';
       return '';
     }
@@ -376,7 +372,7 @@
           <div class="match-row warn">
             <div class="match-board">Not matched</div>
             <div class="match-source">${escapeHtml(file.name)}</div>
-            <div class="match-target">Rename the file with daily, weekend, spare, floating, days off/counter, or stat.</div>
+            <div class="match-target">Rename the file with daily, weekend, spare, or stat.</div>
             <button class="remove-btn" type="button" data-remove-file="${escapeHtml(item.id)}">Remove</button>
           </div>
         `);

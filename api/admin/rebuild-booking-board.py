@@ -16,37 +16,28 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_DIR = ROOT / "Booking_Boards"
+FALL_SOURCE_DIR = ROOT / "Fall Booking" / "Booking Boards"
+SOURCE_DIR = FALL_SOURCE_DIR if FALL_SOURCE_DIR.exists() else ROOT / "Booking_Boards"
 BUILD_SCRIPT = ROOT / "tools" / "build_booking_boards.py"
 TARGETS = {
     "daily": {
-        "label": "Daily Work",
-        "filename": "2026 Summer daily bords.pdf",
+        "label": "Fall Daily Work",
+        "filename": "2026 Fall Daily boards TRIP .pdf",
         "board_ids": ["daily_open_work"],
     },
     "weekend": {
-        "label": "Weekend Work",
-        "filename": "2026 Bus Summer Weekend boards.pdf",
+        "label": "Fall Weekend Work",
+        "filename": "2026 Fall Weekend boards TRIP.pdf",
         "board_ids": ["weekend_boards"],
     },
     "spares": {
-        "label": "Spare Boards",
-        "filename": "2026 Summer Spare,s Boards.pdf",
+        "label": "Fall Spare Boards",
+        "filename": "2026 Fall Daily and weekend spare update.pdf",
         "board_ids": ["spares"],
     },
-    "floating_spares": {
-        "label": "Daily and Weekly Floating Spares",
-        "filename": "2026 Summer Daily and weekly floating spares  (4) (1).pdf",
-        "board_ids": ["floating_spares"],
-    },
-    "days_off_counter": {
-        "label": "Days Off Counter",
-        "filename": "2026 Summer Days off Counter (3).pdf",
-        "board_ids": ["days_off_counter"],
-    },
     "stat": {
-        "label": "Stat Work",
-        "filename": "2026 Summer stat work.pdf",
+        "label": "Fall Stat Work",
+        "filename": "2026 Fall stat boards TRIP.pdf",
         "board_ids": ["stat_work"],
     },
 }
@@ -58,16 +49,12 @@ def normalize_upload_name(name: str) -> str:
 
 def classify_upload_name(name: str) -> str:
     normalized = normalize_upload_name(name)
-    if "floating" in normalized:
-        return "floating_spares"
-    if "days off" in normalized or "day off" in normalized or "counter" in normalized:
-        return "days_off_counter"
-    if "weekend" in normalized or "saturday" in normalized or "sunday" in normalized:
-        return "weekend"
-    if "stat" in normalized or "canada day" in normalized or "august civic" in normalized:
-        return "stat"
     if "spare" in normalized:
         return "spares"
+    if "stat" in normalized or "canada day" in normalized or "august civic" in normalized:
+        return "stat"
+    if "weekend" in normalized or "saturday" in normalized or "sunday" in normalized:
+        return "weekend"
     if "daily" in normalized or "bords" in normalized or "board" in normalized:
         return "daily"
     return ""
@@ -111,26 +98,18 @@ def copy_sources(temp_source_dir: Path):
 
 def build_payload(temp_source_dir: Path) -> dict:
     builder = load_builder()
-    daily_pdf = temp_source_dir / "2026 Summer daily bords.pdf"
-    weekend_pdf = temp_source_dir / "2026 Bus Summer Weekend boards.pdf"
-    days_off_pdf = temp_source_dir / "2026 Summer Days off Counter (3).pdf"
-    spares_pdf = temp_source_dir / "2026 Summer Spare,s Boards.pdf"
-    floating_spares_pdf = temp_source_dir / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
-    stat_pdf = temp_source_dir / "2026 Summer stat work.pdf"
+    daily_pdf = temp_source_dir / TARGETS["daily"]["filename"]
+    weekend_pdf = temp_source_dir / TARGETS["weekend"]["filename"]
+    spares_pdf = temp_source_dir / TARGETS["spares"]["filename"]
+    stat_pdf = temp_source_dir / TARGETS["stat"]["filename"]
     boards = [
         builder.with_board_updated_at(builder.parse_daily_board(daily_pdf), daily_pdf),
         builder.with_board_updated_at(builder.parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf),
-        builder.with_board_updated_at(builder.parse_days_off_counter(days_off_pdf), days_off_pdf),
         builder.with_board_updated_at(builder.parse_spares_board(spares_pdf), spares_pdf),
-        builder.with_board_updated_at(builder.parse_spares_board(
-            floating_spares_pdf,
-            "floating_spares",
-            "Daily and Weekly Floating Spares",
-        ), floating_spares_pdf),
         builder.with_board_updated_at(builder.parse_stat_board(stat_pdf), stat_pdf),
     ]
     return {
-        "generatedFrom": "Booking_Boards PDFs",
+        "generatedFrom": "Fall Booking/Booking Boards PDFs",
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "boards": boards,
     }
@@ -238,7 +217,7 @@ def commit_updates(uploaded_targets: dict[str, bytes], payload: dict):
 
     for board_key, pdf_bytes in uploaded_targets.items():
         target = TARGETS[board_key]
-        pdf_path = f"Booking_Boards/{target['filename']}"
+        pdf_path = f"Fall Booking/Booking Boards/{target['filename']}"
         put_github_file(
             repo,
             branch,

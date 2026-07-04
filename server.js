@@ -27,7 +27,10 @@ const {
 const execFileAsync = promisify(execFile);
 const BOOKING_BOARDS_DATA_FILE = path.join(__dirname, 'data', 'booking_boards.json');
 const FALL_PDF_SEARCH_INDEX_FILE = path.join(__dirname, 'data', 'fall_pdf_search_index.json');
-const BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Booking_Boards');
+const FALL_BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Fall Booking', 'Booking Boards');
+const BOOKING_BOARDS_SOURCE_DIR = fs.existsSync(FALL_BOOKING_BOARDS_SOURCE_DIR)
+  ? FALL_BOOKING_BOARDS_SOURCE_DIR
+  : path.join(__dirname, 'Booking_Boards');
 const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking_boards.py');
 const PYTHON_BIN = String(process.env.PYTHON_BIN || '').trim();
 const PYTHON_VENDOR_DIR = path.join(__dirname, 'vendor', 'python');
@@ -74,42 +77,27 @@ const BOOKING_BOARD_DAY_OPTIONS = [
 
 const BOOKING_BOARD_UPLOAD_TARGETS = {
   daily: {
-    label: 'Daily Work',
-    filename: '2026 Summer daily bords.pdf',
+    label: 'Fall Daily Work',
+    filename: '2026 Fall Daily boards TRIP .pdf',
     boardIds: ['daily_open_work'],
   },
   spares: {
-    label: 'Spare Boards',
-    filename: '2026 Summer Spare,s Boards.pdf',
+    label: 'Fall Spare Boards',
+    filename: '2026 Fall Daily and weekend spare update.pdf',
     boardIds: ['spares'],
   },
-  floating_spares: {
-    label: 'Daily and Weekly Floating Spares',
-    filename: '2026 Summer Daily and weekly floating spares  (4) (1).pdf',
-    boardIds: ['floating_spares'],
-  },
   weekend: {
-    label: 'Weekend Work',
-    filename: '2026 Bus Summer Weekend boards.pdf',
+    label: 'Fall Weekend Work',
+    filename: '2026 Fall Weekend boards TRIP.pdf',
     boardIds: ['weekend_boards'],
-  },
-  general_spare_weekend: {
-    label: 'Weekend Work',
-    filename: '2026 Bus Summer Weekend boards.pdf',
-    boardIds: ['weekend_boards'],
-  },
-  days_off_counter: {
-    label: 'Days Off Counter',
-    filename: '2026 Summer Days off Counter (3).pdf',
-    boardIds: ['days_off_counter'],
   },
   stat: {
-    label: 'Stat Work',
-    filename: '2026 Summer stat work.pdf',
+    label: 'Fall Stat Work',
+    filename: '2026 Fall stat boards TRIP.pdf',
     boardIds: ['stat_work'],
   },
 };
-const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'floating_spares', 'days_off_counter', 'stat'];
+const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'stat'];
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -3750,11 +3738,9 @@ function normalizeBookingBoardUploadName(name) {
 
 function classifyBookingBoardUploadName(name) {
   const normalized = normalizeBookingBoardUploadName(name);
-  if (normalized.includes('floating')) return 'floating_spares';
-  if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
-  if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
-  if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
   if (normalized.includes('spare')) return 'spares';
+  if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
+  if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
   if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';
   return '';
 }
@@ -4044,6 +4030,7 @@ app.get('/api/fall-pdf-docs', handleFallPdfDocuments);
 app.get('/api/fall-pdf-search', handleFallPdfSearch);
 app.get('/api/fall-pdf-download', handleFallPdfDownload);
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
+app.post('/api/admin/rebuild-booking-board', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
