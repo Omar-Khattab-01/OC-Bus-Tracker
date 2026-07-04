@@ -854,6 +854,7 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
     sections = []
     current_section = None
     current_garage = None
+    current_group = "daily"
 
     def parse_spare_row(line: str):
       compact_match = re.fullmatch(r"(\d+)\s+(\d+)\s+(\d+)(\d{2}:\d{2})", line)
@@ -883,15 +884,59 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
       current_section = None
       current_garage = None
 
-    def start_section(title: str, page_number: int):
-      nonlocal current_section, current_garage
+    def normalize_section_group(title: str, page_number: int):
+      lower = title.lower()
+      if "labour day" in lower or "thanksgiving" in lower or "remembrance" in lower or "stat" in lower:
+          return "stat"
+      if "saturday" in lower or page_number in {3, 4}:
+          return "saturday"
+      if "sunday" in lower or page_number in {6, 7}:
+          return "sunday"
+      if board_id == "floating_spares":
+          return "floating"
+      return "daily"
+
+    def normalize_section_kind(title: str):
+      lower = title.lower()
+      if "floating" in lower:
+          return "floating"
+      if "am spare" in lower:
+          return "am"
+      if "pm spare" in lower:
+          return "pm"
+      if "1 spare" in lower:
+          return "week1"
+      if "2 spare" in lower:
+          return "week2"
+      return "regular"
+
+    def normalize_holiday(title: str):
+      lower = title.lower()
+      if "labour day" in lower:
+          return "labour-day", "Labour Day"
+      if "thanksgiving" in lower:
+          return "thanksgiving", "Thanksgiving"
+      if "remembrance" in lower:
+          return "remembrance-day", "Remembrance Day"
+      return "", ""
+
+    def start_section(title: str, page_number: int, group: str | None = None):
+      nonlocal current_section, current_garage, current_group
       flush_section()
+      section_group = group or normalize_section_group(title, page_number)
+      current_group = section_group
+      holiday_key, holiday_label = normalize_holiday(title)
       current_section = {
           "id": re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-"),
           "title": title,
           "page": page_number,
+          "group": section_group,
+          "kind": normalize_section_kind(title),
           "garages": [],
       }
+      if holiday_key:
+          current_section["holidayKey"] = holiday_key
+          current_section["holidayLabel"] = holiday_label
       current_garage = None
 
     def ensure_garage(name: str):
@@ -925,11 +970,26 @@ def parse_spares_board(pdf_path: Path, board_id: str = "spares", title: str = "S
             if board_id == "spares" and line in FLOATING_SPARE_TITLES:
                 flush_section()
                 continue
-            if line in {"Saturday Spare", "Sunday Spare", "Stats Spare"}:
+            if line == "Saturday Spare":
+                current_group = "saturday"
                 flush_section()
                 continue
+            if line == "Sunday Spare":
+                current_group = "sunday"
+                flush_section()
+                continue
+            if line == "Stats Spare":
+                current_group = "stat"
+                flush_section()
+                continue
+            holiday_garage_match = re.match(r"^(Labour Day|Thanksgiving|Remembrance Day)\s+(.+)$", line)
+            if holiday_garage_match and not line.endswith("Spare"):
+                holiday_label = holiday_garage_match.group(1)
+                expected_title = f"{holiday_label} Spare"
+                if current_section is None or current_section.get("title") != expected_title:
+                    start_section(expected_title, page["page"], "stat")
             if "Spare" in line or line.startswith("Canada Day ") or line.startswith("August Civic "):
-                start_section(line, page["page"])
+                start_section(line, page["page"], current_group if line in {"AM Spare", "PM Spare"} else None)
                 continue
             row = parse_spare_row(line)
             if row:

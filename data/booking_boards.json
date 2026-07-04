@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Fall Booking/Booking Boards",
-  "generatedAt": "2026-07-04T15:41:33.348475+00:00",
+  "generatedAt": "2026-07-04T15:52:12.351329+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -75391,6 +75391,8 @@
           "id": "daily-spare",
           "title": "Daily Spare",
           "page": 1,
+          "group": "daily",
+          "kind": "regular",
           "garages": [
             {
               "name": "Industrial Garage",
@@ -75580,6 +75582,8 @@
           "id": "pm-spare",
           "title": "PM Spare",
           "page": 1,
+          "group": "daily",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -75598,6 +75602,8 @@
           "id": "daily-floating-spare",
           "title": "Daily Floating Spare",
           "page": 1,
+          "group": "daily",
+          "kind": "floating",
           "garages": [
             {
               "name": "All locations",
@@ -75616,6 +75622,8 @@
           "id": "saturday-1-spare",
           "title": "Saturday 1 Spare",
           "page": 3,
+          "group": "saturday",
+          "kind": "week1",
           "garages": [
             {
               "name": "Industrial Garage",
@@ -75872,6 +75880,8 @@
           "id": "saturday-2-spare",
           "title": "Saturday 2 Spare",
           "page": 3,
+          "group": "saturday",
+          "kind": "week2",
           "garages": [
             {
               "name": "Industrial Garage",
@@ -76122,6 +76132,8 @@
           "id": "am-spare",
           "title": "AM Spare",
           "page": 4,
+          "group": "saturday",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -76140,6 +76152,8 @@
           "id": "pm-spare",
           "title": "PM Spare",
           "page": 4,
+          "group": "saturday",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -76176,6 +76190,8 @@
           "id": "am-spare",
           "title": "AM Spare",
           "page": 4,
+          "group": "saturday",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -76194,6 +76210,8 @@
           "id": "pm-spare",
           "title": "PM Spare",
           "page": 4,
+          "group": "saturday",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -76224,6 +76242,8 @@
           "id": "sunday-1-spare",
           "title": "Sunday 1 Spare",
           "page": 6,
+          "group": "sunday",
+          "kind": "week1",
           "garages": [
             {
               "name": "Industrial Garage",
@@ -76474,6 +76494,8 @@
           "id": "sunday-2-spare",
           "title": "Sunday 2 Spare",
           "page": 6,
+          "group": "sunday",
+          "kind": "week2",
           "garages": [
             {
               "name": "Industrial Garage",
@@ -76724,6 +76746,8 @@
           "id": "am-spare",
           "title": "AM Spare",
           "page": 7,
+          "group": "sunday",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -76742,6 +76766,8 @@
           "id": "pm-spare",
           "title": "PM Spare",
           "page": 7,
+          "group": "sunday",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -76778,6 +76804,8 @@
           "id": "am-spare",
           "title": "AM Spare",
           "page": 7,
+          "group": "sunday",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -76796,6 +76824,8 @@
           "id": "pm-spare",
           "title": "PM Spare",
           "page": 7,
+          "group": "sunday",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -76825,7 +76855,16 @@
                   "available": 6
                 }
               ]
-            },
+            }
+          ]
+        },
+        {
+          "id": "labour-day-spare",
+          "title": "Labour Day Spare",
+          "page": 8,
+          "group": "stat",
+          "kind": "regular",
+          "garages": [
             {
               "name": "Labour Day Industrial Garage",
               "slots": [
@@ -77069,12 +77108,16 @@
                 }
               ]
             }
-          ]
+          ],
+          "holidayKey": "labour-day",
+          "holidayLabel": "Labour Day"
         },
         {
           "id": "labour-day-am-spare",
           "title": "Labour Day AM Spare",
           "page": 8,
+          "group": "stat",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -77087,12 +77130,16 @@
                 }
               ]
             }
-          ]
+          ],
+          "holidayKey": "labour-day",
+          "holidayLabel": "Labour Day"
         },
         {
           "id": "labour-day-pm-spare",
           "title": "Labour Day PM Spare",
           "page": 9,
+          "group": "stat",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -77122,7 +77169,18 @@
                   "available": 6
                 }
               ]
-            },
+            }
+          ],
+          "holidayKey": "labour-day",
+          "holidayLabel": "Labour Day"
+        },
+        {
+          "id": "thanksgiving-spare",
+          "title": "Thanksgiving Spare",
+          "page": 9,
+          "group": "stat",
+          "kind": "regular",
+          "garages": [
             {
               "name": "Thanksgiving Industrial Garage",
               "slots": [
@@ -77366,12 +77424,16 @@
                 }
               ]
             }
-          ]
+          ],
+          "holidayKey": "thanksgiving",
+          "holidayLabel": "Thanksgiving"
         },
         {
           "id": "thanksgiving-am-spare",
           "title": "Thanksgiving AM Spare",
           "page": 10,
+          "group": "stat",
+          "kind": "am",
           "garages": [
             {
               "name": "All locations",
@@ -77384,12 +77446,16 @@
                 }
               ]
             }
-          ]
+          ],
+          "holidayKey": "thanksgiving",
+          "holidayLabel": "Thanksgiving"
         },
         {
           "id": "thanksgiving-pm-spare",
           "title": "Thanksgiving PM Spare",
           "page": 10,
+          "group": "stat",
+          "kind": "pm",
           "garages": [
             {
               "name": "All locations",
@@ -77420,7 +77486,9 @@
                 }
               ]
             }
-          ]
+          ],
+          "holidayKey": "thanksgiving",
+          "holidayLabel": "Thanksgiving"
         }
       ],
       "updatedAt": "2026-07-04T15:40:58.041900+00:00"

@@ -599,6 +599,16 @@
       line-height: 1.45;
     }
 
+    .spare-kind-title {
+      margin: 8px 0 -2px;
+      color: #f8fafc;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
     .spare-section-table {
       width: 100%;
       border-collapse: collapse;
@@ -1560,6 +1570,8 @@
 
       const isFloatingBoard = board?.id === 'floating_spares';
       const categorizeSpareSection = (section) => {
+        const parsedGroup = String(section?.group || '').trim();
+        if (parsedGroup) return parsedGroup;
         if (isFloatingBoard) return 'floating';
         const title = String(section?.title || '').toLowerCase();
         const page = Number(section?.page || 0) || 0;
@@ -1608,14 +1620,43 @@
         const getOrder = (section, index) => {
           const title = String(section?.title || '').toLowerCase();
           const page = Number(section?.page || 0) || 0;
+          const kind = String(section?.kind || '').trim();
+          const kindOrder = {
+            regular: 0,
+            week1: 1,
+            week2: 2,
+            am: 3,
+            pm: 4,
+            floating: 5,
+          };
           const saturdayWeek = title.match(/\bsaturday\s+([12])\s+spare\b/);
           if (saturdayWeek) return [page, Number(saturdayWeek[1]) - 1, index];
-          return [page, 50, index];
+          return [page, kindOrder[kind] ?? 50, index];
         };
         const left = getOrder(a, items.indexOf(a));
         const right = getOrder(b, items.indexOf(b));
         return left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
       });
+
+      const sectionKindLabel = (section) => {
+        const kind = String(section?.kind || '').trim();
+        if (kind === 'week1') return 'Week 1 Spare';
+        if (kind === 'week2') return 'Week 2 Spare';
+        if (kind === 'am') return 'AM Spare';
+        if (kind === 'pm') return 'PM Spare';
+        if (kind === 'floating') return 'Floating Spare';
+        return 'Main Spare';
+      };
+
+      const groupSectionsByKind = (items) => {
+        const buckets = new Map();
+        for (const section of items) {
+          const label = sectionKindLabel(section);
+          if (!buckets.has(label)) buckets.set(label, []);
+          buckets.get(label).push(section);
+        }
+        return Array.from(buckets.entries());
+      };
 
       const renderSectionCard = (section) => `
         <article class="board-card">
@@ -1737,7 +1778,10 @@
               <div class="board-total-pill"><strong>Limit</strong><span>${escapeHtml(limitTotal)}</span></div>
             </div>
           </div>
-          ${groupSections.map(renderSectionCard).join('')}
+          ${groupSectionsByKind(groupSections).map(([label, sectionsForKind]) => `
+            <h4 class="spare-kind-title">${escapeHtml(label)}</h4>
+            ${sectionsForKind.map(renderSectionCard).join('')}
+          `).join('')}
         </section>
       `;
     }
