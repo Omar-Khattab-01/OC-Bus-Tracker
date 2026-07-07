@@ -218,10 +218,60 @@
       background: rgba(180, 35, 24, 0.05);
     }
 
+    .override-panel {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcff;
+    }
+
+    .override-panel h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .override-panel p {
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .floating-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .floating-input {
+      display: grid;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .floating-input strong {
+      min-height: 38px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .floating-input span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
     @media (max-width: 720px) {
       .main { padding: 16px; }
       .top { display: block; }
       .grid { grid-template-columns: 1fr; }
+      .floating-grid { grid-template-columns: 1fr; }
       .match-row { grid-template-columns: 1fr; }
     }
   </style>
@@ -250,6 +300,12 @@
         </div>
         <div id="matchList" class="match-list"></div>
 
+        <div class="override-panel">
+          <h2>Floating spare available spots</h2>
+          <p>Use these when the floating spare box is embedded as an image in the spare PDF. Leave blank to keep the parsed PDF values.</p>
+          <div id="floatingOverrideList" class="floating-grid"></div>
+        </div>
+
         <div class="actions">
           <button id="uploadBtn" type="submit">Upload matched PDFs and rebuild</button>
           <button id="clearFilesBtn" class="secondary-btn" type="button">Clear staged PDFs</button>
@@ -271,6 +327,7 @@
     const clearFilesBtn = document.getElementById('clearFilesBtn');
     const statusEl = document.getElementById('status');
     const matchList = document.getElementById('matchList');
+    const floatingOverrideList = document.getElementById('floatingOverrideList');
     let stagedFiles = [];
 
     const boardTargets = [
@@ -280,6 +337,12 @@
       { key: 'stat', label: 'Fall Stat Work', filename: '2026 Fall stat boards TRIP.pdf' },
     ];
     const boardTargetsByKey = Object.fromEntries(boardTargets.map((target) => [target.key, target]));
+    const floatingSpareDefinitions = [
+      { id: 'weekly-floating-spare', title: 'Weekly Floating Spare', limit: 35 },
+      { id: 'weekly-pm-floating-spare', title: 'Weekly PM Floating Spare', limit: 8 },
+      { id: 'daily-early-early-floating-spare', title: 'Daily Early Early Floating Spare', limit: 20 },
+      { id: 'daily-early-floating-spare', title: 'Daily Early Floating Spare', limit: 30 },
+    ];
 
     const savedToken = sessionStorage.getItem('bookingBoardAdminToken');
     if (savedToken) adminToken.value = savedToken;
@@ -329,6 +392,40 @@
         matched.set(boardKey, item);
       }
       return { matched, unmatched, duplicates };
+    }
+
+    function renderFloatingOverrides() {
+      floatingOverrideList.innerHTML = floatingSpareDefinitions.map((definition) => `
+        <label class="floating-input">
+          <strong>${escapeHtml(definition.title)}</strong>
+          <span>Available, max ${definition.limit}</span>
+          <input
+            type="number"
+            inputmode="numeric"
+            min="0"
+            max="${definition.limit}"
+            step="1"
+            placeholder="Available"
+            data-floating-available="${escapeHtml(definition.id)}"
+          >
+        </label>
+      `).join('');
+    }
+
+    function getFloatingSpareOverrides() {
+      const overrides = [];
+      for (const input of floatingOverrideList.querySelectorAll('[data-floating-available]')) {
+        const value = String(input.value || '').trim();
+        if (!value) continue;
+        const definition = floatingSpareDefinitions.find((item) => item.id === input.dataset.floatingAvailable);
+        if (!definition) continue;
+        const available = Number.parseInt(value, 10);
+        if (!Number.isInteger(available) || available < 0 || available > definition.limit) {
+          throw new Error(`${definition.title} available spots must be between 0 and ${definition.limit}.`);
+        }
+        overrides.push({ id: definition.id, available });
+      }
+      return overrides;
     }
 
     function addStagedFiles(files) {
@@ -429,8 +526,15 @@
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const { matched, unmatched, duplicates } = getMatchedFiles();
-      if (!matched.size) {
-        setStatus('Choose at least one matching PDF first.', 'warn');
+      let floatingSpareOverrides = [];
+      try {
+        floatingSpareOverrides = getFloatingSpareOverrides();
+      } catch (err) {
+        setStatus(err.message || 'Check the floating spare available spots.', 'warn');
+        return;
+      }
+      if (!matched.size && !floatingSpareOverrides.length) {
+        setStatus('Choose at least one matching PDF or enter floating spare available spots first.', 'warn');
         return;
       }
       if (duplicates.length) {
@@ -441,7 +545,12 @@
       uploadBtn.disabled = true;
       sessionStorage.setItem('bookingBoardAdminToken', adminToken.value);
       const matchedLabels = [...matched.keys()].map((key) => boardTargetsByKey[key].label).join(', ');
-      setStatus(`Matched: ${matchedLabels}.\nReading PDFs and rebuilding booking boards once. This can take a minute...`);
+      const overrideLine = floatingSpareOverrides.length ? `Floating spare overrides: ${floatingSpareOverrides.length}.` : '';
+      setStatus([
+        matchedLabels ? `Matched: ${matchedLabels}.` : '',
+        overrideLine,
+        'Reading PDFs and rebuilding booking boards once. This can take a minute...',
+      ].filter(Boolean).join('\n'));
 
       try {
         const files = [];
@@ -460,7 +569,7 @@
             'content-type': 'application/json',
             'x-admin-token': adminToken.value,
           },
-          body: JSON.stringify({ files }),
+          body: JSON.stringify({ files, floatingSpareOverrides }),
         });
         const data = await response.json();
         if (!response.ok || !data.ok) {
@@ -474,11 +583,15 @@
           : 'Updated selected boards.';
         const missingLine = missing.length ? `Missing from this batch: ${missing.map((item) => item.label).join(', ')}` : 'All board PDFs were included.';
         const unmatchedLine = unmatchedResponse.length ? `Not matched: ${unmatchedResponse.join(', ')}` : '';
+        const floatingLine = Array.isArray(data.floatingSpareOverrides) && data.floatingSpareOverrides.length
+          ? `Floating spares updated: ${data.floatingSpareOverrides.join(', ')}`
+          : '';
         setStatus([
           'Site update successful. It can take about a minute to show on the site.',
           uploadedLine,
           missingLine,
           unmatchedLine,
+          floatingLine,
         ].filter(Boolean).join('\n'), 'ok');
         stagedFiles = [];
         pdfFile.value = '';
@@ -490,6 +603,8 @@
         renderMatches();
       }
     });
+
+    renderFloatingOverrides();
   </script>
 </body>
 </html>

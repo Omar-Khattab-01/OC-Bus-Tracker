@@ -41,6 +41,12 @@ TARGETS = {
         "board_ids": ["stat_work"],
     },
 }
+FLOATING_SPARE_OVERRIDE_DEFINITIONS = [
+    {"id": "weekly-floating-spare", "title": "Weekly Floating Spare", "limit": 35},
+    {"id": "weekly-pm-floating-spare", "title": "Weekly PM Floating Spare", "limit": 8},
+    {"id": "daily-early-early-floating-spare", "title": "Daily Early Early Floating Spare", "limit": 20},
+    {"id": "daily-early-floating-spare", "title": "Daily Early Floating Spare", "limit": 30},
+]
 
 
 def normalize_upload_name(name: str) -> str:
@@ -113,6 +119,80 @@ def build_payload(temp_source_dir: Path) -> dict:
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "boards": boards,
     }
+
+
+def normalize_floating_spare_overrides(raw_overrides) -> list[dict]:
+    if not isinstance(raw_overrides, list):
+        return []
+    definitions_by_id = {
+        definition["id"]: definition
+        for definition in FLOATING_SPARE_OVERRIDE_DEFINITIONS
+    }
+    overrides = []
+    for item in raw_overrides:
+        if not isinstance(item, dict):
+            continue
+        override_id = str(item.get("id") or "").strip()
+        definition = definitions_by_id.get(override_id)
+        if not definition:
+            continue
+        try:
+            available = int(str(item.get("available")).strip())
+        except Exception as error:
+            raise ValueError(f"{definition['title']} available spots must be a number.") from error
+        if available < 0 or available > int(definition["limit"]):
+            raise ValueError(f"{definition['title']} available spots must be between 0 and {definition['limit']}.")
+        limit = int(definition["limit"])
+        overrides.append({
+            **definition,
+            "available": available,
+            "booked": max(0, limit - available),
+        })
+    return overrides
+
+
+def apply_floating_spare_overrides(payload: dict, raw_overrides) -> tuple[dict, list[str]]:
+    overrides = normalize_floating_spare_overrides(raw_overrides)
+    if not overrides:
+        return payload, []
+
+    boards = payload.get("boards") if isinstance(payload.get("boards"), list) else []
+    spares_board = next((board for board in boards if board.get("id") == "spares"), None)
+    if not spares_board:
+        return payload, []
+
+    override_titles = {override["title"] for override in overrides}
+    existing_sections = spares_board.get("sections") if isinstance(spares_board.get("sections"), list) else []
+    non_floating_sections = [
+        section
+        for section in existing_sections
+        if section.get("kind") != "floating" and str(section.get("title") or "") not in override_titles
+    ]
+    floating_sections = [
+        {
+            "id": override["id"],
+            "title": override["title"],
+            "page": 1,
+            "group": "daily",
+            "kind": "floating",
+            "garages": [
+                {
+                    "name": "All locations",
+                    "slots": [
+                        {
+                            "onTime": "00:00",
+                            "limit": int(override["limit"]),
+                            "booked": int(override["booked"]),
+                            "available": int(override["available"]),
+                        }
+                    ],
+                }
+            ],
+        }
+        for override in overrides
+    ]
+    spares_board["sections"] = non_floating_sections + floating_sections
+    return payload, [section["title"] for section in floating_sections]
 
 
 def github_request(method: str, url: str, token: str, body: dict | None = None) -> dict:
@@ -202,7 +282,7 @@ def merge_board_update_timestamps(payload: dict, previous_payload: dict, target:
     return {**payload, "boards": boards}
 
 
-def commit_updates(uploaded_targets: dict[str, bytes], payload: dict):
+def commit_updates(uploaded_targets: dict[str, bytes], payload: dict, updated_board_keys: list[str]):
     token = os.environ.get("BOOKING_BOARD_GITHUB_TOKEN", "").strip()
     if not token:
         raise RuntimeError("Set BOOKING_BOARD_GITHUB_TOKEN in Vercel to permanently update booking boards.")
@@ -211,7 +291,7 @@ def commit_updates(uploaded_targets: dict[str, bytes], payload: dict):
     branch = os.environ.get("BOOKING_BOARD_GITHUB_BRANCH", "main").strip()
     updated_at = datetime.now(timezone.utc).isoformat()
     previous_payload = get_existing_booking_board_payload(repo, branch, token)
-    targets = [TARGETS[key] for key in uploaded_targets.keys()]
+    targets = [TARGETS[key] for key in updated_board_keys if key in TARGETS]
     payload = merge_board_update_timestamps(payload, previous_payload, targets, updated_at)
     data_bytes = json.dumps(payload, indent=2).encode("utf-8") + b"\n"
 
@@ -237,20 +317,22 @@ def commit_updates(uploaded_targets: dict[str, bytes], payload: dict):
     return repo, branch, updated_at, payload
 
 
-def decode_batch_files(raw_body: bytes) -> tuple[dict[str, bytes], list[dict], list[str]]:
+def decode_batch_files(raw_body: bytes) -> tuple[dict[str, bytes], list[dict], list[str], list[dict]]:
     try:
         body = json.loads(raw_body.decode("utf-8"))
     except Exception as error:
         raise ValueError("Upload JSON could not be read.") from error
 
     files = body.get("files") if isinstance(body, dict) else None
-    if not isinstance(files, list) or not files:
-        raise ValueError("Choose at least one PDF file.")
+    raw_overrides = body.get("floatingSpareOverrides") if isinstance(body, dict) else None
+    floating_spare_overrides = normalize_floating_spare_overrides(raw_overrides)
+    if (not isinstance(files, list) or not files) and not floating_spare_overrides:
+        raise ValueError("Choose at least one PDF file or enter floating spare available spots.")
 
     uploaded_targets: dict[str, bytes] = {}
     matched = []
     unmatched = []
-    for item in files:
+    for item in files or []:
         if not isinstance(item, dict):
             continue
         original_name = str(item.get("name") or "").strip()
@@ -277,9 +359,9 @@ def decode_batch_files(raw_body: bytes) -> tuple[dict[str, bytes], list[dict], l
             "filename": TARGETS[board_key]["filename"],
         })
 
-    if not uploaded_targets:
+    if not uploaded_targets and not floating_spare_overrides:
         raise ValueError("None of the selected PDFs matched a booking board type.")
-    return uploaded_targets, matched, unmatched
+    return uploaded_targets, matched, unmatched, floating_spare_overrides
 
 
 class handler(BaseHTTPRequestHandler):
@@ -302,8 +384,9 @@ class handler(BaseHTTPRequestHandler):
             matched = []
             unmatched = []
             uploaded_targets: dict[str, bytes] = {}
+            floating_spare_overrides = []
             if "application/json" in header_value(self, "content-type").lower():
-                uploaded_targets, matched, unmatched = decode_batch_files(raw_body)
+                uploaded_targets, matched, unmatched, floating_spare_overrides = decode_batch_files(raw_body)
             else:
                 target = TARGETS.get(board_key)
                 if not target:
@@ -326,7 +409,11 @@ class handler(BaseHTTPRequestHandler):
                 for key, pdf_bytes in uploaded_targets.items():
                     (temp_source_dir / TARGETS[key]["filename"]).write_bytes(pdf_bytes)
                 payload = build_payload(temp_source_dir)
-                repo, branch, updated_at, payload = commit_updates(uploaded_targets, payload)
+                payload, applied_floating_overrides = apply_floating_spare_overrides(payload, floating_spare_overrides)
+                updated_board_keys = list(uploaded_targets.keys())
+                if applied_floating_overrides and "spares" not in updated_board_keys:
+                    updated_board_keys.append("spares")
+                repo, branch, updated_at, payload = commit_updates(uploaded_targets, payload, updated_board_keys)
 
             json_response(
                 self,
@@ -340,6 +427,7 @@ class handler(BaseHTTPRequestHandler):
                         if key not in uploaded_targets
                     ],
                     "unmatched": unmatched,
+                    "floatingSpareOverrides": applied_floating_overrides,
                     "boardCount": len(payload["boards"]),
                     "updatedAt": updated_at,
                     "storage": "github",

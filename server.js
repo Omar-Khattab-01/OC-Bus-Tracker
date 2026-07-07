@@ -98,6 +98,12 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
   },
 };
 const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'stat'];
+const FLOATING_SPARE_OVERRIDE_DEFINITIONS = [
+  { id: 'weekly-floating-spare', title: 'Weekly Floating Spare', limit: 35 },
+  { id: 'weekly-pm-floating-spare', title: 'Weekly PM Floating Spare', limit: 8 },
+  { id: 'daily-early-early-floating-spare', title: 'Daily Early Early Floating Spare', limit: 20 },
+  { id: 'daily-early-floating-spare', title: 'Daily Early Floating Spare', limit: 30 },
+];
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -3745,6 +3751,61 @@ function classifyBookingBoardUploadName(name) {
   return '';
 }
 
+function normalizeFloatingSpareOverrides(rawOverrides) {
+  if (!Array.isArray(rawOverrides)) return [];
+  const definitionsById = new Map(FLOATING_SPARE_OVERRIDE_DEFINITIONS.map((definition) => [definition.id, definition]));
+  const overrides = [];
+  for (const item of rawOverrides) {
+    const id = String(item?.id || '').trim();
+    const definition = definitionsById.get(id);
+    if (!definition) continue;
+    const available = Number.parseInt(String(item?.available ?? '').trim(), 10);
+    if (!Number.isInteger(available) || available < 0 || available > definition.limit) {
+      throw new Error(`${definition.title} available spots must be between 0 and ${definition.limit}.`);
+    }
+    overrides.push({
+      ...definition,
+      available,
+      booked: Math.max(0, definition.limit - available),
+    });
+  }
+  return overrides;
+}
+
+function applyFloatingSpareOverrides(bookingBoardsData, rawOverrides) {
+  const overrides = normalizeFloatingSpareOverrides(rawOverrides);
+  if (!overrides.length) return { data: bookingBoardsData, applied: [] };
+
+  const boards = Array.isArray(bookingBoardsData?.boards) ? bookingBoardsData.boards : [];
+  const data = { ...bookingBoardsData, boards: boards.map((board) => ({ ...board })) };
+  const sparesBoard = data.boards.find((board) => board?.id === 'spares');
+  if (!sparesBoard) return { data, applied: [] };
+
+  const overrideTitles = new Set(overrides.map((override) => override.title));
+  const existingSections = Array.isArray(sparesBoard.sections) ? sparesBoard.sections : [];
+  const nonFloatingSections = existingSections.filter((section) => (
+    section?.kind !== 'floating' && !overrideTitles.has(String(section?.title || ''))
+  ));
+  const floatingSections = overrides.map((override) => ({
+    id: override.id,
+    title: override.title,
+    page: 1,
+    group: 'daily',
+    kind: 'floating',
+    garages: [{
+      name: 'All locations',
+      slots: [{
+        onTime: '00:00',
+        limit: override.limit,
+        booked: override.booked,
+        available: override.available,
+      }],
+    }],
+  }));
+  sparesBoard.sections = [...nonFloatingSections, ...floatingSections];
+  return { data, applied: floatingSections.map((section) => section.title) };
+}
+
 function copyBookingBoardSourcesToTemp(tempSourceDir) {
   fs.mkdirSync(tempSourceDir, { recursive: true });
   for (const target of Object.values(BOOKING_BOARD_UPLOAD_TARGETS)) {
@@ -3787,11 +3848,11 @@ async function rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile) {
   throw new Error(message);
 }
 
-async function rebuildUploadedBookingBoards(uploadedTargets) {
+async function rebuildUploadedBookingBoards(uploadedTargets, options = {}) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-boards-'));
   const tempSourceDir = path.join(tempRoot, 'Booking_Boards');
   const tempOutputFile = path.join(tempRoot, 'booking_boards.json');
-  const uploadedBoardKeys = Object.keys(uploadedTargets);
+  const uploadedBoardKeys = [...Object.keys(uploadedTargets)];
 
   try {
     const previousData = loadBookingBoardsData();
@@ -3802,7 +3863,12 @@ async function rebuildUploadedBookingBoards(uploadedTargets) {
     }
 
     const pythonBin = await rebuildBookingBoardsWithPython(tempSourceDir, tempOutputFile);
-    const rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
+    let rebuiltData = JSON.parse(fs.readFileSync(tempOutputFile, 'utf8'));
+    const floatingOverrideResult = applyFloatingSpareOverrides(rebuiltData, options.floatingSpareOverrides);
+    rebuiltData = floatingOverrideResult.data;
+    if (floatingOverrideResult.applied.length && !uploadedBoardKeys.includes('spares')) {
+      uploadedBoardKeys.push('spares');
+    }
     const updatedAt = new Date().toISOString();
     const mergedData = mergeBookingBoardUpdateTimestamps(rebuiltData, previousData, uploadedBoardKeys, updatedAt);
     bookingBoardsDataCache = mergedData;
@@ -3812,6 +3878,7 @@ async function rebuildUploadedBookingBoards(uploadedTargets) {
       boardCount: Array.isArray(mergedData?.boards) ? mergedData.boards.length : 0,
       updatedAt,
       runtime: pythonBin,
+      floatingSpareOverrides: floatingOverrideResult.applied,
     };
   } finally {
     try {
@@ -3886,8 +3953,9 @@ async function handleBookingBoardBatchUpload(req, res) {
 
   try {
     const files = Array.isArray(req.body?.files) ? req.body.files : [];
-    if (!files.length) {
-      res.status(400).json({ ok: false, error: 'Choose at least one PDF file.' });
+    const floatingSpareOverrides = Array.isArray(req.body?.floatingSpareOverrides) ? req.body.floatingSpareOverrides : [];
+    if (!files.length && !floatingSpareOverrides.length) {
+      res.status(400).json({ ok: false, error: 'Choose at least one PDF file or enter floating spare available spots.' });
       return;
     }
 
@@ -3924,12 +3992,12 @@ async function handleBookingBoardBatchUpload(req, res) {
       });
     }
 
-    if (!Object.keys(uploadedTargets).length) {
+    if (!Object.keys(uploadedTargets).length && !floatingSpareOverrides.length) {
       res.status(400).json({ ok: false, error: 'None of the selected PDFs matched a booking board type.' });
       return;
     }
 
-    const result = await rebuildUploadedBookingBoards(uploadedTargets);
+    const result = await rebuildUploadedBookingBoards(uploadedTargets, { floatingSpareOverrides });
     res.json({
       ok: true,
       uploaded,
@@ -3941,6 +4009,7 @@ async function handleBookingBoardBatchUpload(req, res) {
       updatedAt: result.updatedAt,
       storage: 'runtime-memory',
       runtime: result.runtime,
+      floatingSpareOverrides: result.floatingSpareOverrides,
       note: 'Site update successful. It can take about a minute to show on the site.',
     });
   } catch (err) {
