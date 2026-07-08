@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Fall Booking/Booking Boards PDFs",
-  "generatedAt": "2026-07-08T09:24:26.402200+00:00",
+  "generatedAt": "2026-07-08T09:27:45.802162+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -29159,7 +29159,7 @@
           "workSection": "AM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-07-08T09:24:26.402251+00:00"
+      "updatedAt": "2026-07-08T09:27:45.802232+00:00"
     },
     {
       "id": "weekend_boards",
@@ -73412,7 +73412,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-07-08T09:24:26.402251+00:00"
+      "updatedAt": "2026-07-08T09:27:45.802232+00:00"
     },
     {
       "id": "spares",
@@ -75531,7 +75531,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-08T09:24:26.402251+00:00"
+      "updatedAt": "2026-07-08T09:27:45.802232+00:00"
     },
     {
       "id": "stat_work",
@@ -113094,7 +113094,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-08T09:24:26.402251+00:00"
+      "updatedAt": "2026-07-08T09:27:45.802232+00:00"
     }
   ]
 }
