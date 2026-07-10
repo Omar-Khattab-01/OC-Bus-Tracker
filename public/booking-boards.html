@@ -656,6 +656,28 @@
       white-space: nowrap;
     }
 
+    .days-off-table {
+      table-layout: fixed;
+    }
+
+    .days-off-table .day-cell {
+      width: 28%;
+    }
+
+    .days-off-table .week-cell {
+      width: 14%;
+    }
+
+    .days-off-table .counter-value-cell {
+      width: 18%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .days-off-table th.counter-value-cell {
+      white-space: normal;
+    }
+
     .empty {
       padding: 20px 18px;
       color: var(--oc-mist);
@@ -942,6 +964,30 @@
       .board-card-head { padding: 12px; }
       .meta-strip { grid-template-columns: 1fr 1fr 1fr; }
       .meta-grid { grid-template-columns: 1fr 1fr; }
+      .spare-grid {
+        padding: 10px;
+      }
+      .days-off-table th,
+      .days-off-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+      .days-off-table th {
+        font-size: 9px;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+      }
+      .days-off-table .day-cell {
+        width: 30%;
+      }
+      .days-off-table .week-cell {
+        width: 12%;
+        text-align: center;
+      }
+      .days-off-table .counter-value-cell {
+        width: 19.33%;
+        text-align: right;
+      }
       .pieces {
         padding: 8px;
       }
@@ -2120,24 +2166,24 @@
               <div class="pill open">${escapeHtml(formatRemainingCount(activeCounter.remaining))} remaining</div>
             </div>
             <div class="spare-grid">
-              <table class="spare-section-table">
+              <table class="spare-section-table days-off-table">
                 <thead>
                   <tr>
-                    <th>Day</th>
-                    <th>Week</th>
-                    <th class="value-cell">Total</th>
-                    <th class="value-cell">Booked</th>
-                    <th class="value-cell">Remaining</th>
+                    <th class="day-cell">Day</th>
+                    <th class="week-cell">Week</th>
+                    <th class="counter-value-cell">Total</th>
+                    <th class="counter-value-cell">Booked</th>
+                    <th class="counter-value-cell">Remaining</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${activeCounter.rows.map((row) => `
                     <tr>
-                      <td>${escapeHtml(row.day)}</td>
-                      <td>${escapeHtml(row.week || 'All')}</td>
-                      <td class="value-cell">${escapeHtml(row.total)}</td>
-                      <td class="value-cell">${escapeHtml(row.booked)}</td>
-                      <td class="value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
+                      <td class="day-cell">${escapeHtml(row.day)}</td>
+                      <td class="week-cell">${escapeHtml(row.week || 'All')}</td>
+                      <td class="counter-value-cell">${escapeHtml(row.total)}</td>
+                      <td class="counter-value-cell">${escapeHtml(row.booked)}</td>
+                      <td class="counter-value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
                     </tr>
                   `).join('')}
                 </tbody>

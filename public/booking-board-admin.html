@@ -334,6 +334,7 @@
       { key: 'daily', label: 'Fall Daily Work', filename: '2026 Fall Daily boards TRIP .pdf' },
       { key: 'weekend', label: 'Fall Weekend Work', filename: '2026 Fall Weekend boards TRIP.pdf' },
       { key: 'spares', label: 'Fall Spare Boards', filename: '2026 Fall Daily and weekend spare update.pdf' },
+      { key: 'days_off_counter', label: 'Fall Days Off Counter', filename: '2026 Fall Days off counter  (1).pdf' },
       { key: 'stat', label: 'Fall Stat Work', filename: '2026 Fall stat boards TRIP.pdf' },
     ];
     const boardTargetsByKey = Object.fromEntries(boardTargets.map((target) => [target.key, target]));
@@ -368,6 +369,7 @@
     function classifyUploadName(name) {
       const normalized = normalizeUploadName(name);
       if (normalized.includes('spare')) return 'spares';
+      if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
       if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
       if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
       if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';
@@ -469,7 +471,7 @@
           <div class="match-row warn">
             <div class="match-board">Not matched</div>
             <div class="match-source">${escapeHtml(file.name)}</div>
-            <div class="match-target">Rename the file with daily, weekend, spare, or stat.</div>
+            <div class="match-target">Rename the file with daily, weekend, spare, days off/counter, or stat.</div>
             <button class="remove-btn" type="button" data-remove-file="${escapeHtml(item.id)}">Remove</button>
           </div>
         `);

@@ -91,13 +91,18 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
     filename: '2026 Fall Weekend boards TRIP.pdf',
     boardIds: ['weekend_boards'],
   },
+  days_off_counter: {
+    label: 'Fall Days Off Counter',
+    filename: '2026 Fall Days off counter  (1).pdf',
+    boardIds: ['days_off_counter'],
+  },
   stat: {
     label: 'Fall Stat Work',
     filename: '2026 Fall stat boards TRIP.pdf',
     boardIds: ['stat_work'],
   },
 };
-const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'stat'];
+const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'days_off_counter', 'stat'];
 const FLOATING_SPARE_OVERRIDE_DEFINITIONS = [
   { id: 'weekly-floating-spare', title: 'Weekly Floating Spare', limit: 35 },
   { id: 'weekly-pm-floating-spare', title: 'Weekly PM Floating Spare', limit: 8 },
@@ -3745,6 +3750,7 @@ function normalizeBookingBoardUploadName(name) {
 function classifyBookingBoardUploadName(name) {
   const normalized = normalizeBookingBoardUploadName(name);
   if (normalized.includes('spare')) return 'spares';
+  if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
   if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
   if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
   if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';

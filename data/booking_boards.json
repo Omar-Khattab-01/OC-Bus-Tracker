@@ -1,6 +1,6 @@
 {
-  "generatedFrom": "Fall Booking/Booking Boards PDFs",
-  "generatedAt": "2026-07-09T13:07:39.768288+00:00",
+  "generatedFrom": "Fall Booking/Booking Boards",
+  "generatedAt": "2026-07-10T14:52:46.550975+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -26329,7 +26329,7 @@
           "workSection": "AM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-07-09T13:07:39.768389+00:00"
+      "updatedAt": "2026-07-10T14:52:18.213229+00:00"
     },
     {
       "id": "weekend_boards",
@@ -70582,7 +70582,175 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-07-09T13:07:39.768389+00:00"
+      "updatedAt": "2026-07-10T14:52:18.215015+00:00"
+    },
+    {
+      "id": "days_off_counter",
+      "title": "Days Off Counter",
+      "serviceDay": "weekday",
+      "sourcePdf": "2026 Fall Days off counter  (1).pdf",
+      "entries": [],
+      "counters": [
+        {
+          "id": "day_work",
+          "title": "Day Work",
+          "rows": [
+            {
+              "day": "Monday",
+              "week": "1",
+              "total": 100,
+              "booked": 18,
+              "remaining": 82
+            },
+            {
+              "day": "Tuesday",
+              "week": "1",
+              "total": 100,
+              "booked": 7,
+              "remaining": 93
+            },
+            {
+              "day": "Wednesday",
+              "week": "1",
+              "total": 100,
+              "booked": 25,
+              "remaining": 75
+            },
+            {
+              "day": "Thursday",
+              "week": "1",
+              "total": 100,
+              "booked": 13,
+              "remaining": 87
+            },
+            {
+              "day": "Friday",
+              "week": "1",
+              "total": 100,
+              "booked": 63,
+              "remaining": 37
+            },
+            {
+              "day": "Monday",
+              "week": "2",
+              "total": 100,
+              "booked": 10,
+              "remaining": 90
+            },
+            {
+              "day": "Tuesday",
+              "week": "2",
+              "total": 100,
+              "booked": 5,
+              "remaining": 95
+            },
+            {
+              "day": "Wednesday",
+              "week": "2",
+              "total": 100,
+              "booked": 14,
+              "remaining": 86
+            },
+            {
+              "day": "Thursday",
+              "week": "2",
+              "total": 100,
+              "booked": 13,
+              "remaining": 87
+            },
+            {
+              "day": "Friday",
+              "week": "2",
+              "total": 100,
+              "booked": 51,
+              "remaining": 49
+            }
+          ],
+          "total": 1000,
+          "booked": 219,
+          "remaining": 781
+        },
+        {
+          "id": "night_work",
+          "title": "Night Work",
+          "rows": [
+            {
+              "day": "Monday",
+              "week": "1",
+              "total": 70,
+              "booked": 1,
+              "remaining": 69
+            },
+            {
+              "day": "Tuesday",
+              "week": "1",
+              "total": 70,
+              "booked": 3,
+              "remaining": 67
+            },
+            {
+              "day": "Wednesday",
+              "week": "1",
+              "total": 70,
+              "booked": 3,
+              "remaining": 67
+            },
+            {
+              "day": "Thursday",
+              "week": "1",
+              "total": 70,
+              "booked": 6,
+              "remaining": 64
+            },
+            {
+              "day": "Friday",
+              "week": "1",
+              "total": 70,
+              "booked": 27,
+              "remaining": 43
+            },
+            {
+              "day": "Monday",
+              "week": "2",
+              "total": 70,
+              "booked": 3,
+              "remaining": 67
+            },
+            {
+              "day": "Tuesday",
+              "week": "2",
+              "total": 70,
+              "booked": 2,
+              "remaining": 68
+            },
+            {
+              "day": "Wednesday",
+              "week": "2",
+              "total": 70,
+              "booked": 3,
+              "remaining": 67
+            },
+            {
+              "day": "Thursday",
+              "week": "2",
+              "total": 70,
+              "booked": 6,
+              "remaining": 64
+            },
+            {
+              "day": "Friday",
+              "week": "2",
+              "total": 70,
+              "booked": 23,
+              "remaining": 47
+            }
+          ],
+          "total": 700,
+          "booked": 77,
+          "remaining": 623
+        }
+      ],
+      "updatedAt": "2026-07-10T14:52:18.501545+00:00"
     },
     {
       "id": "spares",
@@ -72727,8 +72895,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 35,
-                  "booked": 20,
-                  "available": 15
+                  "booked": 1,
+                  "available": 34
                 }
               ]
             }
@@ -72747,8 +72915,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 8,
-                  "booked": 4,
-                  "available": 4
+                  "booked": 0,
+                  "available": 8
                 }
               ]
             }
@@ -72767,8 +72935,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 20,
-                  "booked": 6,
-                  "available": 14
+                  "booked": 2,
+                  "available": 18
                 }
               ]
             }
@@ -72787,15 +72955,15 @@
                 {
                   "onTime": "00:00",
                   "limit": 30,
-                  "booked": 7,
-                  "available": 23
+                  "booked": 1,
+                  "available": 29
                 }
               ]
             }
           ]
         }
       ],
-      "updatedAt": "2026-07-09T13:07:39.768389+00:00"
+      "updatedAt": "2026-07-10T14:52:18.211243+00:00"
     },
     {
       "id": "stat_work",
@@ -110250,7 +110418,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-09T13:07:39.768389+00:00"
+      "updatedAt": "2026-07-10T14:52:18.216605+00:00"
     }
   ]
 }

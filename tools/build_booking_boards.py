@@ -24,6 +24,10 @@ WEEKEND_BOARD_FILENAME = os.environ.get("BOOKING_WEEKEND_BOARD_FILENAME") or (
 STAT_BOARD_FILENAME = os.environ.get("BOOKING_STAT_BOARD_FILENAME") or (
     "2026 Fall stat boards TRIP.pdf" if (SOURCE_DIR / "2026 Fall stat boards TRIP.pdf").exists() else "2026 Summer stat work.pdf"
 )
+FALL_DAYS_OFF_BOARD_FILENAME = "2026 Fall Days off counter  (1).pdf"
+DAYS_OFF_BOARD_FILENAME = os.environ.get("BOOKING_DAYS_OFF_BOARD_FILENAME") or (
+    FALL_DAYS_OFF_BOARD_FILENAME if (SOURCE_DIR / FALL_DAYS_OFF_BOARD_FILENAME).exists() else "2026 Summer Days off Counter (3).pdf"
+)
 SPARES_BOARD_FILENAME = os.environ.get("BOOKING_SPARES_BOARD_FILENAME") or (
     "2026 Fall Daily and weekend spare update.pdf"
     if (SOURCE_DIR / "2026 Fall Daily and weekend spare update.pdf").exists()
@@ -1029,7 +1033,7 @@ def with_board_updated_at(board: dict, pdf_path: Path):
 def main():
     daily_pdf = SOURCE_DIR / DAILY_BOARD_FILENAME
     weekend_pdf = SOURCE_DIR / WEEKEND_BOARD_FILENAME
-    days_off_pdf = SOURCE_DIR / "2026 Summer Days off Counter (3).pdf"
+    days_off_pdf = SOURCE_DIR / DAYS_OFF_BOARD_FILENAME
     spares_pdf = SOURCE_DIR / SPARES_BOARD_FILENAME
     floating_spares_pdf = SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
     stat_pdf = SOURCE_DIR / STAT_BOARD_FILENAME
