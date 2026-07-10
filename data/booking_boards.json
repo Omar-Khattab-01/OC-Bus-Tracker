@@ -1,6 +1,6 @@
 {
-  "generatedFrom": "Fall Booking/Booking Boards PDFs",
-  "generatedAt": "2026-07-10T14:59:09.647796+00:00",
+  "generatedFrom": "Fall Booking/Booking Boards",
+  "generatedAt": "2026-07-10T15:17:09.786778+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -23233,7 +23233,7 @@
           "workSection": "AM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-07-10T14:59:09.647892+00:00"
+      "updatedAt": "2026-07-10T15:16:47.430849+00:00"
     },
     {
       "id": "weekend_boards",
@@ -67486,7 +67486,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-07-10T14:59:09.647892+00:00"
+      "updatedAt": "2026-07-10T15:16:47.432977+00:00"
     },
     {
       "id": "days_off_counter",
@@ -67654,7 +67654,170 @@
           "remaining": 623
         }
       ],
-      "updatedAt": "2026-07-10T14:59:04.635405+00:00"
+      "updatedAt": "2026-07-10T14:52:18.501545+00:00"
+    },
+    {
+      "id": "vacation_tracker",
+      "title": "Vacation Tracker",
+      "serviceDay": "weekday",
+      "sourcePdf": "Vacation Tracker Fall 2026 (2).pdf",
+      "entries": [],
+      "counters": [
+        {
+          "id": "vacation",
+          "title": "Vacation",
+          "rows": [
+            {
+              "week": "35",
+              "label": "Week 35",
+              "dateRange": "August 30 - September 5",
+              "total": 67,
+              "booked": 40,
+              "remaining": 27
+            },
+            {
+              "week": "36",
+              "label": "Week 36",
+              "dateRange": "September 6 -12",
+              "total": 67,
+              "booked": 26,
+              "remaining": 41
+            },
+            {
+              "week": "37",
+              "label": "Week 37",
+              "dateRange": "September 13 - 19",
+              "total": 67,
+              "booked": 31,
+              "remaining": 36
+            },
+            {
+              "week": "38",
+              "label": "Week 38",
+              "dateRange": "September 20 - 26",
+              "total": 67,
+              "booked": 23,
+              "remaining": 44
+            },
+            {
+              "week": "39",
+              "label": "Week 39",
+              "dateRange": "September 27 - October 03",
+              "total": 67,
+              "booked": 23,
+              "remaining": 44
+            },
+            {
+              "week": "40",
+              "label": "Week 40",
+              "dateRange": "October 04 - 10",
+              "total": 67,
+              "booked": 43,
+              "remaining": 24
+            },
+            {
+              "week": "41",
+              "label": "Week 41",
+              "dateRange": "October 11 - 17",
+              "total": 67,
+              "booked": 48,
+              "remaining": 19
+            },
+            {
+              "week": "42",
+              "label": "Week 42",
+              "dateRange": "October 18 - 24",
+              "total": 67,
+              "booked": 27,
+              "remaining": 40
+            },
+            {
+              "week": "43",
+              "label": "Week 43",
+              "dateRange": "October 25 - 31",
+              "total": 67,
+              "booked": 36,
+              "remaining": 31
+            },
+            {
+              "week": "44",
+              "label": "Week 44",
+              "dateRange": "November 1 - 7",
+              "total": 67,
+              "booked": 32,
+              "remaining": 35
+            },
+            {
+              "week": "45",
+              "label": "Week 45",
+              "dateRange": "November 8 - 14",
+              "total": 67,
+              "booked": 27,
+              "remaining": 40
+            },
+            {
+              "week": "46",
+              "label": "Week 46",
+              "dateRange": "November 15 - 21",
+              "total": 67,
+              "booked": 31,
+              "remaining": 36
+            },
+            {
+              "week": "47",
+              "label": "Week 47",
+              "dateRange": "November 22 - 28",
+              "total": 67,
+              "booked": 34,
+              "remaining": 33
+            },
+            {
+              "week": "48",
+              "label": "Week 48",
+              "dateRange": "November 29 -December 05",
+              "total": 67,
+              "booked": 27,
+              "remaining": 40
+            },
+            {
+              "week": "49",
+              "label": "Week 49",
+              "dateRange": "December 6 - 12",
+              "total": 67,
+              "booked": 38,
+              "remaining": 29
+            },
+            {
+              "week": "50",
+              "label": "Week 50",
+              "dateRange": "December 13 - 19",
+              "total": 67,
+              "booked": 61,
+              "remaining": 6
+            },
+            {
+              "week": "51",
+              "label": "Week 51",
+              "dateRange": "Xmas December 20 - 26",
+              "total": 120,
+              "booked": 102,
+              "remaining": 18
+            },
+            {
+              "week": "52",
+              "label": "Week 52",
+              "dateRange": "Nyear December 27 - January 02",
+              "total": 120,
+              "booked": 82,
+              "remaining": 38
+            }
+          ],
+          "total": 1312,
+          "booked": 731,
+          "remaining": 581
+        }
+      ],
+      "updatedAt": "2026-07-10T15:16:47.590222+00:00"
     },
     {
       "id": "spares",
@@ -69819,8 +69982,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 35,
-                  "booked": 20,
-                  "available": 15
+                  "booked": 1,
+                  "available": 34
                 }
               ]
             }
@@ -69839,8 +70002,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 8,
-                  "booked": 7,
-                  "available": 1
+                  "booked": 0,
+                  "available": 8
                 }
               ]
             }
@@ -69859,8 +70022,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 20,
-                  "booked": 7,
-                  "available": 13
+                  "booked": 2,
+                  "available": 18
                 }
               ]
             }
@@ -69879,15 +70042,15 @@
                 {
                   "onTime": "00:00",
                   "limit": 30,
-                  "booked": 9,
-                  "available": 21
+                  "booked": 1,
+                  "available": 29
                 }
               ]
             }
           ]
         }
       ],
-      "updatedAt": "2026-07-10T14:59:09.647892+00:00"
+      "updatedAt": "2026-07-10T15:16:47.429178+00:00"
     },
     {
       "id": "stat_work",
@@ -106892,7 +107055,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-10T14:59:09.647892+00:00"
+      "updatedAt": "2026-07-10T15:16:47.434534+00:00"
     }
   ]
 }

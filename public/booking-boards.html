@@ -678,6 +678,104 @@
       white-space: normal;
     }
 
+    .vacation-table .week-label-cell {
+      width: 18%;
+      white-space: nowrap;
+    }
+
+    .vacation-table .date-range-cell {
+      width: 34%;
+    }
+
+    .vacation-table .counter-value-cell {
+      width: 16%;
+    }
+
+    .vacation-view-switcher,
+    .vacation-calendar-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 12px;
+    }
+
+    .vacation-calendar {
+      display: grid;
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+
+    .vacation-month-title {
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .vacation-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .vacation-weekday,
+    .vacation-day {
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(12, 16, 21, 0.74);
+    }
+
+    .vacation-weekday {
+      padding: 8px 4px;
+      color: var(--oc-mist);
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .vacation-day {
+      min-height: 76px;
+      padding: 7px;
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      color: var(--oc-mist);
+    }
+
+    .vacation-day.outside-month {
+      border-style: dashed;
+      opacity: 0.35;
+    }
+
+    .vacation-day.in-week {
+      border-color: color-mix(in srgb, var(--week-color, #39b66c) 58%, transparent);
+      background: color-mix(in srgb, var(--week-color, #39b66c) 18%, rgba(12, 16, 21, 0.74));
+      color: #f8fafc;
+    }
+
+    .vacation-day.outside-month.in-week {
+      opacity: 0.78;
+    }
+
+    .vacation-day-number {
+      font-weight: 700;
+      color: var(--oc-white);
+    }
+
+    .vacation-week-label {
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .vacation-week-meta {
+      font-size: 10px;
+      color: var(--oc-mist);
+      line-height: 1.2;
+    }
+
     .empty {
       padding: 20px 18px;
       color: var(--oc-mist);
@@ -967,6 +1065,26 @@
       .spare-grid {
         padding: 10px;
       }
+      .spare-section-table th,
+      .spare-section-table td {
+        padding: 8px 6px;
+      }
+      .spare-section-table th {
+        font-size: 8px;
+        letter-spacing: 0;
+        line-height: 1.1;
+        white-space: normal;
+      }
+      .spare-section-table .garage-cell {
+        width: 31%;
+      }
+      .spare-section-table .time-cell {
+        width: 20%;
+      }
+      .spare-section-table .value-cell {
+        width: 16.33%;
+        text-align: right;
+      }
       .days-off-table th,
       .days-off-table td {
         padding: 8px 6px;
@@ -987,6 +1105,38 @@
       .days-off-table .counter-value-cell {
         width: 19.33%;
         text-align: right;
+      }
+      .vacation-table .week-label-cell {
+        width: 20%;
+      }
+      .vacation-table .date-range-cell {
+        width: 32%;
+      }
+      .vacation-table .counter-value-cell {
+        width: 16%;
+      }
+      .vacation-view-switcher,
+      .vacation-calendar-nav,
+      .vacation-calendar {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+      .vacation-calendar-grid {
+        gap: 3px;
+      }
+      .vacation-weekday {
+        padding: 6px 2px;
+        font-size: 8px;
+      }
+      .vacation-day {
+        min-height: 62px;
+        padding: 5px 3px;
+      }
+      .vacation-week-label {
+        font-size: 9px;
+      }
+      .vacation-week-meta {
+        font-size: 8px;
       }
       .pieces {
         padding: 8px;
@@ -1111,6 +1261,8 @@
     let selectedGeneralSpareDay = 'saturday';
     let selectedGeneralSpareSection = '';
     let selectedDaysOffCounter = 'day_work';
+    let selectedVacationView = 'table';
+    let selectedVacationMonthIndex = 0;
     let selectedSpareGroup = 'daily';
     let selectedStatBoard = '';
     let selectedStatWorkBoard = '';
@@ -2125,10 +2277,144 @@
       `;
     }
 
+    const vacationMonths = [
+      { label: 'August', month: 7, year: 2026 },
+      { label: 'September', month: 8, year: 2026 },
+      { label: 'October', month: 9, year: 2026 },
+      { label: 'November', month: 10, year: 2026 },
+      { label: 'December', month: 11, year: 2026 },
+      { label: 'January', month: 0, year: 2027 },
+    ];
+    const vacationMonthNumbers = {
+      january: 0,
+      february: 1,
+      march: 2,
+      april: 3,
+      may: 4,
+      june: 5,
+      july: 6,
+      august: 7,
+      september: 8,
+      october: 9,
+      november: 10,
+      december: 11,
+    };
+    const vacationWeekColors = [
+      '#39b66c',
+      '#ffb348',
+      '#5aa7ff',
+      '#f26d85',
+      '#b889ff',
+      '#49c7b8',
+      '#f28c28',
+      '#7bd66f',
+      '#ff6f61',
+      '#6f9cff',
+      '#d3b64d',
+      '#d980fa',
+      '#42d392',
+      '#ff8fb3',
+      '#73d2de',
+      '#c7e75f',
+      '#ff9f43',
+      '#a29bfe',
+    ];
+
+    function colorForVacationWeek(row) {
+      const weekNumber = Number(row?.week || 0);
+      const colorIndex = Number.isFinite(weekNumber) && weekNumber > 0
+        ? weekNumber % vacationWeekColors.length
+        : 0;
+      return vacationWeekColors[colorIndex];
+    }
+
+    function vacationDateFor(monthName, day) {
+      const month = vacationMonthNumbers[String(monthName || '').toLowerCase()];
+      const year = month === 0 ? 2027 : 2026;
+      return new Date(year, month, Number(day || 1));
+    }
+
+    function parseVacationRange(row) {
+      const range = String(row?.dateRange || '').replace(/\s+/g, ' ').trim();
+      const monthPattern = '(January|February|March|April|May|June|July|August|September|October|November|December)';
+      const startMatch = range.match(new RegExp(`${monthPattern}\\s+(\\d{1,2})`, 'i'));
+      if (!startMatch) return null;
+      const startMonth = startMatch[1];
+      const startDay = startMatch[2];
+      const suffix = range.slice(startMatch.index + startMatch[0].length);
+      const endWithMonth = suffix.match(new RegExp(`-\\s*${monthPattern}\\s*(\\d{1,2})`, 'i'));
+      const endDayOnly = suffix.match(/-\s*(\d{1,2})/);
+      const endMonth = endWithMonth ? endWithMonth[1] : startMonth;
+      const endDay = endWithMonth ? endWithMonth[2] : endDayOnly?.[1];
+      if (!endDay) return null;
+      return {
+        start: vacationDateFor(startMonth, startDay),
+        end: vacationDateFor(endMonth, endDay),
+      };
+    }
+
+    function sameCalendarDay(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function findVacationWeekForDate(date, rows) {
+      return rows.find((row) => {
+        const parsedRange = parseVacationRange(row);
+        if (!parsedRange) return false;
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        return dayStart >= parsedRange.start.getTime() && dayStart <= parsedRange.end.getTime();
+      }) || null;
+    }
+
+    function renderVacationCalendar(activeCounter, formatRemainingCount) {
+      const rows = Array.isArray(activeCounter?.rows) ? activeCounter.rows : [];
+      const month = vacationMonths[selectedVacationMonthIndex] || vacationMonths[0];
+      const firstDay = new Date(month.year, month.month, 1);
+      const leadingBlanks = firstDay.getDay();
+      const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayCells = [];
+      const gridStart = new Date(month.year, month.month, 1 - leadingBlanks);
+      const cellCount = 42;
+      for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
+        const date = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + cellIndex);
+        const day = date.getDate();
+        const outsideMonth = date.getMonth() !== month.month || date.getFullYear() !== month.year;
+        const row = findVacationWeekForDate(date, rows);
+        const parsedRange = row ? parseVacationRange(row) : null;
+        const showWeekDetails = row && parsedRange && sameCalendarDay(date, parsedRange.start);
+        const weekColor = row ? colorForVacationWeek(row) : '';
+        dayCells.push(`
+          <div class="vacation-day ${outsideMonth ? 'outside-month' : ''} ${row ? 'in-week' : ''}" ${weekColor ? `style="--week-color: ${escapeHtml(weekColor)}"` : ''}>
+            <div class="vacation-day-number">${day}</div>
+            ${row ? `<div class="vacation-week-label">${escapeHtml(row.label || `Week ${row.week}`)}</div>` : ''}
+            ${showWeekDetails ? `<div class="vacation-week-meta">${escapeHtml(formatRemainingCount(row.remaining))} rem</div>` : ''}
+          </div>
+        `);
+      }
+      return `
+        <div class="vacation-calendar-nav">
+          <button class="board-btn" type="button" data-vacation-month-step="-1" ${selectedVacationMonthIndex === 0 ? 'disabled' : ''}>Previous</button>
+          ${vacationMonths.map((item, index) => `
+            <button class="board-btn spare-group-btn ${index === selectedVacationMonthIndex ? 'active' : ''}" type="button" data-vacation-month="${index}">
+              ${escapeHtml(item.label)}
+            </button>
+          `).join('')}
+          <button class="board-btn" type="button" data-vacation-month-step="1" ${selectedVacationMonthIndex === vacationMonths.length - 1 ? 'disabled' : ''}>Next</button>
+        </div>
+        <div class="vacation-calendar">
+          <h4 class="vacation-month-title">${escapeHtml(month.label)} ${month.year}</h4>
+          <div class="vacation-calendar-grid">
+            ${weekdays.map((weekday) => `<div class="vacation-weekday">${weekday}</div>`).join('')}
+            ${dayCells.join('')}
+          </div>
+        </div>
+      `;
+    }
+
     function renderDaysOffCounterBoard(board) {
       const counters = Array.isArray(board?.counters) ? board.counters : [];
       if (!counters.length) {
-        boardList.innerHTML = '<div class="empty">No days-off counter rows are available yet.</div>';
+        boardList.innerHTML = '<div class="empty">No counter rows are available yet.</div>';
         return;
       }
 
@@ -2137,19 +2423,64 @@
       }
 
       const activeCounter = counters.find((counter) => counter.id === selectedDaysOffCounter) || counters[0];
+      const isVacationBoard = board?.id === 'vacation_tracker';
       const formatRemainingCount = (value) => {
         if (String(value || '').trim().toLowerCase() === 'closed') return 'Closed';
         const count = Number(value || 0);
         return count === 0 ? 'Closed' : count;
       };
       metaStrip.innerHTML = `
-        <article class="stat-card"><span class="k">Total</span><span class="v">${escapeHtml(activeCounter.total || 0)}</span></article>
+        <article class="stat-card"><span class="k">${isVacationBoard ? 'Quota' : 'Total'}</span><span class="v">${escapeHtml(activeCounter.total || 0)}</span></article>
         <article class="stat-card"><span class="k">Booked</span><span class="v">${escapeHtml(activeCounter.booked || 0)}</span></article>
         <article class="stat-card"><span class="k">Remaining</span><span class="v">${escapeHtml(formatRemainingCount(activeCounter.remaining))}</span></article>
       `;
 
-      boardList.innerHTML = `
-        <section class="spare-group">
+      const tableRows = isVacationBoard
+        ? activeCounter.rows.map((row) => `
+          <tr>
+            <td class="week-label-cell">${escapeHtml(row.label || `Week ${row.week}`)}</td>
+            <td class="date-range-cell">${escapeHtml(row.dateRange || '')}</td>
+            <td class="counter-value-cell">${escapeHtml(row.total)}</td>
+            <td class="counter-value-cell">${escapeHtml(row.booked)}</td>
+            <td class="counter-value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
+          </tr>
+        `).join('')
+        : activeCounter.rows.map((row) => `
+          <tr>
+            <td class="day-cell">${escapeHtml(row.day)}</td>
+            <td class="week-cell">${escapeHtml(row.week || 'All')}</td>
+            <td class="counter-value-cell">${escapeHtml(row.total)}</td>
+            <td class="counter-value-cell">${escapeHtml(row.booked)}</td>
+            <td class="counter-value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
+          </tr>
+        `).join('');
+      const tableHead = isVacationBoard
+        ? `
+          <tr>
+            <th class="week-label-cell">Week</th>
+            <th class="date-range-cell">Date Range</th>
+            <th class="counter-value-cell">Quota</th>
+            <th class="counter-value-cell">Booked</th>
+            <th class="counter-value-cell">Remaining</th>
+          </tr>
+        `
+        : `
+          <tr>
+            <th class="day-cell">Day</th>
+            <th class="week-cell">Week</th>
+            <th class="counter-value-cell">Total</th>
+            <th class="counter-value-cell">Booked</th>
+            <th class="counter-value-cell">Remaining</th>
+          </tr>
+        `;
+      const counterSwitcher = isVacationBoard
+        ? `
+          <div class="vacation-view-switcher">
+            <button class="board-btn spare-group-btn ${selectedVacationView === 'table' ? 'active' : ''}" type="button" data-vacation-view="table">Table</button>
+            <button class="board-btn spare-group-btn ${selectedVacationView === 'calendar' ? 'active' : ''}" type="button" data-vacation-view="calendar">Calendar</button>
+          </div>
+        `
+        : `
           <div class="spare-group-switcher">
             ${counters.map((counter) => `
               <button class="board-btn spare-group-btn ${counter.id === activeCounter.id ? 'active' : ''}" type="button" data-days-off-counter="${escapeHtml(counter.id)}">
@@ -2157,38 +2488,34 @@
               </button>
             `).join('')}
           </div>
+        `;
+      const counterBody = isVacationBoard && selectedVacationView === 'calendar'
+        ? renderVacationCalendar(activeCounter, formatRemainingCount)
+        : `
+          <div class="spare-grid">
+            <table class="spare-section-table days-off-table ${isVacationBoard ? 'vacation-table' : ''}">
+              <thead>
+                ${tableHead}
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+      boardList.innerHTML = `
+        <section class="spare-group">
+          ${counterSwitcher}
           <article class="board-card">
             <div class="board-card-head">
               <div>
                 <h3>${escapeHtml(activeCounter.title)}</h3>
-                <div class="board-sub">Days off counter from ${escapeHtml(board.sourcePdf || 'uploaded PDF')}</div>
+                <div class="board-sub">${escapeHtml(isVacationBoard ? 'Vacation tracker' : 'Days off counter')} from ${escapeHtml(board.sourcePdf || 'uploaded PDF')}</div>
               </div>
               <div class="pill open">${escapeHtml(formatRemainingCount(activeCounter.remaining))} remaining</div>
             </div>
-            <div class="spare-grid">
-              <table class="spare-section-table days-off-table">
-                <thead>
-                  <tr>
-                    <th class="day-cell">Day</th>
-                    <th class="week-cell">Week</th>
-                    <th class="counter-value-cell">Total</th>
-                    <th class="counter-value-cell">Booked</th>
-                    <th class="counter-value-cell">Remaining</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${activeCounter.rows.map((row) => `
-                    <tr>
-                      <td class="day-cell">${escapeHtml(row.day)}</td>
-                      <td class="week-cell">${escapeHtml(row.week || 'All')}</td>
-                      <td class="counter-value-cell">${escapeHtml(row.total)}</td>
-                      <td class="counter-value-cell">${escapeHtml(row.booked)}</td>
-                      <td class="counter-value-cell">${escapeHtml(formatRemainingCount(row.remaining))}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
+            ${counterBody}
           </article>
         </section>
       `;
@@ -2200,6 +2527,7 @@
         if (id === 'daily_open_work') return 'Daily Work';
         if (id === 'weekend_boards' || id === 'general_spare_weekend') return 'Weekend Work';
         if (id === 'days_off_counter') return 'Days Off Counter';
+        if (id === 'vacation_tracker') return 'Vacation';
         if (id === 'stat_work') return 'Stat Work';
         if (id === 'spares') return 'Spare Boards';
         if (id === 'floating_spares') return 'Floating Spares';
@@ -2229,7 +2557,7 @@
         renderWeekendBoard(board);
         return;
       }
-      if (board?.id === 'days_off_counter') {
+      if (board?.id === 'days_off_counter' || board?.id === 'vacation_tracker') {
         renderDaysOffCounterBoard(board);
         return;
       }
@@ -2353,6 +2681,28 @@
         const daysOffCounterButton = event.target.closest('[data-days-off-counter]');
         if (daysOffCounterButton) {
           selectedDaysOffCounter = String(daysOffCounterButton.dataset.daysOffCounter || 'day_work').trim() || 'day_work';
+          renderBoardEntries(boardState.board);
+          return;
+        }
+        const vacationViewButton = event.target.closest('[data-vacation-view]');
+        if (vacationViewButton) {
+          selectedVacationView = String(vacationViewButton.dataset.vacationView || 'table').trim() === 'calendar' ? 'calendar' : 'table';
+          renderBoardEntries(boardState.board);
+          return;
+        }
+        const vacationMonthButton = event.target.closest('[data-vacation-month]');
+        if (vacationMonthButton) {
+          const nextIndex = Number(vacationMonthButton.dataset.vacationMonth);
+          if (Number.isInteger(nextIndex)) {
+            selectedVacationMonthIndex = Math.max(0, Math.min(vacationMonths.length - 1, nextIndex));
+            renderBoardEntries(boardState.board);
+          }
+          return;
+        }
+        const vacationMonthStepButton = event.target.closest('[data-vacation-month-step]');
+        if (vacationMonthStepButton) {
+          const step = Number(vacationMonthStepButton.dataset.vacationMonthStep || 0);
+          selectedVacationMonthIndex = Math.max(0, Math.min(vacationMonths.length - 1, selectedVacationMonthIndex + step));
           renderBoardEntries(boardState.board);
           return;
         }

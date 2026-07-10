@@ -96,13 +96,18 @@ const BOOKING_BOARD_UPLOAD_TARGETS = {
     filename: '2026 Fall Days off counter  (1).pdf',
     boardIds: ['days_off_counter'],
   },
+  vacation_tracker: {
+    label: 'Fall Vacation Tracker',
+    filename: 'Vacation Tracker Fall 2026 (2).pdf',
+    boardIds: ['vacation_tracker'],
+  },
   stat: {
     label: 'Fall Stat Work',
     filename: '2026 Fall stat boards TRIP.pdf',
     boardIds: ['stat_work'],
   },
 };
-const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'days_off_counter', 'stat'];
+const BOOKING_BOARD_PRIMARY_UPLOAD_KEYS = ['daily', 'weekend', 'spares', 'days_off_counter', 'vacation_tracker', 'stat'];
 const FLOATING_SPARE_OVERRIDE_DEFINITIONS = [
   { id: 'weekly-floating-spare', title: 'Weekly Floating Spare', limit: 35 },
   { id: 'weekly-pm-floating-spare', title: 'Weekly PM Floating Spare', limit: 8 },
@@ -2069,6 +2074,8 @@ function buildDaysOffCounterSummary(counter = {}) {
   const rows = Array.isArray(counter.rows) ? counter.rows.map((row) => ({
     day: String(row.day || '').trim(),
     week: String(row.week || '').trim(),
+    label: String(row.label || '').trim(),
+    dateRange: String(row.dateRange || '').trim(),
     total: Number(row.total || 0) || 0,
     booked: Number(row.booked || 0) || 0,
     remaining: displayDaysOffRemaining(row.remaining),
@@ -3751,6 +3758,7 @@ function classifyBookingBoardUploadName(name) {
   const normalized = normalizeBookingBoardUploadName(name);
   if (normalized.includes('spare')) return 'spares';
   if (normalized.includes('days off') || normalized.includes('day off') || normalized.includes('counter')) return 'days_off_counter';
+  if (normalized.includes('vacation')) return 'vacation_tracker';
   if (normalized.includes('stat') || normalized.includes('canada day') || normalized.includes('august civic')) return 'stat';
   if (normalized.includes('weekend') || normalized.includes('saturday') || normalized.includes('sunday')) return 'weekend';
   if (normalized.includes('daily') || normalized.includes('bords') || normalized.includes('board')) return 'daily';

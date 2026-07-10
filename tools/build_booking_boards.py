@@ -28,6 +28,7 @@ FALL_DAYS_OFF_BOARD_FILENAME = "2026 Fall Days off counter  (1).pdf"
 DAYS_OFF_BOARD_FILENAME = os.environ.get("BOOKING_DAYS_OFF_BOARD_FILENAME") or (
     FALL_DAYS_OFF_BOARD_FILENAME if (SOURCE_DIR / FALL_DAYS_OFF_BOARD_FILENAME).exists() else "2026 Summer Days off Counter (3).pdf"
 )
+VACATION_BOARD_FILENAME = os.environ.get("BOOKING_VACATION_BOARD_FILENAME") or "Vacation Tracker Fall 2026 (2).pdf"
 SPARES_BOARD_FILENAME = os.environ.get("BOOKING_SPARES_BOARD_FILENAME") or (
     "2026 Fall Daily and weekend spare update.pdf"
     if (SOURCE_DIR / "2026 Fall Daily and weekend spare update.pdf").exists()
@@ -752,6 +753,56 @@ def parse_days_off_counter(pdf_path: Path):
     }
 
 
+def parse_vacation_tracker(pdf_path: Path):
+    lines = extract_lines(pdf_path)[0]["lines"]
+    rows = []
+    total = booked = remaining = 0
+
+    for line in lines:
+        match = re.fullmatch(
+            r"Week\s+(\d+)\s+(.+?)\s+(\d+)\s+(\d+)\s+(\d+)",
+            line,
+        )
+        if match:
+            week, date_range, quota, booked_count, remaining_count = match.groups()
+            rows.append({
+                "week": week,
+                "label": f"Week {week}",
+                "dateRange": date_range.strip(),
+                "total": int(quota),
+                "booked": int(booked_count),
+                "remaining": int(remaining_count),
+            })
+            continue
+
+        total_match = re.fullmatch(r"(\d+)\s+(\d+)\s+(\d+)", line)
+        if total_match:
+            total, booked, remaining = (int(value) for value in total_match.groups())
+
+    if not total:
+        total = sum(row["total"] for row in rows)
+    if not booked:
+        booked = sum(row["booked"] for row in rows)
+    if not remaining:
+        remaining = sum(row["remaining"] for row in rows)
+
+    return {
+        "id": "vacation_tracker",
+        "title": "Vacation Tracker",
+        "serviceDay": "weekday",
+        "sourcePdf": pdf_path.name,
+        "entries": [],
+        "counters": [{
+            "id": "vacation",
+            "title": "Vacation",
+            "rows": rows,
+            "total": total,
+            "booked": booked,
+            "remaining": remaining,
+        }],
+    }
+
+
 def parse_stat_board(pdf_path: Path):
     pages = extract_lines(pdf_path)
     entries = []
@@ -1034,6 +1085,7 @@ def main():
     daily_pdf = SOURCE_DIR / DAILY_BOARD_FILENAME
     weekend_pdf = SOURCE_DIR / WEEKEND_BOARD_FILENAME
     days_off_pdf = SOURCE_DIR / DAYS_OFF_BOARD_FILENAME
+    vacation_pdf = SOURCE_DIR / VACATION_BOARD_FILENAME
     spares_pdf = SOURCE_DIR / SPARES_BOARD_FILENAME
     floating_spares_pdf = SOURCE_DIR / "2026 Summer Daily and weekly floating spares  (4) (1).pdf"
     stat_pdf = SOURCE_DIR / STAT_BOARD_FILENAME
@@ -1044,6 +1096,8 @@ def main():
         boards.append(with_board_updated_at(parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf))
     if days_off_pdf.exists():
         boards.append(with_board_updated_at(parse_days_off_counter(days_off_pdf), days_off_pdf))
+    if vacation_pdf.exists():
+        boards.append(with_board_updated_at(parse_vacation_tracker(vacation_pdf), vacation_pdf))
     if spares_pdf.exists():
         boards.append(with_board_updated_at(parse_spares_board(spares_pdf), spares_pdf))
     if floating_spares_pdf.exists():

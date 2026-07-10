@@ -40,6 +40,11 @@ TARGETS = {
         "filename": "2026 Fall Days off counter  (1).pdf",
         "board_ids": ["days_off_counter"],
     },
+    "vacation_tracker": {
+        "label": "Fall Vacation Tracker",
+        "filename": "Vacation Tracker Fall 2026 (2).pdf",
+        "board_ids": ["vacation_tracker"],
+    },
     "stat": {
         "label": "Fall Stat Work",
         "filename": "2026 Fall stat boards TRIP.pdf",
@@ -64,6 +69,8 @@ def classify_upload_name(name: str) -> str:
         return "spares"
     if "days off" in normalized or "day off" in normalized or "counter" in normalized:
         return "days_off_counter"
+    if "vacation" in normalized:
+        return "vacation_tracker"
     if "stat" in normalized or "canada day" in normalized or "august civic" in normalized:
         return "stat"
     if "weekend" in normalized or "saturday" in normalized or "sunday" in normalized:
@@ -115,11 +122,13 @@ def build_payload(temp_source_dir: Path) -> dict:
     weekend_pdf = temp_source_dir / TARGETS["weekend"]["filename"]
     spares_pdf = temp_source_dir / TARGETS["spares"]["filename"]
     days_off_pdf = temp_source_dir / TARGETS["days_off_counter"]["filename"]
+    vacation_pdf = temp_source_dir / TARGETS["vacation_tracker"]["filename"]
     stat_pdf = temp_source_dir / TARGETS["stat"]["filename"]
     boards = [
         builder.with_board_updated_at(builder.parse_daily_board(daily_pdf), daily_pdf),
         builder.with_board_updated_at(builder.parse_bus_summer_weekend_board(weekend_pdf), weekend_pdf),
         builder.with_board_updated_at(builder.parse_days_off_counter(days_off_pdf), days_off_pdf),
+        builder.with_board_updated_at(builder.parse_vacation_tracker(vacation_pdf), vacation_pdf),
         builder.with_board_updated_at(builder.parse_spares_board(spares_pdf), spares_pdf),
         builder.with_board_updated_at(builder.parse_stat_board(stat_pdf), stat_pdf),
     ]
