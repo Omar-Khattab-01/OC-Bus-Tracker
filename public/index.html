@@ -202,23 +202,84 @@
     .main {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
       min-height: 0;
     }
 
+    .support-banner,
     .quick-panel,
     .chat,
     .tool-page-view,
-    .composer {
+    .composer,
+    .main-support-footer {
       grid-column: 1;
     }
 
-    .quick-panel {
+    .support-banner {
       grid-row: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(255, 179, 72, 0.18);
+      background: linear-gradient(90deg, rgba(255, 179, 72, 0.12), rgba(17, 22, 28, 0.74));
+      color: var(--oc-mist);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .support-banner strong {
+      display: block;
+      color: var(--oc-white);
+      font-size: 13px;
+      margin-bottom: 1px;
+    }
+
+    .support-banner-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: none;
+    }
+
+    .support-banner-link,
+    .main-support-footer a {
+      color: #ffcf7a;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .support-banner-link:hover,
+    .main-support-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .support-banner-close {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      background: rgba(10, 14, 18, 0.64);
+      color: var(--oc-mist);
+      cursor: pointer;
+      font: inherit;
+      line-height: 1;
+    }
+
+    .support-banner-close:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      color: var(--oc-white);
+    }
+
+    .quick-panel {
+      grid-row: 2;
     }
 
     .chat {
-      grid-row: 2;
+      grid-row: 3;
       height: 100%;
       max-height: 100%;
       min-height: 0;
@@ -491,7 +552,7 @@
     }
 
     .tool-page-view {
-      grid-row: 2;
+      grid-row: 3;
       position: relative;
       isolation: isolate;
       height: 100%;
@@ -742,10 +803,25 @@
     }
 
     .composer {
-      grid-row: 3;
+      grid-row: 4;
       border-top: 1px solid var(--border);
       padding: 12px;
       background: rgba(17, 22, 28, 0.8);
+    }
+
+    .main-support-footer {
+      grid-row: 5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 14, 18, 0.54);
+      color: rgba(215, 221, 230, 0.78);
+      font-size: 11px;
+      line-height: 1.4;
+      flex-wrap: wrap;
     }
 
     .composer form {
@@ -1093,6 +1169,11 @@
       gap: 10px;
     }
 
+    .support-note-card {
+      border-color: rgba(255, 179, 72, 0.24);
+      background: rgba(44, 30, 14, 0.34);
+    }
+
     .field-grid {
       display: grid;
       gap: 10px;
@@ -1276,6 +1357,7 @@
       }
 
       .header,
+      .support-banner,
       .quick-panel,
       .chat,
       .composer {
@@ -1338,7 +1420,8 @@
       .header-actions > #canadaDayPaddlesBtn,
       .header-actions > #civicHolidayPaddlesBtn,
       .header-actions > #fallPaddlesBtn,
-      .header-actions > #fallBookingBoardBtn {
+      .header-actions > #fallBookingBoardBtn,
+      .header-actions > #supportBtn {
         display: none;
       }
 
@@ -1355,6 +1438,12 @@
 
       .mobile-menu {
         display: none;
+      }
+
+      .support-banner {
+        align-items: flex-start;
+        padding-top: 10px;
+        padding-bottom: 10px;
       }
 
       .quick-panel {
@@ -1541,6 +1630,7 @@
         <button id="fallPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/fall-paddles'">Fall Paddles</button>
         <button id="fallBookingBoardBtn" class="header-btn" type="button" onclick="window.location.href='/booking-boards'">Fall Booking Board</button>
         <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
+        <button id="supportBtn" class="header-btn" type="button" onclick="window.location.href='/support'">Support</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <button id="mobileMenuBtn" class="header-btn mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileHeaderMenu">Menu</button>
@@ -1552,6 +1642,7 @@
           <button id="mobileFallBookingBoardBtn" class="header-btn" type="button">Fall Booking Board</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileBusDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
+          <button id="mobileSupportBtn" class="header-btn" type="button">Support</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
           <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
           <div class="menu-section-label">Status</div>
@@ -1562,6 +1653,17 @@
     </header>
 
     <div class="main">
+      <section id="supportBanner" class="support-banner" aria-label="Support OC OPERATORS TOOLS">
+        <div>
+          <strong>OC OPERATORS TOOLS is independently maintained.</strong>
+          <span>Support helps cover hosting, database costs, and new features.</span>
+        </div>
+        <div class="support-banner-actions">
+          <a class="support-banner-link" href="/support">Support</a>
+          <button id="dismissSupportBannerBtn" class="support-banner-close" type="button" aria-label="Dismiss support message">x</button>
+        </div>
+      </section>
+
       <section id="quickLookupPanel" class="quick-panel" hidden>
         <div class="quick-panel-top">
           <div>
@@ -1595,6 +1697,11 @@
           <span>Do not use your phone while operating the bus, and always follow the deadheads shown on the paddle.</span>
         </div>
       </section>
+
+      <footer class="main-support-footer">
+        <span>Built and maintained independently.</span>
+        <a href="/support">Support the project</a>
+      </footer>
     </div>
   </main>
 
@@ -1702,6 +1809,7 @@
     const mobileFallBookingBoardBtn = document.getElementById('mobileFallBookingBoardBtn');
     const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
     const mobileBusDefectsBtn = document.getElementById('mobileBusDefectsBtn');
+    const mobileSupportBtn = document.getElementById('mobileSupportBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
     const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
     const mobileMenuStatus = document.getElementById('mobileMenuStatus');
@@ -1739,6 +1847,9 @@
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
     const confirmOkBtn = document.getElementById('confirmOkBtn');
     const closeConfirmBtn = document.getElementById('closeConfirmBtn');
+    const supportBanner = document.getElementById('supportBanner');
+    const dismissSupportBannerBtn = document.getElementById('dismissSupportBannerBtn');
+    const SUPPORT_BANNER_DISMISS_KEY = 'oc-operators-tools:support-banner-dismissed:v2';
     let supabaseClient = null;
     let supabaseEnabled = false;
     let currentUser = null;
@@ -2385,6 +2496,18 @@
       return `<div id="accountNoticeBox" class="notice${toneClass}"${hiddenStyle}>${escapeHtml(accountNotice.text)}</div>`;
     }
 
+    function renderSupportNote() {
+      return `
+        <section class="section-card support-note-card">
+          <div class="field-label">Support</div>
+          <div class="subtle-text">OC OPERATORS TOOLS is maintained independently. Support helps cover hosting, database costs, and ongoing updates.</div>
+          <div class="section-actions">
+            <a class="link-btn" href="/support">Support the project</a>
+          </div>
+        </section>
+      `;
+    }
+
     function updateAccountNoticeElement() {
       const node = document.getElementById('accountNoticeBox');
       if (!node) return;
@@ -2419,6 +2542,32 @@
       accountAuthMode = 'signin';
       setAccountNotice('', '');
       renderAccountModal();
+    }
+
+    function readLocalStorageValue(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeLocalStorageValue(key, value) {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (_) {}
+    }
+
+    function initSupportBanner() {
+      if (!supportBanner || !dismissSupportBannerBtn) return;
+      if (readLocalStorageValue(SUPPORT_BANNER_DISMISS_KEY) === '1') {
+        supportBanner.hidden = true;
+        return;
+      }
+      dismissSupportBannerBtn.addEventListener('click', () => {
+        supportBanner.hidden = true;
+        writeLocalStorageValue(SUPPORT_BANNER_DISMISS_KEY, '1');
+      });
     }
 
     function isRecoveryUrl() {
@@ -3739,6 +3888,7 @@
               <button id="signOutBtn" class="link-btn" type="button">Sign Out</button>
             </div>
           </section>
+          ${renderSupportNote()}
         `;
         wireAccountModalEvents();
         return;
@@ -3815,6 +3965,7 @@
           </section>
           <div class="subtle-text">Changes here save automatically to your work schedule.</div>
         </section>
+        ${renderSupportNote()}
       `;
       wireAccountModalEvents();
     }
@@ -5158,6 +5309,10 @@
       closeMobileMenu();
       openBusDefectsPage();
     });
+    mobileSupportBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/support';
+    });
     mobileAccountBtn.addEventListener('click', () => {
       closeMobileMenu();
       openAccountModal();
@@ -5430,6 +5585,7 @@
       }
     });
 
+    initSupportBanner();
     initSupabase();
 
     async function restoreTodayWorkOnLoad() {

@@ -4180,6 +4180,9 @@ app.get('/fall-paddles', (_req, res) => {
 app.get('/booking-boards', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
 });
+app.get('/support', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'support.html'));
+});
 app.get('/booking-board-admin', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-board-admin.html'));
 });
