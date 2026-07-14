@@ -944,52 +944,6 @@
       gap: 14px;
     }
 
-    .support-message-modal {
-      width: min(620px, 100%);
-    }
-
-    .support-message-body {
-      padding: 22px;
-      gap: 18px;
-    }
-
-    .support-message-copy {
-      display: grid;
-      gap: 12px;
-      color: var(--oc-mist);
-      font-size: 15px;
-      line-height: 1.55;
-    }
-
-    .support-message-copy p {
-      margin: 0;
-    }
-
-    .support-message-copy strong {
-      color: var(--oc-white);
-    }
-
-    .support-message-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .support-message-actions .btn {
-      min-height: 42px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-    }
-
-    .support-message-note {
-      color: rgba(220, 228, 238, 0.72);
-      font-size: 12px;
-    }
-
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1568,10 +1522,6 @@
         padding: 12px;
       }
 
-      .support-message-body {
-        padding: 16px;
-      }
-
       .meta-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1828,30 +1778,6 @@
     </section>
   </div>
 
-  <div id="supportMessageOverlay" class="overlay" hidden>
-    <section class="modal support-message-modal" role="dialog" aria-modal="true" aria-labelledby="supportMessageTitle">
-      <header class="modal-head">
-        <div>
-          <h2 id="supportMessageTitle">A Message From Omar</h2>
-          <p class="modal-meta">OC OPERATORS TOOLS remains free to use.</p>
-        </div>
-        <button id="closeSupportMessageBtn" class="close-btn" type="button" aria-label="Close support message">x</button>
-      </header>
-      <div class="modal-body support-message-body">
-        <div class="support-message-copy">
-          <p><strong>If you use this site and benefit from it, please consider supporting the work behind it.</strong></p>
-          <p>OC OPERATORS TOOLS is maintained only by me. I’ve put many hours into building it, improving it, and keeping it running.</p>
-          <p>Support helps cover hosting, database costs, maintenance, and future improvements. Contributions are completely optional, but they help keep the site available and improving.</p>
-        </div>
-        <div class="support-message-actions">
-          <a id="supportMessageSupportBtn" class="btn" href="/support">Support the site</a>
-          <button id="supportMessageLaterBtn" class="link-btn" type="button">Maybe later</button>
-        </div>
-        <div class="support-message-note">You can close this and continue using the site.</div>
-      </div>
-    </section>
-  </div>
-
   <script src="/oc-header.js"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -1872,7 +1798,6 @@
     const input = document.getElementById('messageInput');
     const chat = document.getElementById('chat');
     const appShell = document.querySelector('.app');
-    const supportPath = window.location.protocol === 'file:' ? 'support.html' : '/support';
     const homeBtn = document.getElementById('homeBtn');
     const todayWorkBtn = document.getElementById('todayWorkBtn');
     const busDefectsBtn = document.getElementById('busDefectsBtn');
@@ -1925,13 +1850,6 @@
     const supportBanner = document.getElementById('supportBanner');
     const dismissSupportBannerBtn = document.getElementById('dismissSupportBannerBtn');
     const SUPPORT_BANNER_DISMISS_KEY = 'oc-operators-tools:support-banner-dismissed:v2';
-    const supportMessageOverlay = document.getElementById('supportMessageOverlay');
-    const closeSupportMessageBtn = document.getElementById('closeSupportMessageBtn');
-    const supportMessageLaterBtn = document.getElementById('supportMessageLaterBtn');
-    const supportMessageSupportBtn = document.getElementById('supportMessageSupportBtn');
-    const SUPPORT_MESSAGE_DISMISS_UNTIL_KEY = 'oc-operators-tools:support-message-dismissed-until:v1';
-    const SUPPORT_MESSAGE_DISMISS_DAYS = 14;
-    const SUPPORT_MESSAGE_CLICK_DAYS = 30;
     let supabaseClient = null;
     let supabaseEnabled = false;
     let currentUser = null;
@@ -2638,50 +2556,6 @@
       try {
         window.localStorage.setItem(key, value);
       } catch (_) {}
-    }
-
-    function openSupportPage() {
-      window.location.href = supportPath;
-    }
-
-    function initSupportLinks() {
-      document.querySelectorAll('a[href="/support"]').forEach((link) => {
-        link.href = supportPath;
-      });
-    }
-
-    function addDaysFromNow(days) {
-      return Date.now() + (Number(days) || 0) * 24 * 60 * 60 * 1000;
-    }
-
-    function isSupportMessageDismissed() {
-      const value = Number(readLocalStorageValue(SUPPORT_MESSAGE_DISMISS_UNTIL_KEY) || 0);
-      return Number.isFinite(value) && value > Date.now();
-    }
-
-    function dismissSupportMessage(days) {
-      if (supportMessageOverlay) supportMessageOverlay.hidden = true;
-      writeLocalStorageValue(SUPPORT_MESSAGE_DISMISS_UNTIL_KEY, String(addDaysFromNow(days)));
-    }
-
-    function initSupportMessage() {
-      if (!supportMessageOverlay || !closeSupportMessageBtn || !supportMessageLaterBtn || !supportMessageSupportBtn) return;
-      if (new URLSearchParams(window.location.search || '').get('showSupportMessage') === '1') {
-        writeLocalStorageValue(SUPPORT_MESSAGE_DISMISS_UNTIL_KEY, '0');
-      }
-      if (!isSupportMessageDismissed()) {
-        window.setTimeout(() => {
-          supportMessageOverlay.hidden = false;
-        }, 550);
-      }
-      closeSupportMessageBtn.addEventListener('click', () => dismissSupportMessage(SUPPORT_MESSAGE_DISMISS_DAYS));
-      supportMessageLaterBtn.addEventListener('click', () => dismissSupportMessage(SUPPORT_MESSAGE_DISMISS_DAYS));
-      supportMessageSupportBtn.addEventListener('click', () => {
-        writeLocalStorageValue(SUPPORT_MESSAGE_DISMISS_UNTIL_KEY, String(addDaysFromNow(SUPPORT_MESSAGE_CLICK_DAYS)));
-      });
-      supportMessageOverlay.addEventListener('click', (event) => {
-        if (event.target === supportMessageOverlay) dismissSupportMessage(SUPPORT_MESSAGE_DISMISS_DAYS);
-      });
     }
 
     function initSupportBanner() {
@@ -5435,12 +5309,8 @@
       closeMobileMenu();
       openBusDefectsPage();
     });
-    supportBtn.addEventListener('click', () => {
-      openSupportPage();
-    });
     mobileSupportBtn.addEventListener('click', () => {
       closeMobileMenu();
-      openSupportPage();
     });
     mobileAccountBtn.addEventListener('click', () => {
       closeMobileMenu();
@@ -5711,14 +5581,10 @@
         closeMapModal();
       } else if (event.key === 'Escape' && !confirmOverlay.hidden) {
         closeConfirmModal(false);
-      } else if (event.key === 'Escape' && supportMessageOverlay && !supportMessageOverlay.hidden) {
-        dismissSupportMessage(SUPPORT_MESSAGE_DISMISS_DAYS);
       }
     });
 
-    initSupportLinks();
     initSupportBanner();
-    initSupportMessage();
     initSupabase();
 
     async function restoreTodayWorkOnLoad() {
