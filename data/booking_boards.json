@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Fall Booking/Booking Boards PDFs",
-  "generatedAt": "2026-07-14T03:13:30.046097+00:00",
+  "generatedAt": "2026-07-15T13:16:29.269519+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -18823,7 +18823,7 @@
           "workSection": "AM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     },
     {
       "id": "weekend_boards",
@@ -62950,7 +62950,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     },
     {
       "id": "days_off_counter",
@@ -63118,7 +63118,7 @@
           "remaining": 597
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     },
     {
       "id": "vacation_tracker",
@@ -63281,7 +63281,7 @@
           "remaining": 385
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     },
     {
       "id": "spares",
@@ -65460,8 +65460,8 @@
                 {
                   "onTime": "00:00",
                   "limit": 20,
-                  "booked": 12,
-                  "available": 8
+                  "booked": 14,
+                  "available": 6
                 }
               ]
             }
@@ -65480,15 +65480,15 @@
                 {
                   "onTime": "00:00",
                   "limit": 30,
-                  "booked": 17,
-                  "available": 13
+                  "booked": 19,
+                  "available": 11
                 }
               ]
             }
           ]
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     },
     {
       "id": "stat_work",
@@ -102226,7 +102226,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-14T03:13:30.046192+00:00"
+      "updatedAt": "2026-07-15T13:16:29.269613+00:00"
     }
   ]
 }
