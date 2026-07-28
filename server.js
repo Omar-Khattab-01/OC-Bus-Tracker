@@ -9,7 +9,6 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { createClient } = require('@supabase/supabase-js');
-const { trackBlock } = require('./track_block');
 const {
   debugGtfsState,
   getGtfsWarmupStatus,
@@ -43,9 +42,7 @@ let fallPdfSearchIndexMtimeMs = 0;
 
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
-const FALLBACK_TIMEOUT_MS = Number(process.env.FALLBACK_TIMEOUT_MS || 90000);
 const TRACK_CONCURRENCY = Math.max(1, Number(process.env.TRACK_CONCURRENCY || 6));
-const ENABLE_PLAYWRIGHT_FALLBACK = process.env.ENABLE_PLAYWRIGHT_FALLBACK === '1';
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
@@ -2833,23 +2830,10 @@ async function fetchLiveResult(block) {
 
   const job = enqueue(async () => {
     const timings = {
-      tripsFetchMs: 0,
       paddleFetchMs: 0,
       gtfsMs: 0,
-      betterTransitMs: 0,
-      transSeeMs: 0,
     };
-    let trips = [];
     let paddleTrips = [];
-    let directLookupError = null;
-
-    try {
-      const startedAt = Date.now();
-      trips = await fetchTripsForBlock(block);
-      timings.tripsFetchMs = Date.now() - startedAt;
-    } catch (err) {
-      directLookupError = err;
-    }
 
     try {
       const startedAt = Date.now();
@@ -2859,51 +2843,16 @@ async function fetchLiveResult(block) {
       paddleTrips = [];
     }
 
-    const gtfsTrips = paddleTrips.length ? paddleTrips : trips;
-    if (gtfsTrips.length > 0) {
+    if (paddleTrips.length > 0) {
       const startedAt = Date.now();
-      const gtfsFallback = await fetchGtfsBlockFallback(block, gtfsTrips);
+      const gtfsResult = await fetchGtfsBlockFallback(block, paddleTrips);
       timings.gtfsMs = Date.now() - startedAt;
-      if (gtfsFallback) {
-        return { ...gtfsFallback, timings };
+      if (gtfsResult) {
+        return { ...gtfsResult, timings };
       }
     }
 
-    let buses = [];
-    if (!directLookupError) {
-      try {
-        const startedAt = Date.now();
-        buses = await fetchBusesForBlock(block);
-        timings.betterTransitMs += Date.now() - startedAt;
-      } catch (err) {
-        directLookupError = err;
-      }
-    }
-    if (buses.length > 0) {
-      const startedAt = Date.now();
-      const results = await Promise.allSettled(buses.map((bus) => fetchLocationForBus(bus)));
-      timings.betterTransitMs += Date.now() - startedAt;
-      const locations = results
-        .filter((result) => result.status === 'fulfilled')
-        .map((result) => result.value);
-      if (locations.length > 0) {
-        return { block, buses: locations, liveSource: 'bettertransit', timings };
-      }
-    }
-
-    const fallbackTrips = trips.length ? trips : paddleTrips;
-    if (fallbackTrips.length > 0) {
-      const startedAt = Date.now();
-      const transSeeFallback = await fetchTransSeeTripFallback(block, fallbackTrips);
-      timings.transSeeMs = Date.now() - startedAt;
-      if (transSeeFallback) {
-        return { ...transSeeFallback, liveSource: 'transsee', timings };
-      }
-    } else if (directLookupError) {
-      throw directLookupError;
-    }
-
-    return { block, buses: [], liveSource: 'none', timings };
+    return { block, buses: [], liveSource: 'gtfs-rt', timings };
   }).finally(() => {
     pendingByBlock.delete(block);
   });
@@ -2914,30 +2863,14 @@ async function fetchLiveResult(block) {
 
 async function fetchLiveResultWithFallback(block) {
   const startedAt = Date.now();
-  try {
-    const payload = await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
-    return {
-      ...payload,
-      timings: {
-        ...(payload?.timings || {}),
-        totalLookupMs: Date.now() - startedAt,
-      },
-    };
-  } catch (directErr) {
-    if (!ENABLE_PLAYWRIGHT_FALLBACK) throw directErr;
-    if (Number(directErr.code) === 400) throw directErr;
-    const fallbackStartedAt = Date.now();
-    const fallback = await withTimeout(trackBlock(block, { headless: true }), FALLBACK_TIMEOUT_MS);
-    return {
-      ...fallback,
-      liveSource: fallback.liveSource || 'playwright-fallback',
-      timings: {
-        ...(fallback?.timings || {}),
-        fallbackMs: Date.now() - fallbackStartedAt,
-        totalLookupMs: Date.now() - startedAt,
-      },
-    };
-  }
+  const payload = await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
+  return {
+    ...payload,
+    timings: {
+      ...(payload?.timings || {}),
+      totalLookupMs: Date.now() - startedAt,
+    },
+  };
 }
 
 function drainQueue() {
@@ -3059,9 +2992,6 @@ function validateBlockOrSend(block, res) {
 function describeLiveSource(value) {
   const source = String(value || '').trim().toLowerCase();
   if (source === 'gtfs-rt') return 'GTFS-RT';
-  if (source === 'bettertransit') return 'BetterTransit';
-  if (source === 'transsee') return 'TransSee';
-  if (source === 'playwright-fallback') return 'Playwright fallback';
   if (source === 'none') return 'No live source';
   if (source === 'direct') return 'Direct lookup';
   return source ? source : 'Unknown';
@@ -3071,21 +3001,15 @@ function formatTimingLine(timings = {}) {
   const parts = [];
   const totalLookupMs = Number(timings?.totalLookupMs || 0);
   const gtfsMs = Number(timings?.gtfsMs || 0);
-  const betterTransitMs = Number(timings?.betterTransitMs || 0);
-  const transSeeMs = Number(timings?.transSeeMs || 0);
-  const fallbackMs = Number(timings?.fallbackMs || 0);
   if (totalLookupMs > 0) parts.push(`total ${totalLookupMs}ms`);
   if (gtfsMs > 0) parts.push(`GTFS ${gtfsMs}ms`);
-  if (betterTransitMs > 0) parts.push(`BetterTransit ${betterTransitMs}ms`);
-  if (transSeeMs > 0) parts.push(`TransSee ${transSeeMs}ms`);
-  if (fallbackMs > 0) parts.push(`fallback ${fallbackMs}ms`);
   return parts.length ? `Timing: ${parts.join(' | ')}` : '';
 }
 
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no live data is available right now across the tracking sites either \u{1F609}`.trim();
+    return `Block ${payload?.block || ''}: no live GTFS-RT vehicle is available right now.`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
@@ -3212,22 +3136,20 @@ async function handleBusLookup(busNumber, res) {
           };
         }
       } catch (_) {
-        // Fall through to the older location path below.
+        // Report no GTFS-RT result below.
       }
     }
 
     if (!payload) {
-      const [location, block] = await Promise.all([
-        fetchLocationForBus(busNumber),
-        withTimeout(resolveBlockForBus(busNumber).catch(() => null), 10000).catch(() => null),
-      ]);
       payload = {
         busNumber: String(busNumber),
-        block: block || null,
-        buses: [location],
-        parked: !block && locationSuggestsParked(location?.locationText),
-        liveSource: 'transsee',
-        timings: {},
+        block: storedMapping?.block || null,
+        buses: [],
+        parked: false,
+        liveSource: 'gtfs-rt',
+        timings: {
+          gtfsMs: Date.now() - startedAt,
+        },
       };
     }
 

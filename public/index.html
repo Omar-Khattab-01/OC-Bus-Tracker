@@ -2400,14 +2400,12 @@
       if (!isLocalDevEnvironment()) return '';
       const parts = [];
       if (data.liveSource) {
-        parts.push(`Source: ${escapeHtml(data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource === 'bettertransit' ? 'BetterTransit' : data.liveSource === 'transsee' ? 'TransSee' : data.liveSource)}`);
+        parts.push(`Source: ${escapeHtml(data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource)}`);
       }
       const timings = data.timings || {};
       const timingParts = [];
       if (Number(timings.totalLookupMs || 0) > 0) timingParts.push(`total ${escapeHtml(timings.totalLookupMs)}ms`);
       if (Number(timings.gtfsMs || 0) > 0) timingParts.push(`GTFS ${escapeHtml(timings.gtfsMs)}ms`);
-      if (Number(timings.betterTransitMs || 0) > 0) timingParts.push(`BetterTransit ${escapeHtml(timings.betterTransitMs)}ms`);
-      if (Number(timings.transSeeMs || 0) > 0) timingParts.push(`TransSee ${escapeHtml(timings.transSeeMs)}ms`);
       if (timingParts.length) {
         parts.push(`Timing: ${timingParts.join(' | ')}`);
       }
@@ -2418,14 +2416,12 @@
       if (!isLocalDevEnvironment()) return '';
       const parts = [];
       if (data.liveSource) {
-        parts.push(`Source: ${data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource === 'bettertransit' ? 'BetterTransit' : data.liveSource === 'transsee' ? 'TransSee' : data.liveSource}`);
+        parts.push(`Source: ${data.liveSource === 'gtfs-rt' ? 'GTFS-RT' : data.liveSource}`);
       }
       const timings = data.timings || {};
       const timingParts = [];
       if (Number(timings.totalLookupMs || 0) > 0) timingParts.push(`total ${timings.totalLookupMs}ms`);
       if (Number(timings.gtfsMs || 0) > 0) timingParts.push(`GTFS ${timings.gtfsMs}ms`);
-      if (Number(timings.betterTransitMs || 0) > 0) timingParts.push(`BetterTransit ${timings.betterTransitMs}ms`);
-      if (Number(timings.transSeeMs || 0) > 0) timingParts.push(`TransSee ${timings.transSeeMs}ms`);
       if (timingParts.length) {
         parts.push(`Timing: ${timingParts.join(' | ')}`);
       }
