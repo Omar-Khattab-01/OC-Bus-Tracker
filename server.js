@@ -9,6 +9,11 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { createClient } = require('@supabase/supabase-js');
+
+if (typeof process.loadEnvFile === 'function' && fs.existsSync(path.join(__dirname, '.env.local'))) {
+  process.loadEnvFile(path.join(__dirname, '.env.local'));
+}
+
 const {
   debugGtfsState,
   getGtfsWarmupStatus,
@@ -3009,7 +3014,7 @@ function formatTimingLine(timings = {}) {
 function formatChatReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Block ${payload?.block || ''}: no live GTFS-RT vehicle is available right now.`.trim();
+    return `Block ${payload?.block || ''}: live bus information isn't available right now.`.trim();
   }
 
   const lines = [`Block ${payload.block}`];
@@ -3053,7 +3058,7 @@ function formatShowAllReply(activePaddles) {
 function formatBusReply(payload) {
   const buses = Array.isArray(payload?.buses) ? payload.buses : [];
   if (!buses.length) {
-    return `Bus ${payload?.busNumber || ''}: no live location is available right now.`.trim();
+    return `Bus ${payload?.busNumber || ''}: live bus information isn't available right now.`.trim();
   }
 
   const lines = [`Bus ${payload.busNumber}`];
@@ -3087,37 +3092,18 @@ async function handleBusLookup(busNumber, res) {
   try {
     const startedAt = Date.now();
     let payload = null;
-    const storedMapping = await getStoredLiveBusPaddleMapping(busNumber).catch(() => null);
+    const storedMapping = await withTimeout(
+      getStoredLiveBusPaddleMapping(busNumber),
+      1000
+    ).catch(() => null);
     let gtfsMatched = null;
 
     if (isGtfsRtConfigured()) {
       const gtfsStartedAt = Date.now();
       try {
-        let cachedBlock = storedMapping?.block || await resolveBlockForBus(busNumber).catch(() => null);
+        let cachedBlock = storedMapping?.block || null;
         const gtfsPayload = await lookupBusPositionWithGtfsRt(busNumber);
         if (gtfsPayload?.position) {
-          const routeHint = String(gtfsPayload.position.routeShortName || gtfsPayload.position.routeId || '').trim();
-          const activeCandidates = getActivePaddlesForNow();
-          const filteredCandidates = routeHint
-            ? activeCandidates.filter((item) => String(item.route || '').trim() === routeHint)
-            : activeCandidates;
-          const lookupCandidates = filteredCandidates.length ? filteredCandidates : activeCandidates;
-          if (lookupCandidates.length) {
-            const activePaddlesWithTrips = await Promise.all(
-              lookupCandidates.map(async (item) => ({
-                ...item,
-                trips: await fetchPaddleTripsForBlock(item.block),
-              }))
-            );
-            gtfsMatched = await withTimeout(
-              lookupBusWithGtfsRt(busNumber, activePaddlesWithTrips),
-              2500
-            ).catch(() => null);
-          }
-
-          if (!cachedBlock && gtfsMatched?.matched?.block) {
-            cachedBlock = gtfsMatched.matched.block;
-          }
           if (!cachedBlock && gtfsPayload.position.blockId) {
             cachedBlock = await resolveCanonicalBlock(gtfsPayload.position.blockId).catch(() => null) || normalizeBlock(gtfsPayload.position.blockId);
           }
