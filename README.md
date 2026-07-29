@@ -95,6 +95,30 @@ When Supabase is configured, operators can:
 - Supabase Auth + Postgres
 - Vercel
 
+## WhatsApp Fall Booking Board Updates
+
+The site can accept Fall booking board PDFs from a Twilio WhatsApp webhook and rebuild the live booking board data without using the admin page.
+
+Configure the Twilio WhatsApp incoming-message webhook to:
+
+```text
+https://YOUR_SITE/api/admin/whatsapp-booking-board?token=YOUR_WHATSAPP_BOOKING_BOARD_TOKEN
+```
+
+Set these environment variables on the deployed backend:
+
+```text
+WHATSAPP_BOOKING_BOARD_TOKEN=long-random-secret
+WHATSAPP_ALLOWED_FROM=whatsapp:+1XXXXXXXXXX
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+WHATSAPP_PUBLIC_WEBHOOK_URL=https://YOUR_SITE/api/admin/whatsapp-booking-board?token=YOUR_WHATSAPP_BOOKING_BOARD_TOKEN
+BOOKING_BOARD_GITHUB_TOKEN=github_pat_or_fine_grained_token
+BOOKING_BOARD_GITHUB_REPO=Omar-Khattab-01/OC-Bus-Tracker
+BOOKING_BOARD_GITHUB_BRANCH=main
+```
+
+Forward one or more PDF documents to the WhatsApp number. If the original filename is not available, add a caption such as `daily`, `weekend`, `spare`, `stat`, `days off`, or `vacation`. The webhook also inspects PDF text as a fallback before committing updated PDFs and `data/booking_boards.json` to GitHub.
 
 ## Notes
 

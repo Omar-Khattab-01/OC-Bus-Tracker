@@ -39,6 +39,11 @@ const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking
 const PYTHON_BIN = String(process.env.PYTHON_BIN || '').trim();
 const PYTHON_VENDOR_DIR = path.join(__dirname, 'vendor', 'python');
 const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN || '').trim();
+const WHATSAPP_BOOKING_BOARD_TOKEN = String(process.env.WHATSAPP_BOOKING_BOARD_TOKEN || BOOKING_BOARD_ADMIN_TOKEN || '').trim();
+const WHATSAPP_ALLOWED_FROM = String(process.env.WHATSAPP_ALLOWED_FROM || '').split(',').map((item) => item.trim()).filter(Boolean);
+const WHATSAPP_PUBLIC_WEBHOOK_URL = String(process.env.WHATSAPP_PUBLIC_WEBHOOK_URL || '').trim();
+const TWILIO_ACCOUNT_SID = String(process.env.TWILIO_ACCOUNT_SID || '').trim();
+const TWILIO_AUTH_TOKEN = String(process.env.TWILIO_AUTH_TOKEN || '').trim();
 let bookingBoardsDataCache = null;
 let bookingBoardsDataMtimeMs = 0;
 let bookingBoardsRuntimeUpdatedAt = '';
@@ -3673,6 +3678,246 @@ function classifyBookingBoardUploadName(name) {
   return '';
 }
 
+function normalizeWhatsAppAddress(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function makeTwilioSignatureUrl(req) {
+  if (WHATSAPP_PUBLIC_WEBHOOK_URL) return WHATSAPP_PUBLIC_WEBHOOK_URL;
+  const proto = String(req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim();
+  const host = String(req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim();
+  return `${proto}://${host}${req.originalUrl}`;
+}
+
+function validateTwilioSignature(req) {
+  if (!TWILIO_AUTH_TOKEN) return true;
+  const provided = String(req.get('x-twilio-signature') || '').trim();
+  if (!provided) return false;
+  const params = req.body && typeof req.body === 'object' ? req.body : {};
+  const payload = Object.keys(params)
+    .sort()
+    .reduce((acc, key) => acc + key + String(params[key] ?? ''), makeTwilioSignatureUrl(req));
+  const expected = crypto.createHmac('sha1', TWILIO_AUTH_TOKEN).update(payload).digest('base64');
+  return crypto.timingSafeEqual(
+    Buffer.from(provided.padEnd(expected.length, '\0').slice(0, expected.length)),
+    Buffer.from(expected)
+  ) && provided.length === expected.length;
+}
+
+function isAuthorizedWhatsAppBookingBoardRequest(req) {
+  if (!WHATSAPP_BOOKING_BOARD_TOKEN) return false;
+  const token = String(req.query.token || req.get('x-whatsapp-booking-token') || '').trim();
+  if (token !== WHATSAPP_BOOKING_BOARD_TOKEN) return false;
+  if (!validateTwilioSignature(req)) return false;
+  if (!WHATSAPP_ALLOWED_FROM.length) return true;
+  const sender = normalizeWhatsAppAddress(req.body?.From);
+  return WHATSAPP_ALLOWED_FROM.map(normalizeWhatsAppAddress).includes(sender);
+}
+
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function sendTwilioMessage(res, message) {
+  res.set('Content-Type', 'text/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`);
+}
+
+function parseBoardHintsFromText(text) {
+  const normalized = normalizeBookingBoardUploadName(text);
+  const matches = [];
+  const hintAliases = [
+    ['days_off_counter', /\b(days?\s+off|counter)\b/g],
+    ['vacation_tracker', /\bvacation\b/g],
+    ['spares', /\bspares?\b/g],
+    ['stat', /\b(stat|civic|canada\s+day|holiday)\b/g],
+    ['weekend', /\b(weekend|saturday|sunday)\b/g],
+    ['daily', /\b(daily|weekday|weekdays)\b/g],
+  ];
+  for (const [key, pattern] of hintAliases) {
+    for (const match of normalized.matchAll(pattern)) {
+      matches.push({ key, index: match.index || 0 });
+    }
+  }
+  const seen = new Set();
+  return matches
+    .sort((a, b) => a.index - b.index)
+    .map((item) => item.key)
+    .filter((key) => {
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+async function downloadTwilioMedia(mediaUrl) {
+  const headers = {};
+  if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+    headers.Authorization = `Basic ${Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64')}`;
+  }
+  const response = await fetch(mediaUrl, { headers });
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (!response.ok) {
+    throw new Error(`Media download failed with HTTP ${response.status}: ${buffer.toString('utf8').slice(0, 300)}`);
+  }
+  return {
+    buffer,
+    contentType: String(response.headers.get('content-type') || '').toLowerCase(),
+    disposition: String(response.headers.get('content-disposition') || ''),
+  };
+}
+
+function filenameFromContentDisposition(disposition) {
+  const match = String(disposition || '').match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+  return match ? decodeURIComponent(match[1].replace(/^"|"$/g, '').trim()) : '';
+}
+
+function collectTwilioMediaItems(body) {
+  const count = Math.max(0, Number.parseInt(String(body?.NumMedia || '0'), 10) || 0);
+  const items = [];
+  for (let index = 0; index < count; index += 1) {
+    const url = String(body?.[`MediaUrl${index}`] || '').trim();
+    if (!url) continue;
+    items.push({
+      index,
+      url,
+      contentType: String(body?.[`MediaContentType${index}`] || '').toLowerCase(),
+    });
+  }
+  return items;
+}
+
+async function classifyBookingBoardPdfBuffer(pdfBuffer) {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-board-classify-'));
+  const tempPdf = path.join(tempRoot, 'incoming.pdf');
+  const classifyScript = `
+import importlib.util
+import json
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+pdf_path = Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location("builder", root / "tools" / "build_booking_boards.py")
+builder = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(builder)
+pages = builder.extract_lines(pdf_path)
+first_page = " ".join((pages[0].get("lines", [])[:80] if pages else []))
+first_page = " ".join(str(first_page or "").replace("_", " ").replace("-", " ").lower().split())
+text = " ".join(" ".join(page.get("lines", [])[:80]) for page in pages[:3])
+text = " ".join(str(text or "").replace("_", " ").replace("-", " ").lower().split())
+board = ""
+if "vacation tracker" in text:
+    board = "vacation_tracker"
+elif "fall 2026 days off" in text or "day total booked remaining" in first_page:
+    board = "days_off_counter"
+elif "general booking spare progress report" in first_page or "floating spare" in first_page:
+    board = "spares"
+elif "daily open work" in first_page:
+    board = "daily"
+elif "mixed odd work saturday" in first_page or "mixed odd work sunday" in text or "sat1 sat2" in first_page:
+    board = "weekend"
+elif "labour day" in first_page or "stat work" in text or "canada day" in text or "civic" in text or "holiday" in text:
+    board = "stat"
+print(json.dumps({"board": board}))
+`;
+  try {
+    fs.writeFileSync(tempPdf, pdfBuffer);
+    const pythonBins = [PYTHON_BIN, 'python3', 'python'].filter(Boolean);
+    for (const pythonBin of [...new Set(pythonBins)]) {
+      try {
+        const result = await execFileAsync(pythonBin, ['-c', classifyScript, __dirname, tempPdf], {
+          cwd: __dirname,
+          timeout: 45000,
+          maxBuffer: 1024 * 1024,
+          env: {
+            ...process.env,
+            PYTHONPATH: [PYTHON_VENDOR_DIR, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+          },
+        });
+        return String(JSON.parse(result.stdout || '{}').board || '').trim();
+      } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+      }
+    }
+    return '';
+  } finally {
+    try {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    } catch {}
+  }
+}
+
+async function handleWhatsAppBookingBoardUpload(req, res) {
+  if (!isAuthorizedWhatsAppBookingBoardRequest(req)) {
+    sendTwilioMessage(res, 'Booking board WhatsApp upload is not authorized.');
+    return;
+  }
+
+  const mediaItems = collectTwilioMediaItems(req.body);
+  if (!mediaItems.length) {
+    sendTwilioMessage(res, 'Send or forward one or more Fall booking board PDF files. You can add a caption like daily, weekend, spare, stat, days off, or vacation.');
+    return;
+  }
+
+  try {
+    const bodyText = String(req.body?.Body || '').trim();
+    const bodyHints = parseBoardHintsFromText(bodyText);
+    const uploadedTargets = {};
+    const uploaded = [];
+    const unmatched = [];
+
+    for (const item of mediaItems) {
+      const downloaded = await downloadTwilioMedia(item.url);
+      const sourceName = filenameFromContentDisposition(downloaded.disposition) || bodyText || `whatsapp-media-${item.index + 1}.pdf`;
+      if (!downloaded.buffer.length || downloaded.buffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+        unmatched.push(`${sourceName} was not a PDF.`);
+        continue;
+      }
+      const inferredBoard = classifyBookingBoardUploadName(sourceName)
+        || (bodyHints.length === mediaItems.length ? bodyHints[item.index] : '')
+        || (mediaItems.length === 1 && bodyHints.length === 1 ? bodyHints[0] : '')
+        || await classifyBookingBoardPdfBuffer(downloaded.buffer);
+      const target = BOOKING_BOARD_UPLOAD_TARGETS[inferredBoard];
+      if (!target || !BOOKING_BOARD_PRIMARY_UPLOAD_KEYS.includes(inferredBoard)) {
+        unmatched.push(`${sourceName} could not be matched. Add a caption like daily, weekend, spare, stat, days off, or vacation.`);
+        continue;
+      }
+      if (uploadedTargets[inferredBoard]) {
+        throw new Error(`More than one PDF matched ${target.label}. Send one PDF for that board type.`);
+      }
+      uploadedTargets[inferredBoard] = downloaded.buffer;
+      uploaded.push({
+        board: inferredBoard,
+        label: target.label,
+        sourceName,
+        filename: target.filename,
+      });
+    }
+
+    if (!Object.keys(uploadedTargets).length) {
+      sendTwilioMessage(res, `No booking boards were updated. ${unmatched.join(' ')}`.trim());
+      return;
+    }
+
+    const result = await rebuildUploadedBookingBoards(uploadedTargets);
+    const updatedLabels = uploaded.map((item) => item.label).join(', ');
+    const unmatchedNote = unmatched.length ? ` Unmatched: ${unmatched.join(' ')}` : '';
+    sendTwilioMessage(
+      res,
+      `Updated ${updatedLabels}. ${result.boardCount} boards rebuilt at ${result.updatedAt}. Local runtime updated; use Vercel webhook for permanent GitHub updates.${unmatchedNote}`
+    );
+  } catch (err) {
+    sendTwilioMessage(res, `Booking board update failed: ${String(err.message || err).slice(0, 900)}`);
+  }
+}
+
 function normalizeFloatingSpareOverrides(rawOverrides) {
   if (!Array.isArray(rawOverrides)) return [];
   const definitionsById = new Map(FLOATING_SPARE_OVERRIDE_DEFINITIONS.map((definition) => [definition.id, definition]));
@@ -4023,6 +4268,7 @@ app.get('/api/fall-pdf-download', handleFallPdfDownload);
 app.post('/api/admin/booking-boards', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/rebuild-booking-board', express.json({ limit: '120mb' }), handleBookingBoardBatchUpload);
 app.post('/api/admin/booking-boards/:board', express.raw({ type: ['application/pdf', 'application/octet-stream'], limit: '30mb' }), handleBookingBoardUpload);
+app.post('/api/admin/whatsapp-booking-board', express.urlencoded({ extended: false, limit: '2mb' }), handleWhatsAppBookingBoardUpload);
 app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/fall-booking', handleFallBooking);
