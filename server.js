@@ -44,6 +44,8 @@ const WHATSAPP_ALLOWED_FROM = String(process.env.WHATSAPP_ALLOWED_FROM || '').sp
 const WHATSAPP_PUBLIC_WEBHOOK_URL = String(process.env.WHATSAPP_PUBLIC_WEBHOOK_URL || '').trim();
 const TWILIO_ACCOUNT_SID = String(process.env.TWILIO_ACCOUNT_SID || '').trim();
 const TWILIO_AUTH_TOKEN = String(process.env.TWILIO_AUTH_TOKEN || '').trim();
+const TWILIO_API_KEY_SID = String(process.env.TWILIO_API_KEY_SID || '').trim();
+const TWILIO_API_KEY_SECRET = String(process.env.TWILIO_API_KEY_SECRET || '').trim();
 let bookingBoardsDataCache = null;
 let bookingBoardsDataMtimeMs = 0;
 let bookingBoardsRuntimeUpdatedAt = '';
@@ -3757,8 +3759,10 @@ function parseBoardHintsFromText(text) {
 
 async function downloadTwilioMedia(mediaUrl) {
   const headers = {};
-  if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
-    headers.Authorization = `Basic ${Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64')}`;
+  const mediaAuthUser = TWILIO_API_KEY_SID || TWILIO_ACCOUNT_SID;
+  const mediaAuthPass = TWILIO_API_KEY_SECRET || TWILIO_AUTH_TOKEN;
+  if (mediaAuthUser && mediaAuthPass) {
+    headers.Authorization = `Basic ${Buffer.from(`${mediaAuthUser}:${mediaAuthPass}`).toString('base64')}`;
   }
   const response = await fetch(mediaUrl, { headers });
   const buffer = Buffer.from(await response.arrayBuffer());

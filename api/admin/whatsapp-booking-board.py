@@ -154,10 +154,10 @@ def filename_from_content_disposition(value: str) -> str:
 
 def download_media(url: str) -> tuple[bytes, str]:
     headers = {}
-    account_sid = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
-    auth_token = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
-    if account_sid and auth_token:
-        encoded = base64.b64encode(f"{account_sid}:{auth_token}".encode("utf-8")).decode("ascii")
+    media_user = os.environ.get("TWILIO_API_KEY_SID", "").strip() or os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+    media_pass = os.environ.get("TWILIO_API_KEY_SECRET", "").strip() or os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+    if media_user and media_pass:
+        encoded = base64.b64encode(f"{media_user}:{media_pass}".encode("utf-8")).decode("ascii")
         headers["Authorization"] = f"Basic {encoded}"
     request = urllib.request.Request(url, headers=headers)
     try:

@@ -111,12 +111,16 @@ Set these environment variables on the deployed backend:
 WHATSAPP_BOOKING_BOARD_TOKEN=long-random-secret
 WHATSAPP_ALLOWED_FROM=whatsapp:+1XXXXXXXXXX
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=account_auth_token_used_for_webhook_signatures
+TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_API_KEY_SECRET=restricted_api_key_secret
 WHATSAPP_PUBLIC_WEBHOOK_URL=https://YOUR_SITE/api/admin/whatsapp-booking-board?token=YOUR_WHATSAPP_BOOKING_BOARD_TOKEN
 BOOKING_BOARD_GITHUB_TOKEN=github_pat_or_fine_grained_token
 BOOKING_BOARD_GITHUB_REPO=Omar-Khattab-01/OC-Bus-Tracker
 BOOKING_BOARD_GITHUB_BRANCH=main
 ```
+
+`TWILIO_AUTH_TOKEN` must be the Account Auth Token from the Twilio dashboard because Twilio uses it to sign incoming webhooks. The optional `TWILIO_API_KEY_SID` and `TWILIO_API_KEY_SECRET` can be a restricted API key for downloading media attachments.
 
 Forward one or more PDF documents to the WhatsApp number. If the original filename is not available, add a caption such as `daily`, `weekend`, `spare`, `stat`, `days off`, or `vacation`. The webhook also inspects PDF text as a fallback before committing updated PDFs and `data/booking_boards.json` to GitHub.
 
