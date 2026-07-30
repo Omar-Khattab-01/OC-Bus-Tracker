@@ -1,6 +1,6 @@
 {
   "generatedFrom": "Fall Booking/Booking Boards PDFs",
-  "generatedAt": "2026-07-29T13:58:30.027134+00:00",
+  "generatedAt": "2026-07-30T03:50:08.704603+00:00",
   "boards": [
     {
       "id": "daily_open_work",
@@ -12,15 +12,15 @@
           "id": "general-spare",
           "title": "General Spare",
           "limit": 396,
-          "booked": 335,
-          "available": 61
+          "booked": 343,
+          "available": 53
         },
         {
           "id": "holiday-spare",
           "title": "Vacation Spares",
           "limit": 67,
-          "booked": 67,
-          "available": 0
+          "booked": 66,
+          "available": 1
         }
       ],
       "entries": [
@@ -98,44 +98,6 @@
           ],
           "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
           "shiftId": "920",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-2-690",
-          "title": "Daily 690",
-          "serviceDay": "weekday",
-          "boardPage": 2,
-          "availabilityStart": "07:30",
-          "availabilityEnd": "07:30",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "690",
-              "block": "99-02",
-              "routeLabel": "99",
-              "from": "Merivale Garage",
-              "to": "Barrhaven Ctr",
-              "startTime": "04:53",
-              "endTime": "08:34",
-              "payTime": "03:41",
-              "page": 2,
-              "taken": false
-            },
-            {
-              "pieceId": "690",
-              "block": "57-07",
-              "routeLabel": "57,75,86",
-              "from": "Merivale Garage",
-              "to": "Baseline Station",
-              "startTime": "13:08",
-              "endTime": "16:50",
-              "payTime": "03:42",
-              "page": 2,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "690",
           "workSection": "Mixed Odd Work"
         },
         {
@@ -265,44 +227,6 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-2-436",
-          "title": "Daily 436",
-          "serviceDay": "weekday",
-          "boardPage": 2,
-          "availabilityStart": "08:00",
-          "availabilityEnd": "08:00",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "436",
-              "block": "61-03",
-              "routeLabel": "61",
-              "from": "Merivale Garage",
-              "to": "Merivale Garage",
-              "startTime": "05:19",
-              "endTime": "09:03",
-              "payTime": "03:44",
-              "page": 2,
-              "taken": false
-            },
-            {
-              "pieceId": "436",
-              "block": "13-05",
-              "routeLabel": "13,51",
-              "from": "Lincoln Fields Station",
-              "to": "Tunney's Station",
-              "startTime": "12:56",
-              "endTime": "17:10",
-              "payTime": "04:14",
-              "page": 2,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "436",
-          "workSection": "Mixed Odd Work"
-        },
-        {
           "id": "daily-2-841",
           "title": "Daily 841",
           "serviceDay": "weekday",
@@ -358,7 +282,7 @@
               "startTime": "05:31",
               "endTime": "09:56",
               "payTime": "04:25",
-              "page": 3,
+              "page": 2,
               "taken": false
             },
             {
@@ -370,7 +294,7 @@
               "startTime": "14:05",
               "endTime": "17:10",
               "payTime": "03:05",
-              "page": 3,
+              "page": 2,
               "taken": false
             }
           ],
@@ -379,10 +303,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-3-87",
+          "id": "daily-2-87",
           "title": "Daily 87",
           "serviceDay": "weekday",
-          "boardPage": 3,
+          "boardPage": 2,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:00",
           "taken": false,
@@ -396,7 +320,7 @@
               "startTime": "05:33",
               "endTime": "09:27",
               "payTime": "03:54",
-              "page": 3,
+              "page": 2,
               "taken": false
             },
             {
@@ -408,7 +332,7 @@
               "startTime": "13:26",
               "endTime": "17:31",
               "payTime": "04:05",
-              "page": 3,
+              "page": 2,
               "taken": false
             }
           ],
@@ -417,48 +341,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-3-402",
-          "title": "Daily 402",
-          "serviceDay": "weekday",
-          "boardPage": 3,
-          "availabilityStart": "08:00",
-          "availabilityEnd": "08:00",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "402",
-              "block": "57-02",
-              "routeLabel": "57,74",
-              "from": "Merivale Garage",
-              "to": "Lincoln Fields Station",
-              "startTime": "05:34",
-              "endTime": "10:02",
-              "payTime": "04:28",
-              "page": 3,
-              "taken": false
-            },
-            {
-              "pieceId": "402",
-              "block": "70-13",
-              "routeLabel": "70,299,696",
-              "from": "Merivale Garage",
-              "to": "Barrhaven Ctr",
-              "startTime": "13:42",
-              "endTime": "17:13",
-              "payTime": "03:31",
-              "page": 3,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "402",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-3-791",
+          "id": "daily-2-791",
           "title": "Daily 791",
           "serviceDay": "weekday",
-          "boardPage": 3,
+          "boardPage": 2,
           "availabilityStart": "07:31",
           "availabilityEnd": "07:31",
           "taken": false,
@@ -645,10 +531,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-4-09",
+          "id": "daily-3-09",
           "title": "Daily 09",
           "serviceDay": "weekday",
-          "boardPage": 4,
+          "boardPage": 3,
           "availabilityStart": "08:37",
           "availabilityEnd": "08:37",
           "taken": false,
@@ -662,7 +548,7 @@
               "startTime": "06:02",
               "endTime": "10:27",
               "payTime": "04:25",
-              "page": 4,
+              "page": 3,
               "taken": false
             },
             {
@@ -674,7 +560,7 @@
               "startTime": "13:50",
               "endTime": "18:02",
               "payTime": "04:12",
-              "page": 4,
+              "page": 3,
               "taken": false
             }
           ],
@@ -683,10 +569,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-4-25",
+          "id": "daily-3-25",
           "title": "Daily 25",
           "serviceDay": "weekday",
-          "boardPage": 4,
+          "boardPage": 3,
           "availabilityStart": "07:32",
           "availabilityEnd": "07:32",
           "taken": false,
@@ -700,7 +586,7 @@
               "startTime": "06:07",
               "endTime": "09:55",
               "payTime": "03:48",
-              "page": 4,
+              "page": 3,
               "taken": false
             },
             {
@@ -712,7 +598,7 @@
               "startTime": "14:20",
               "endTime": "18:04",
               "payTime": "03:44",
-              "page": 4,
+              "page": 3,
               "taken": false
             }
           ],
@@ -721,48 +607,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-4-27",
-          "title": "Daily 27",
-          "serviceDay": "weekday",
-          "boardPage": 4,
-          "availabilityStart": "08:04",
-          "availabilityEnd": "08:04",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "27",
-              "block": "6-09",
-              "routeLabel": "6,90",
-              "from": "Merivale Garage",
-              "to": "Billings Bridge Station",
-              "startTime": "06:08",
-              "endTime": "10:10",
-              "payTime": "04:02",
-              "page": 4,
-              "taken": false
-            },
-            {
-              "pieceId": "27",
-              "block": "901-413",
-              "routeLabel": "80,110",
-              "from": "Merivale Garage",
-              "to": "Merivale Garage",
-              "startTime": "14:03",
-              "endTime": "18:05",
-              "payTime": "04:02",
-              "page": 4,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "27",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-4-149",
+          "id": "daily-3-149",
           "title": "Daily 149",
           "serviceDay": "weekday",
-          "boardPage": 4,
+          "boardPage": 3,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -776,7 +624,7 @@
               "startTime": "06:14",
               "endTime": "09:15",
               "payTime": "03:01",
-              "page": 4,
+              "page": 3,
               "taken": false
             },
             {
@@ -788,7 +636,7 @@
               "startTime": "13:42",
               "endTime": "18:11",
               "payTime": "04:29",
-              "page": 4,
+              "page": 3,
               "taken": false
             }
           ],
@@ -911,86 +759,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-4-30",
-          "title": "Daily 30",
-          "serviceDay": "weekday",
-          "boardPage": 4,
-          "availabilityStart": "08:00",
-          "availabilityEnd": "08:00",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "30",
-              "block": "6-11",
-              "routeLabel": "6,42,90",
-              "from": "Industrial Garage",
-              "to": "Billings Bridge Station",
-              "startTime": "06:20",
-              "endTime": "10:33",
-              "payTime": "04:13",
-              "page": 4,
-              "taken": false
-            },
-            {
-              "pieceId": "30",
-              "block": "901-715",
-              "routeLabel": "47,228,641",
-              "from": "Industrial Garage",
-              "to": "Industrial Garage",
-              "startTime": "14:35",
-              "endTime": "18:15",
-              "payTime": "03:40",
-              "page": 4,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "30",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-5-161",
-          "title": "Daily 161",
-          "serviceDay": "weekday",
-          "boardPage": 5,
-          "availabilityStart": "08:01",
-          "availabilityEnd": "08:01",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "161",
-              "block": "14-11",
-              "routeLabel": "7,14,49",
-              "from": "Industrial Garage",
-              "to": "St Laurent Station",
-              "startTime": "06:22",
-              "endTime": "09:49",
-              "payTime": "03:27",
-              "page": 5,
-              "taken": false
-            },
-            {
-              "pieceId": "161",
-              "block": "7-15",
-              "routeLabel": "7,8",
-              "from": "Industrial Garage",
-              "to": "Industrial Garage",
-              "startTime": "13:47",
-              "endTime": "18:21",
-              "payTime": "04:34",
-              "page": 5,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "161",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-5-851",
+          "id": "daily-4-851",
           "title": "Daily 851",
           "serviceDay": "weekday",
-          "boardPage": 5,
+          "boardPage": 4,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1004,7 +776,7 @@
               "startTime": "06:24",
               "endTime": "09:06",
               "payTime": "02:42",
-              "page": 5,
+              "page": 4,
               "taken": false
             },
             {
@@ -1016,7 +788,7 @@
               "startTime": "13:28",
               "endTime": "18:15",
               "payTime": "04:47",
-              "page": 5,
+              "page": 4,
               "taken": false
             }
           ],
@@ -1025,10 +797,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-5-54",
+          "id": "daily-4-54",
           "title": "Daily 54",
           "serviceDay": "weekday",
-          "boardPage": 5,
+          "boardPage": 4,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:00",
           "taken": false,
@@ -1042,7 +814,7 @@
               "startTime": "06:26",
               "endTime": "10:42",
               "payTime": "04:16",
-              "page": 5,
+              "page": 4,
               "taken": false
             },
             {
@@ -1054,7 +826,7 @@
               "startTime": "14:35",
               "endTime": "18:18",
               "payTime": "03:43",
-              "page": 5,
+              "page": 4,
               "taken": false
             }
           ],
@@ -1063,10 +835,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-5-554",
+          "id": "daily-4-554",
           "title": "Daily 554",
           "serviceDay": "weekday",
-          "boardPage": 5,
+          "boardPage": 4,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1080,7 +852,7 @@
               "startTime": "06:30",
               "endTime": "09:33",
               "payTime": "03:03",
-              "page": 5,
+              "page": 4,
               "taken": false
             },
             {
@@ -1092,7 +864,7 @@
               "startTime": "14:03",
               "endTime": "18:23",
               "payTime": "04:20",
-              "page": 5,
+              "page": 4,
               "taken": false
             }
           ],
@@ -1101,10 +873,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-5-378",
+          "id": "daily-4-378",
           "title": "Daily 378",
           "serviceDay": "weekday",
-          "boardPage": 5,
+          "boardPage": 4,
           "availabilityStart": "07:35",
           "availabilityEnd": "07:35",
           "taken": false,
@@ -1118,7 +890,7 @@
               "startTime": "06:31",
               "endTime": "10:29",
               "payTime": "03:58",
-              "page": 5,
+              "page": 4,
               "taken": false
             },
             {
@@ -1130,7 +902,7 @@
               "startTime": "14:31",
               "endTime": "18:08",
               "payTime": "03:37",
-              "page": 5,
+              "page": 4,
               "taken": false
             }
           ],
@@ -1139,10 +911,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-5-628",
+          "id": "daily-4-628",
           "title": "Daily 628",
           "serviceDay": "weekday",
-          "boardPage": 5,
+          "boardPage": 4,
           "availabilityStart": "08:03",
           "availabilityEnd": "08:03",
           "taken": false,
@@ -1156,7 +928,7 @@
               "startTime": "06:32",
               "endTime": "10:58",
               "payTime": "04:26",
-              "page": 5,
+              "page": 4,
               "taken": false
             },
             {
@@ -1168,7 +940,7 @@
               "startTime": "14:47",
               "endTime": "18:24",
               "payTime": "03:37",
-              "page": 5,
+              "page": 4,
               "taken": false
             }
           ],
@@ -1215,48 +987,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-5-344",
-          "title": "Daily 344",
-          "serviceDay": "weekday",
-          "boardPage": 5,
-          "availabilityStart": "08:07",
-          "availabilityEnd": "08:07",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "344",
-              "block": "44-05",
-              "routeLabel": "42,44,226",
-              "from": "Industrial Garage",
-              "to": "Hurdman Station",
-              "startTime": "06:43",
-              "endTime": "10:44",
-              "payTime": "04:01",
-              "page": 5,
-              "taken": false
-            },
-            {
-              "pieceId": "344",
-              "block": "10-13",
-              "routeLabel": "10,19,44",
-              "from": "Industrial Garage",
-              "to": "St Laurent Station",
-              "startTime": "14:23",
-              "endTime": "18:29",
-              "payTime": "04:06",
-              "page": 5,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "344",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-6-263",
+          "id": "daily-5-263",
           "title": "Daily 263",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "08:08",
           "availabilityEnd": "08:08",
           "taken": false,
@@ -1270,7 +1004,7 @@
               "startTime": "06:45",
               "endTime": "10:39",
               "payTime": "03:54",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1282,7 +1016,7 @@
               "startTime": "14:22",
               "endTime": "18:36",
               "payTime": "04:14",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1291,10 +1025,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-300",
+          "id": "daily-5-300",
           "title": "Daily 300",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1308,7 +1042,7 @@
               "startTime": "06:45",
               "endTime": "09:28",
               "payTime": "02:43",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1320,7 +1054,7 @@
               "startTime": "14:22",
               "endTime": "18:42",
               "payTime": "04:20",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1329,48 +1063,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-11",
-          "title": "Daily 11",
-          "serviceDay": "weekday",
-          "boardPage": 6,
-          "availabilityStart": "08:14",
-          "availabilityEnd": "08:14",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "11",
-              "block": "5-08",
-              "routeLabel": "5",
-              "from": "Industrial Garage",
-              "to": "Industrial Garage",
-              "startTime": "06:47",
-              "endTime": "11:07",
-              "payTime": "04:20",
-              "page": 6,
-              "taken": false
-            },
-            {
-              "pieceId": "11",
-              "block": "12-14",
-              "routeLabel": "12,628",
-              "from": "Industrial Garage",
-              "to": "Blair Station",
-              "startTime": "14:35",
-              "endTime": "18:29",
-              "payTime": "03:54",
-              "page": 6,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "11",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-6-197",
+          "id": "daily-5-197",
           "title": "Daily 197",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "08:05",
           "availabilityEnd": "08:05",
           "taken": false,
@@ -1384,7 +1080,7 @@
               "startTime": "06:47",
               "endTime": "10:29",
               "payTime": "03:42",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1396,7 +1092,7 @@
               "startTime": "14:11",
               "endTime": "18:34",
               "payTime": "04:23",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1405,10 +1101,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-730",
+          "id": "daily-5-730",
           "title": "Daily 730",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "07:33",
           "availabilityEnd": "07:33",
           "taken": false,
@@ -1422,7 +1118,7 @@
               "startTime": "06:48",
               "endTime": "09:42",
               "payTime": "02:54",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1434,7 +1130,7 @@
               "startTime": "14:01",
               "endTime": "18:40",
               "payTime": "04:39",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1443,10 +1139,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-858",
+          "id": "daily-5-858",
           "title": "Daily 858",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1460,7 +1156,7 @@
               "startTime": "06:51",
               "endTime": "09:22",
               "payTime": "02:31",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1472,7 +1168,7 @@
               "startTime": "13:54",
               "endTime": "18:48",
               "payTime": "04:54",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1481,10 +1177,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-77",
+          "id": "daily-5-77",
           "title": "Daily 77",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:00",
           "taken": false,
@@ -1498,7 +1194,7 @@
               "startTime": "06:52",
               "endTime": "10:27",
               "payTime": "03:35",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1510,7 +1206,7 @@
               "startTime": "14:23",
               "endTime": "18:45",
               "payTime": "04:22",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1519,10 +1215,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-6-860",
+          "id": "daily-5-860",
           "title": "Daily 860",
           "serviceDay": "weekday",
-          "boardPage": 6,
+          "boardPage": 5,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1536,7 +1232,7 @@
               "startTime": "06:52",
               "endTime": "09:29",
               "payTime": "02:37",
-              "page": 6,
+              "page": 5,
               "taken": false
             },
             {
@@ -1548,7 +1244,7 @@
               "startTime": "14:30",
               "endTime": "18:50",
               "payTime": "04:20",
-              "page": 6,
+              "page": 5,
               "taken": false
             }
           ],
@@ -1557,10 +1253,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-35",
+          "id": "daily-6-35",
           "title": "Daily 35",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "08:00",
           "availabilityEnd": "08:00",
           "taken": false,
@@ -1574,7 +1270,7 @@
               "startTime": "06:54",
               "endTime": "10:19",
               "payTime": "03:25",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1586,7 +1282,7 @@
               "startTime": "14:09",
               "endTime": "18:38",
               "payTime": "04:29",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1595,10 +1291,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-302",
+          "id": "daily-6-302",
           "title": "Daily 302",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "08:02",
           "availabilityEnd": "08:02",
           "taken": false,
@@ -1612,7 +1308,7 @@
               "startTime": "06:54",
               "endTime": "11:18",
               "payTime": "04:24",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1624,7 +1320,7 @@
               "startTime": "15:08",
               "endTime": "18:46",
               "payTime": "03:38",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1633,48 +1329,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-56",
-          "title": "Daily 56",
-          "serviceDay": "weekday",
-          "boardPage": 7,
-          "availabilityStart": "08:14",
-          "availabilityEnd": "08:14",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "56",
-              "block": "7-10",
-              "routeLabel": "7,618",
-              "from": "Industrial Garage",
-              "to": "St Laurent Station",
-              "startTime": "06:55",
-              "endTime": "10:57",
-              "payTime": "04:02",
-              "page": 7,
-              "taken": false
-            },
-            {
-              "pieceId": "56",
-              "block": "901-712",
-              "routeLabel": "26,33,38",
-              "from": "Industrial Garage",
-              "to": "Industrial Garage",
-              "startTime": "14:33",
-              "endTime": "18:45",
-              "payTime": "04:12",
-              "page": 7,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "56",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-7-57",
+          "id": "daily-6-57",
           "title": "Daily 57",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1688,7 +1346,7 @@
               "startTime": "06:55",
               "endTime": "09:45",
               "payTime": "02:50",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1700,7 +1358,7 @@
               "startTime": "14:21",
               "endTime": "18:55",
               "payTime": "04:34",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1709,10 +1367,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-821",
+          "id": "daily-6-821",
           "title": "Daily 821",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "07:34",
           "availabilityEnd": "07:34",
           "taken": false,
@@ -1726,7 +1384,7 @@
               "startTime": "06:57",
               "endTime": "09:41",
               "payTime": "02:44",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1738,7 +1396,7 @@
               "startTime": "13:51",
               "endTime": "18:41",
               "payTime": "04:50",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1747,10 +1405,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-863",
+          "id": "daily-6-863",
           "title": "Daily 863",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1764,7 +1422,7 @@
               "startTime": "06:59",
               "endTime": "09:26",
               "payTime": "02:27",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1776,7 +1434,7 @@
               "startTime": "13:52",
               "endTime": "18:40",
               "payTime": "04:48",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1785,48 +1443,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-7-689",
-          "title": "Daily 689",
-          "serviceDay": "weekday",
-          "boardPage": 7,
-          "availabilityStart": "08:18",
-          "availabilityEnd": "08:18",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "689",
-              "block": "99-01",
-              "routeLabel": "62,81,266",
-              "from": "Lincoln Fields Station",
-              "to": "Tunney's Station",
-              "startTime": "07:00",
-              "endTime": "11:08",
-              "payTime": "04:08",
-              "page": 7,
-              "taken": false
-            },
-            {
-              "pieceId": "689",
-              "block": "901-418",
-              "routeLabel": "75,99,676",
-              "from": "Merivale Garage",
-              "to": "Merivale Garage",
-              "startTime": "14:22",
-              "endTime": "18:32",
-              "payTime": "04:10",
-              "page": 7,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "689",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-7-864",
+          "id": "daily-6-864",
           "title": "Daily 864",
           "serviceDay": "weekday",
-          "boardPage": 7,
+          "boardPage": 6,
           "availabilityStart": "07:06",
           "availabilityEnd": "07:36",
           "taken": false,
@@ -1840,7 +1460,7 @@
               "startTime": "07:00",
               "endTime": "09:04",
               "payTime": "02:04",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1852,7 +1472,7 @@
               "startTime": "13:12",
               "endTime": "15:05",
               "payTime": "01:53",
-              "page": 7,
+              "page": 6,
               "taken": false
             },
             {
@@ -1864,7 +1484,7 @@
               "startTime": "15:39",
               "endTime": "18:44",
               "payTime": "03:05",
-              "page": 7,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1873,10 +1493,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-866",
+          "id": "daily-6-866",
           "title": "Daily 866",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 6,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -1890,7 +1510,7 @@
               "startTime": "07:01",
               "endTime": "09:20",
               "payTime": "02:19",
-              "page": 8,
+              "page": 6,
               "taken": false
             },
             {
@@ -1902,7 +1522,7 @@
               "startTime": "14:03",
               "endTime": "18:55",
               "payTime": "04:52",
-              "page": 8,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1911,10 +1531,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-216",
+          "id": "daily-6-216",
           "title": "Daily 216",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 6,
           "availabilityStart": "08:02",
           "availabilityEnd": "08:02",
           "taken": false,
@@ -1928,7 +1548,7 @@
               "startTime": "07:01",
               "endTime": "10:22",
               "payTime": "03:21",
-              "page": 8,
+              "page": 6,
               "taken": false
             },
             {
@@ -1940,7 +1560,7 @@
               "startTime": "14:19",
               "endTime": "19:00",
               "payTime": "04:41",
-              "page": 8,
+              "page": 6,
               "taken": false
             }
           ],
@@ -1949,10 +1569,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-556",
+          "id": "daily-7-556",
           "title": "Daily 556",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 7,
           "availabilityStart": "08:07",
           "availabilityEnd": "08:07",
           "taken": false,
@@ -1966,7 +1586,7 @@
               "startTime": "07:01",
               "endTime": "10:23",
               "payTime": "03:22",
-              "page": 8,
+              "page": 7,
               "taken": false
             },
             {
@@ -1978,7 +1598,7 @@
               "startTime": "14:16",
               "endTime": "19:01",
               "payTime": "04:45",
-              "page": 8,
+              "page": 7,
               "taken": false
             }
           ],
@@ -1987,10 +1607,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-12",
+          "id": "daily-7-12",
           "title": "Daily 12",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 7,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2004,7 +1624,7 @@
               "startTime": "07:05",
               "endTime": "10:02",
               "payTime": "02:57",
-              "page": 8,
+              "page": 7,
               "taken": false
             },
             {
@@ -2016,7 +1636,7 @@
               "startTime": "14:37",
               "endTime": "19:05",
               "payTime": "04:28",
-              "page": 8,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2025,10 +1645,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-868",
+          "id": "daily-7-868",
           "title": "Daily 868",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 7,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2042,7 +1662,7 @@
               "startTime": "07:06",
               "endTime": "09:27",
               "payTime": "02:21",
-              "page": 8,
+              "page": 7,
               "taken": false
             },
             {
@@ -2054,7 +1674,7 @@
               "startTime": "14:14",
               "endTime": "19:04",
               "payTime": "04:50",
-              "page": 8,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2063,48 +1683,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-834",
-          "title": "Daily 834",
-          "serviceDay": "weekday",
-          "boardPage": 8,
-          "availabilityStart": "07:30",
-          "availabilityEnd": "07:30",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "834",
-              "block": "900-605",
-              "routeLabel": "56,265",
-              "from": "Pinecrest Garage",
-              "to": "Pinecrest Garage",
-              "startTime": "07:07",
-              "endTime": "09:16",
-              "payTime": "02:09",
-              "page": 8,
-              "taken": false
-            },
-            {
-              "pieceId": "834",
-              "block": "56-01",
-              "routeLabel": "86,116,256,266",
-              "from": "Baseline Station",
-              "to": "Pinecrest Garage",
-              "startTime": "14:08",
-              "endTime": "19:02",
-              "payTime": "04:54",
-              "page": 8,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "834",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-8-465",
+          "id": "daily-7-465",
           "title": "Daily 465",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 7,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2118,7 +1700,7 @@
               "startTime": "07:08",
               "endTime": "09:58",
               "payTime": "02:50",
-              "page": 8,
+              "page": 7,
               "taken": false
             },
             {
@@ -2130,7 +1712,7 @@
               "startTime": "14:35",
               "endTime": "19:05",
               "payTime": "04:30",
-              "page": 8,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2139,10 +1721,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-8-469",
+          "id": "daily-7-469",
           "title": "Daily 469",
           "serviceDay": "weekday",
-          "boardPage": 8,
+          "boardPage": 7,
           "availabilityStart": "07:30",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2156,7 +1738,7 @@
               "startTime": "07:11",
               "endTime": "11:28",
               "payTime": "04:17",
-              "page": 8,
+              "page": 7,
               "taken": false
             },
             {
@@ -2168,7 +1750,7 @@
               "startTime": "15:59",
               "endTime": "18:50",
               "payTime": "02:51",
-              "page": 8,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2177,10 +1759,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-144",
+          "id": "daily-7-144",
           "title": "Daily 144",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 7,
           "availabilityStart": "08:33",
           "availabilityEnd": "08:33",
           "taken": false,
@@ -2194,7 +1776,7 @@
               "startTime": "07:11",
               "endTime": "10:54",
               "payTime": "03:43",
-              "page": 9,
+              "page": 7,
               "taken": false
             },
             {
@@ -2206,7 +1788,7 @@
               "startTime": "14:20",
               "endTime": "19:10",
               "payTime": "04:50",
-              "page": 9,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2215,10 +1797,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-827",
+          "id": "daily-7-827",
           "title": "Daily 827",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 7,
           "availabilityStart": "07:12",
           "availabilityEnd": "07:42",
           "taken": false,
@@ -2232,7 +1814,7 @@
               "startTime": "07:22",
               "endTime": "09:19",
               "payTime": "01:57",
-              "page": 9,
+              "page": 7,
               "taken": false
             },
             {
@@ -2244,7 +1826,7 @@
               "startTime": "13:28",
               "endTime": "15:26",
               "payTime": "01:58",
-              "page": 9,
+              "page": 7,
               "taken": false
             },
             {
@@ -2256,7 +1838,7 @@
               "startTime": "16:04",
               "endTime": "19:10",
               "payTime": "03:06",
-              "page": 9,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2265,48 +1847,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-873",
-          "title": "Daily 873",
-          "serviceDay": "weekday",
-          "boardPage": 9,
-          "availabilityStart": "08:00",
-          "availabilityEnd": "08:00",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "873",
-              "block": "900-737",
-              "routeLabel": "7,627",
-              "from": "Industrial Garage",
-              "to": "Industrial Garage",
-              "startTime": "07:23",
-              "endTime": "10:18",
-              "payTime": "02:55",
-              "page": 9,
-              "taken": false
-            },
-            {
-              "pieceId": "873",
-              "block": "14-11",
-              "routeLabel": "7",
-              "from": "St Laurent Station",
-              "to": "Industrial Garage",
-              "startTime": "14:21",
-              "endTime": "19:16",
-              "payTime": "04:55",
-              "page": 9,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "873",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-9-225",
+          "id": "daily-7-225",
           "title": "Daily 225",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 7,
           "availabilityStart": "07:33",
           "availabilityEnd": "07:33",
           "taken": false,
@@ -2320,7 +1864,7 @@
               "startTime": "07:29",
               "endTime": "10:25",
               "payTime": "02:56",
-              "page": 9,
+              "page": 7,
               "taken": false
             },
             {
@@ -2332,7 +1876,7 @@
               "startTime": "14:52",
               "endTime": "19:29",
               "payTime": "04:37",
-              "page": 9,
+              "page": 7,
               "taken": false
             }
           ],
@@ -2341,48 +1885,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-572",
-          "title": "Daily 572",
-          "serviceDay": "weekday",
-          "boardPage": 9,
-          "availabilityStart": "08:16",
-          "availabilityEnd": "08:16",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "572",
-              "block": "80-03",
-              "routeLabel": "80",
-              "from": "Tunney's Station",
-              "to": "Merivale Garage",
-              "startTime": "07:31",
-              "endTime": "11:17",
-              "payTime": "03:46",
-              "page": 9,
-              "taken": false
-            },
-            {
-              "pieceId": "572",
-              "block": "724-04",
-              "routeLabel": "109",
-              "from": "Merivale Garage",
-              "to": "Merivale Garage",
-              "startTime": "14:35",
-              "endTime": "19:05",
-              "payTime": "04:30",
-              "page": 9,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "572",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-9-315",
+          "id": "daily-8-315",
           "title": "Daily 315",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 8,
           "availabilityStart": "08:04",
           "availabilityEnd": "08:04",
           "taken": false,
@@ -2396,7 +1902,7 @@
               "startTime": "07:34",
               "endTime": "10:44",
               "payTime": "03:10",
-              "page": 9,
+              "page": 8,
               "taken": false
             },
             {
@@ -2408,7 +1914,7 @@
               "startTime": "14:20",
               "endTime": "19:14",
               "payTime": "04:54",
-              "page": 9,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2417,10 +1923,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-221",
+          "id": "daily-8-221",
           "title": "Daily 221",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 8,
           "availabilityStart": "08:24",
           "availabilityEnd": "08:24",
           "taken": false,
@@ -2434,7 +1940,7 @@
               "startTime": "07:49",
               "endTime": "11:43",
               "payTime": "03:54",
-              "page": 9,
+              "page": 8,
               "taken": false
             },
             {
@@ -2446,7 +1952,7 @@
               "startTime": "14:35",
               "endTime": "19:05",
               "payTime": "04:30",
-              "page": 9,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2455,10 +1961,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-9-640",
+          "id": "daily-8-640",
           "title": "Daily 640",
           "serviceDay": "weekday",
-          "boardPage": 9,
+          "boardPage": 8,
           "availabilityStart": "08:05",
           "availabilityEnd": "08:35",
           "taken": false,
@@ -2472,7 +1978,7 @@
               "startTime": "07:59",
               "endTime": "10:25",
               "payTime": "02:26",
-              "page": 9,
+              "page": 8,
               "taken": false
             },
             {
@@ -2484,7 +1990,7 @@
               "startTime": "13:47",
               "endTime": "16:54",
               "payTime": "03:07",
-              "page": 9,
+              "page": 8,
               "taken": false
             },
             {
@@ -2496,7 +2002,7 @@
               "startTime": "17:35",
               "endTime": "19:56",
               "payTime": "02:21",
-              "page": 9,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2505,10 +2011,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-355",
+          "id": "daily-8-355",
           "title": "Daily 355",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 8,
           "availabilityStart": "07:57",
           "availabilityEnd": "08:27",
           "taken": false,
@@ -2522,7 +2028,7 @@
               "startTime": "08:03",
               "endTime": "10:59",
               "payTime": "02:56",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2534,7 +2040,7 @@
               "startTime": "14:12",
               "endTime": "16:35",
               "payTime": "02:23",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2546,7 +2052,7 @@
               "startTime": "17:18",
               "endTime": "19:43",
               "payTime": "02:25",
-              "page": 10,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2555,10 +2061,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-15",
+          "id": "daily-8-15",
           "title": "Daily 15",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 8,
           "availabilityStart": "08:06",
           "availabilityEnd": "08:36",
           "taken": false,
@@ -2572,7 +2078,7 @@
               "startTime": "08:18",
               "endTime": "11:53",
               "payTime": "03:35",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2584,7 +2090,7 @@
               "startTime": "14:42",
               "endTime": "16:55",
               "payTime": "02:13",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2596,7 +2102,7 @@
               "startTime": "17:26",
               "endTime": "19:43",
               "payTime": "02:17",
-              "page": 10,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2605,10 +2111,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-848",
+          "id": "daily-8-848",
           "title": "Daily 848",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 8,
           "availabilityStart": "07:33",
           "availabilityEnd": "07:33",
           "taken": false,
@@ -2622,7 +2128,7 @@
               "startTime": "08:26",
               "endTime": "11:34",
               "payTime": "03:08",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2634,7 +2140,7 @@
               "startTime": "15:40",
               "endTime": "20:05",
               "payTime": "04:25",
-              "page": 10,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2643,10 +2149,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-131",
+          "id": "daily-8-131",
           "title": "Daily 131",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 8,
           "availabilityStart": "08:06",
           "availabilityEnd": "08:06",
           "taken": false,
@@ -2660,7 +2166,7 @@
               "startTime": "08:43",
               "endTime": "12:26",
               "payTime": "03:43",
-              "page": 10,
+              "page": 8,
               "taken": false
             },
             {
@@ -2672,7 +2178,7 @@
               "startTime": "15:08",
               "endTime": "19:31",
               "payTime": "04:23",
-              "page": 10,
+              "page": 8,
               "taken": false
             }
           ],
@@ -2681,86 +2187,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-103",
-          "title": "Daily 103",
-          "serviceDay": "weekday",
-          "boardPage": 10,
-          "availabilityStart": "07:21",
-          "availabilityEnd": "07:51",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "103",
-              "block": "11-02",
-              "routeLabel": "11",
-              "from": "Tunney's Station",
-              "to": "Lincoln Fields Station",
-              "startTime": "12:37",
-              "endTime": "17:03",
-              "payTime": "04:26",
-              "page": 10,
-              "taken": false
-            },
-            {
-              "pieceId": "103",
-              "block": "81-05",
-              "routeLabel": "66,81",
-              "from": "Lincoln Fields Station",
-              "to": "Pinecrest Garage",
-              "startTime": "17:36",
-              "endTime": "20:28",
-              "payTime": "02:52",
-              "page": 10,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "103",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-10-329",
-          "title": "Daily 329",
-          "serviceDay": "weekday",
-          "boardPage": 10,
-          "availabilityStart": "07:04",
-          "availabilityEnd": "07:34",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "329",
-              "block": "42-03",
-              "routeLabel": "42",
-              "from": "Blair Station",
-              "to": "Hurdman Station",
-              "startTime": "13:04",
-              "endTime": "15:16",
-              "payTime": "02:12",
-              "page": 10,
-              "taken": false
-            },
-            {
-              "pieceId": "329",
-              "block": "98-04",
-              "routeLabel": "88",
-              "from": "Hurdman Station",
-              "to": "Industrial Garage",
-              "startTime": "15:50",
-              "endTime": "20:38",
-              "payTime": "04:48",
-              "page": 10,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "329",
-          "workSection": "Mixed Odd Work"
-        },
-        {
-          "id": "daily-10-136",
+          "id": "daily-9-136",
           "title": "Daily 136",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 9,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2774,7 +2204,7 @@
               "startTime": "13:22",
               "endTime": "14:53",
               "payTime": "01:31",
-              "page": 10,
+              "page": 9,
               "taken": false
             },
             {
@@ -2786,7 +2216,7 @@
               "startTime": "15:40",
               "endTime": "20:34",
               "payTime": "04:54",
-              "page": 10,
+              "page": 9,
               "taken": false
             }
           ],
@@ -2795,10 +2225,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-10-113",
+          "id": "daily-9-113",
           "title": "Daily 113",
           "serviceDay": "weekday",
-          "boardPage": 10,
+          "boardPage": 9,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2812,7 +2242,7 @@
               "startTime": "13:29",
               "endTime": "16:00",
               "payTime": "02:31",
-              "page": 10,
+              "page": 9,
               "taken": false
             },
             {
@@ -2824,7 +2254,7 @@
               "startTime": "16:35",
               "endTime": "20:48",
               "payTime": "04:13",
-              "page": 10,
+              "page": 9,
               "taken": false
             }
           ],
@@ -2833,48 +2263,10 @@
           "workSection": "Mixed Odd Work"
         },
         {
-          "id": "daily-11-52",
-          "title": "Daily 52",
-          "serviceDay": "weekday",
-          "boardPage": 11,
-          "availabilityStart": "07:04",
-          "availabilityEnd": "07:34",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "52",
-              "block": "7-07",
-              "routeLabel": "7,24",
-              "from": "St Laurent Station",
-              "to": "Blair Station",
-              "startTime": "13:28",
-              "endTime": "16:49",
-              "payTime": "03:21",
-              "page": 11,
-              "taken": false
-            },
-            {
-              "pieceId": "52",
-              "block": "38-06",
-              "routeLabel": "35,38",
-              "from": "Blair Station",
-              "to": "Industrial Garage",
-              "startTime": "17:35",
-              "endTime": "21:02",
-              "payTime": "03:27",
-              "page": 11,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "52",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-11-179",
+          "id": "daily-10-179",
           "title": "Daily 179",
           "serviceDay": "weekday",
-          "boardPage": 11,
+          "boardPage": 10,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -2888,7 +2280,7 @@
               "startTime": "13:39",
               "endTime": "15:44",
               "payTime": "02:05",
-              "page": 11,
+              "page": 10,
               "taken": false
             },
             {
@@ -2900,7 +2292,7 @@
               "startTime": "16:17",
               "endTime": "21:07",
               "payTime": "04:50",
-              "page": 11,
+              "page": 10,
               "taken": false
             }
           ],
@@ -2909,10 +2301,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-11-680",
+          "id": "daily-10-680",
           "title": "Daily 680",
           "serviceDay": "weekday",
-          "boardPage": 11,
+          "boardPage": 10,
           "availabilityStart": "07:05",
           "availabilityEnd": "07:35",
           "taken": false,
@@ -2926,7 +2318,7 @@
               "startTime": "13:44",
               "endTime": "15:55",
               "payTime": "02:11",
-              "page": 11,
+              "page": 10,
               "taken": false
             },
             {
@@ -2938,7 +2330,7 @@
               "startTime": "16:30",
               "endTime": "21:19",
               "payTime": "04:49",
-              "page": 11,
+              "page": 10,
               "taken": false
             }
           ],
@@ -2947,86 +2339,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-11-76",
-          "title": "Daily 76",
-          "serviceDay": "weekday",
-          "boardPage": 11,
-          "availabilityStart": "07:37",
-          "availabilityEnd": "08:07",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "76",
-              "block": "9-03",
-              "routeLabel": "88",
-              "from": "Hurdman Station",
-              "to": "Hurdman Station",
-              "startTime": "13:59",
-              "endTime": "16:27",
-              "payTime": "02:28",
-              "page": 11,
-              "taken": false
-            },
-            {
-              "pieceId": "76",
-              "block": "9-06",
-              "routeLabel": "9",
-              "from": "Hurdman Station",
-              "to": "Industrial Garage",
-              "startTime": "17:14",
-              "endTime": "22:06",
-              "payTime": "04:52",
-              "page": 11,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "76",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-11-112",
-          "title": "Daily 112",
-          "serviceDay": "weekday",
-          "boardPage": 11,
-          "availabilityStart": "07:10",
-          "availabilityEnd": "07:40",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "112",
-              "block": "11-07",
-              "routeLabel": "11",
-              "from": "Lincoln Fields Station",
-              "to": "Bayshore Station",
-              "startTime": "14:10",
-              "endTime": "17:49",
-              "payTime": "03:39",
-              "page": 11,
-              "taken": false
-            },
-            {
-              "pieceId": "112",
-              "block": "11-07",
-              "routeLabel": "61",
-              "from": "Bayshore Station",
-              "to": "Pinecrest Garage",
-              "startTime": "18:20",
-              "endTime": "21:50",
-              "payTime": "03:30",
-              "page": 11,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "112",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-11-255",
+          "id": "daily-10-255",
           "title": "Daily 255",
           "serviceDay": "weekday",
-          "boardPage": 11,
+          "boardPage": 10,
           "availabilityStart": "07:02",
           "availabilityEnd": "07:32",
           "taken": false,
@@ -3040,7 +2356,7 @@
               "startTime": "14:14",
               "endTime": "17:18",
               "payTime": "03:04",
-              "page": 11,
+              "page": 10,
               "taken": false
             },
             {
@@ -3052,7 +2368,7 @@
               "startTime": "17:48",
               "endTime": "21:46",
               "payTime": "03:58",
-              "page": 11,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3061,86 +2377,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-11-97",
-          "title": "Daily 97",
-          "serviceDay": "weekday",
-          "boardPage": 11,
-          "availabilityStart": "07:13",
-          "availabilityEnd": "07:43",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "97",
-              "block": "10-15",
-              "routeLabel": "10",
-              "from": "Industrial Garage",
-              "to": "Hurdman Station",
-              "startTime": "14:41",
-              "endTime": "17:27",
-              "payTime": "02:46",
-              "page": 11,
-              "taken": false
-            },
-            {
-              "pieceId": "97",
-              "block": "12-14",
-              "routeLabel": "30,75",
-              "from": "Blair Station",
-              "to": "Industrial Garage",
-              "startTime": "18:24",
-              "endTime": "22:24",
-              "payTime": "04:00",
-              "page": 11,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "97",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-11-250",
-          "title": "Daily 250",
-          "serviceDay": "weekday",
-          "boardPage": 11,
-          "availabilityStart": "07:27",
-          "availabilityEnd": "07:57",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "250",
-              "block": "34-05",
-              "routeLabel": "6,43,92",
-              "from": "Industrial Garage",
-              "to": "Billings Bridge Station",
-              "startTime": "14:45",
-              "endTime": "17:44",
-              "payTime": "02:59",
-              "page": 11,
-              "taken": false
-            },
-            {
-              "pieceId": "250",
-              "block": "48-06",
-              "routeLabel": "8,48",
-              "from": "Hurdman Station",
-              "to": "Industrial Garage",
-              "startTime": "18:27",
-              "endTime": "22:42",
-              "payTime": "04:15",
-              "page": 11,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "250",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-11-748",
+          "id": "daily-10-748",
           "title": "Daily 748",
           "serviceDay": "weekday",
-          "boardPage": 11,
+          "boardPage": 10,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -3154,7 +2394,7 @@
               "startTime": "14:49",
               "endTime": "19:12",
               "payTime": "04:23",
-              "page": 12,
+              "page": 10,
               "taken": false
             },
             {
@@ -3166,7 +2406,7 @@
               "startTime": "19:42",
               "endTime": "22:12",
               "payTime": "02:30",
-              "page": 12,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3175,10 +2415,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-542",
+          "id": "daily-10-542",
           "title": "Daily 542",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 10,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -3192,7 +2432,7 @@
               "startTime": "14:54",
               "endTime": "19:20",
               "payTime": "04:26",
-              "page": 12,
+              "page": 10,
               "taken": false
             },
             {
@@ -3204,7 +2444,7 @@
               "startTime": "19:55",
               "endTime": "22:24",
               "payTime": "02:29",
-              "page": 12,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3213,10 +2453,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-487",
+          "id": "daily-10-487",
           "title": "Daily 487",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 10,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -3230,7 +2470,7 @@
               "startTime": "14:59",
               "endTime": "17:11",
               "payTime": "02:12",
-              "page": 12,
+              "page": 10,
               "taken": false
             },
             {
@@ -3242,7 +2482,7 @@
               "startTime": "17:42",
               "endTime": "22:27",
               "payTime": "04:45",
-              "page": 12,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3251,48 +2491,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-681",
-          "title": "Daily 681",
-          "serviceDay": "weekday",
-          "boardPage": 12,
-          "availabilityStart": "08:11",
-          "availabilityEnd": "08:41",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "681",
-              "block": "98-05",
-              "routeLabel": "14,57,88",
-              "from": "Hurdman Station",
-              "to": "Industrial Garage",
-              "startTime": "15:30",
-              "endTime": "19:24",
-              "payTime": "03:54",
-              "page": 12,
-              "taken": false
-            },
-            {
-              "pieceId": "681",
-              "block": "5-11",
-              "routeLabel": "10,90",
-              "from": "Hurdman Station",
-              "to": "Industrial Garage",
-              "startTime": "20:16",
-              "endTime": "00:11",
-              "payTime": "03:55",
-              "page": 12,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "681",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-12-360",
+          "id": "daily-10-360",
           "title": "Daily 360",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 10,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -3306,7 +2508,7 @@
               "startTime": "15:31",
               "endTime": "17:54",
               "payTime": "02:23",
-              "page": 12,
+              "page": 10,
               "taken": false
             },
             {
@@ -3318,7 +2520,7 @@
               "startTime": "18:24",
               "endTime": "22:53",
               "payTime": "04:29",
-              "page": 12,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3327,10 +2529,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-39",
+          "id": "daily-10-39",
           "title": "Daily 39",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 10,
           "availabilityStart": "07:07",
           "availabilityEnd": "07:37",
           "taken": false,
@@ -3344,7 +2546,7 @@
               "startTime": "15:33",
               "endTime": "20:01",
               "payTime": "04:28",
-              "page": 12,
+              "page": 10,
               "taken": false
             },
             {
@@ -3356,7 +2558,7 @@
               "startTime": "20:42",
               "endTime": "23:10",
               "payTime": "02:28",
-              "page": 12,
+              "page": 10,
               "taken": false
             }
           ],
@@ -3365,10 +2567,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-307",
+          "id": "daily-10-307",
           "title": "Daily 307",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 10,
           "availabilityStart": "07:09",
           "availabilityEnd": "07:39",
           "taken": false,
@@ -3382,7 +2584,7 @@
               "startTime": "15:45",
               "endTime": "19:46",
               "payTime": "04:01",
-              "page": 12,
+              "page": 11,
               "taken": false
             },
             {
@@ -3394,7 +2596,7 @@
               "startTime": "20:27",
               "endTime": "23:24",
               "payTime": "02:57",
-              "page": 12,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3403,10 +2605,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-12-24",
+          "id": "daily-11-24",
           "title": "Daily 24",
           "serviceDay": "weekday",
-          "boardPage": 12,
+          "boardPage": 11,
           "availabilityStart": "07:10",
           "availabilityEnd": "07:40",
           "taken": false,
@@ -3420,7 +2622,7 @@
               "startTime": "15:57",
               "endTime": "19:52",
               "payTime": "03:55",
-              "page": 12,
+              "page": 11,
               "taken": false
             },
             {
@@ -3432,7 +2634,7 @@
               "startTime": "20:22",
               "endTime": "23:37",
               "payTime": "03:15",
-              "page": 12,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3441,86 +2643,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-13-02",
-          "title": "Daily 02",
-          "serviceDay": "weekday",
-          "boardPage": 13,
-          "availabilityStart": "08:23",
-          "availabilityEnd": "08:53",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "02",
-              "block": "5-01",
-              "routeLabel": "5",
-              "from": "Rideau C. W",
-              "to": "Elmvale",
-              "startTime": "15:59",
-              "endTime": "19:54",
-              "payTime": "03:55",
-              "page": 13,
-              "taken": false
-            },
-            {
-              "pieceId": "02",
-              "block": "5-01",
-              "routeLabel": "5",
-              "from": "Elmvale",
-              "to": "Industrial Garage",
-              "startTime": "20:32",
-              "endTime": "00:52",
-              "payTime": "04:20",
-              "page": 13,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "02",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-13-118",
-          "title": "Daily 118",
-          "serviceDay": "weekday",
-          "boardPage": 13,
-          "availabilityStart": "07:28",
-          "availabilityEnd": "07:58",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "118",
-              "block": "11-10",
-              "routeLabel": "11",
-              "from": "Lincoln Fields Station",
-              "to": "Tunney's Station",
-              "startTime": "16:06",
-              "endTime": "19:15",
-              "payTime": "03:09",
-              "page": 13,
-              "taken": false
-            },
-            {
-              "pieceId": "118",
-              "block": "11-10",
-              "routeLabel": "63",
-              "from": "Tunney's Station",
-              "to": "Pinecrest Garage",
-              "startTime": "19:56",
-              "endTime": "00:04",
-              "payTime": "04:08",
-              "page": 13,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "118",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-13-877",
+          "id": "daily-11-877",
           "title": "Daily 877",
           "serviceDay": "weekday",
-          "boardPage": 13,
+          "boardPage": 11,
           "availabilityStart": "07:03",
           "availabilityEnd": "07:33",
           "taken": false,
@@ -3534,7 +2660,7 @@
               "startTime": "16:13",
               "endTime": "18:38",
               "payTime": "02:25",
-              "page": 13,
+              "page": 11,
               "taken": false
             },
             {
@@ -3546,7 +2672,7 @@
               "startTime": "19:25",
               "endTime": "23:46",
               "payTime": "04:21",
-              "page": 13,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3555,48 +2681,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-13-765",
-          "title": "Daily 765",
-          "serviceDay": "weekday",
-          "boardPage": 13,
-          "availabilityStart": "07:00",
-          "availabilityEnd": "07:30",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "765",
-              "block": "173-02",
-              "routeLabel": "61",
-              "from": "Terry Fox Station",
-              "to": "Fallowfield Station",
-              "startTime": "16:18",
-              "endTime": "19:19",
-              "payTime": "03:01",
-              "page": 13,
-              "taken": false
-            },
-            {
-              "pieceId": "765",
-              "block": "173-02",
-              "routeLabel": "173",
-              "from": "Fallowfield Station",
-              "to": "Pinecrest Garage",
-              "startTime": "19:55",
-              "endTime": "23:42",
-              "payTime": "03:47",
-              "page": 13,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "765",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-13-42",
+          "id": "daily-11-42",
           "title": "Daily 42",
           "serviceDay": "weekday",
-          "boardPage": 13,
+          "boardPage": 11,
           "availabilityStart": "07:06",
           "availabilityEnd": "07:36",
           "taken": false,
@@ -3610,7 +2698,7 @@
               "startTime": "16:48",
               "endTime": "20:22",
               "payTime": "03:34",
-              "page": 13,
+              "page": 11,
               "taken": false
             },
             {
@@ -3622,7 +2710,7 @@
               "startTime": "20:58",
               "endTime": "00:24",
               "payTime": "03:26",
-              "page": 13,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3631,10 +2719,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-13-267",
+          "id": "daily-11-267",
           "title": "Daily 267",
           "serviceDay": "weekday",
-          "boardPage": 13,
+          "boardPage": 11,
           "availabilityStart": "07:00",
           "availabilityEnd": "07:30",
           "taken": false,
@@ -3648,7 +2736,7 @@
               "startTime": "17:08",
               "endTime": "20:12",
               "payTime": "03:04",
-              "page": 13,
+              "page": 11,
               "taken": false
             },
             {
@@ -3660,7 +2748,7 @@
               "startTime": "20:55",
               "endTime": "00:37",
               "payTime": "03:42",
-              "page": 13,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3669,10 +2757,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-13-401",
+          "id": "daily-11-401",
           "title": "Daily 401",
           "serviceDay": "weekday",
-          "boardPage": 13,
+          "boardPage": 11,
           "availabilityStart": "09:06",
           "availabilityEnd": "09:36",
           "taken": false,
@@ -3686,7 +2774,7 @@
               "startTime": "17:30",
               "endTime": "21:28",
               "payTime": "03:58",
-              "page": 13,
+              "page": 11,
               "taken": false
             },
             {
@@ -3698,7 +2786,7 @@
               "startTime": "22:19",
               "endTime": "03:06",
               "payTime": "04:47",
-              "page": 13,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3707,86 +2795,10 @@
           "workSection": "Mixed Relief Work"
         },
         {
-          "id": "daily-13-616",
-          "title": "Daily 616",
-          "serviceDay": "weekday",
-          "boardPage": 13,
-          "availabilityStart": "07:06",
-          "availabilityEnd": "07:36",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "616",
-              "block": "85-10",
-              "routeLabel": "85",
-              "from": "Bayshore Station",
-              "to": "Bayshore Station",
-              "startTime": "17:49",
-              "endTime": "20:26",
-              "payTime": "02:37",
-              "page": 13,
-              "taken": false
-            },
-            {
-              "pieceId": "616",
-              "block": "85-10",
-              "routeLabel": "85",
-              "from": "Bayshore Station",
-              "to": "Pinecrest Garage",
-              "startTime": "21:14",
-              "endTime": "01:25",
-              "payTime": "04:11",
-              "page": 13,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "616",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-14-294",
-          "title": "Daily 294",
-          "serviceDay": "weekday",
-          "boardPage": 14,
-          "availabilityStart": "07:00",
-          "availabilityEnd": "07:30",
-          "taken": false,
-          "pieces": [
-            {
-              "pieceId": "294",
-              "block": "39-18",
-              "routeLabel": "25",
-              "from": "St L South Garage",
-              "to": "Millennium Prk",
-              "startTime": "20:02",
-              "endTime": "22:23",
-              "payTime": "02:21",
-              "page": 14,
-              "taken": false
-            },
-            {
-              "pieceId": "294",
-              "block": "39-18",
-              "routeLabel": "39",
-              "from": "Millennium Prk",
-              "to": "St L South Garage",
-              "startTime": "22:54",
-              "endTime": "03:17",
-              "payTime": "04:23",
-              "page": 14,
-              "taken": false
-            }
-          ],
-          "sourcePdf": "2026 Fall Daily boards TRIP .pdf",
-          "shiftId": "294",
-          "workSection": "Mixed Relief Work"
-        },
-        {
-          "id": "daily-14-918",
+          "id": "daily-11-918",
           "title": "Daily 918",
           "serviceDay": "weekday",
-          "boardPage": 14,
+          "boardPage": 11,
           "availabilityStart": "",
           "availabilityEnd": "",
           "taken": false,
@@ -3800,7 +2812,7 @@
               "startTime": "06:45",
               "endTime": "10:04",
               "payTime": "03:19",
-              "page": 14,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3809,10 +2821,10 @@
           "workSection": "AM Biddable Trippers"
         },
         {
-          "id": "daily-14-919",
+          "id": "daily-11-919",
           "title": "Daily 919",
           "serviceDay": "weekday",
-          "boardPage": 14,
+          "boardPage": 11,
           "availabilityStart": "",
           "availabilityEnd": "",
           "taken": false,
@@ -3826,7 +2838,7 @@
               "startTime": "06:44",
               "endTime": "09:16",
               "payTime": "02:32",
-              "page": 14,
+              "page": 11,
               "taken": false
             }
           ],
@@ -3835,7 +2847,7 @@
           "workSection": "AM Biddable Trippers"
         }
       ],
-      "updatedAt": "2026-07-29T13:58:30.027181+00:00"
+      "updatedAt": "2026-07-30T03:50:08.704643+00:00"
     },
     {
       "id": "weekend_boards",
@@ -4091,7 +3103,7 @@
           "shiftId": "102",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -4144,7 +3156,7 @@
           "boardPage": 2,
           "availabilityStart": "07:01",
           "availabilityEnd": "07:31",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "75-01",
@@ -4156,7 +3168,7 @@
               "pieceId": "354",
               "routeLabel": "75",
               "page": 2,
-              "taken": false
+              "taken": true
             },
             {
               "block": "75-01",
@@ -4168,14 +3180,14 @@
               "pieceId": "354",
               "routeLabel": "75",
               "page": 2,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "354",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -4301,7 +3313,7 @@
           "shiftId": "245",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -4312,7 +3324,7 @@
           "boardPage": 2,
           "availabilityStart": "07:27",
           "availabilityEnd": "07:57",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "9-01",
@@ -4324,7 +3336,7 @@
               "pieceId": "67",
               "routeLabel": "985",
               "page": 2,
-              "taken": false
+              "taken": true
             },
             {
               "block": "9-01",
@@ -4336,14 +3348,14 @@
               "pieceId": "67",
               "routeLabel": "9,85",
               "page": 2,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "67",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -4648,7 +3660,7 @@
           "boardPage": 4,
           "availabilityStart": "07:14",
           "availabilityEnd": "07:44",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "57-01",
@@ -4660,7 +3672,7 @@
               "pieceId": "295",
               "routeLabel": "75",
               "page": 4,
-              "taken": false
+              "taken": true
             },
             {
               "block": "57-01",
@@ -4672,13 +3684,13 @@
               "pieceId": "295",
               "routeLabel": "57,86",
               "page": 4,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "295",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -5734,7 +4746,7 @@
           "boardPage": 8,
           "availabilityStart": "07:03",
           "availabilityEnd": "07:33",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "74-01",
@@ -5746,7 +4758,7 @@
               "pieceId": "350",
               "routeLabel": "189,895",
               "page": 8,
-              "taken": false
+              "taken": true
             },
             {
               "block": "74-01",
@@ -5758,14 +4770,14 @@
               "pieceId": "350",
               "routeLabel": "51,74",
               "page": 8,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "350",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -6347,7 +5359,7 @@
           "shiftId": "285",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -7246,7 +6258,7 @@
           "boardPage": 13,
           "availabilityStart": "08:37",
           "availabilityEnd": "09:07",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "11-03",
@@ -7258,7 +6270,7 @@
               "pieceId": "91",
               "routeLabel": "11",
               "page": 13,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-14",
@@ -7270,14 +6282,14 @@
               "pieceId": "91",
               "routeLabel": "6",
               "page": 13,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "91",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -7456,7 +6468,7 @@
           "boardPage": 14,
           "availabilityStart": "08:11",
           "availabilityEnd": "08:41",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-05",
@@ -7468,7 +6480,7 @@
               "pieceId": "17",
               "routeLabel": "61",
               "page": 14,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-05",
@@ -7480,14 +6492,14 @@
               "pieceId": "17",
               "routeLabel": "6",
               "page": 14,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "17",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -8825,7 +7837,7 @@
           "shiftId": "186",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -8951,7 +7963,7 @@
           "shiftId": "276",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -9089,7 +8101,7 @@
           "shiftId": "329",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -9958,7 +8970,7 @@
           "boardPage": 24,
           "availabilityStart": "07:32",
           "availabilityEnd": "08:02",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "99-03",
@@ -9970,7 +8982,7 @@
               "pieceId": "453",
               "routeLabel": "61,63",
               "page": 24,
-              "taken": false
+              "taken": true
             },
             {
               "block": "99-03",
@@ -9982,14 +8994,14 @@
               "pieceId": "453",
               "routeLabel": "61,62",
               "page": 24,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "453",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -10031,7 +9043,7 @@
           "shiftId": "253",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -10115,7 +9127,7 @@
           "shiftId": "395",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -10678,7 +9690,7 @@
           "boardPage": 27,
           "availabilityStart": "07:45",
           "availabilityEnd": "08:15",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-08",
@@ -10690,7 +9702,7 @@
               "pieceId": "22",
               "routeLabel": "90",
               "page": 27,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-08",
@@ -10702,13 +9714,13 @@
               "pieceId": "22",
               "routeLabel": "6",
               "page": 27,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "22",
           "workSection": "Mixed Odd Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -10751,7 +9763,7 @@
           "shiftId": "209",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -12923,7 +11935,7 @@
           "shiftId": "407",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -13667,7 +12679,7 @@
           "shiftId": "95",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -15215,7 +14227,7 @@
           "shiftId": "45",
           "workSection": "Mixed Odd Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -17573,7 +16585,7 @@
           "shiftId": "115",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -17776,7 +16788,7 @@
           "boardPage": 53,
           "availabilityStart": "08:28",
           "availabilityEnd": "08:58",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "11-01",
@@ -17788,7 +16800,7 @@
               "pieceId": "89",
               "routeLabel": "11",
               "page": 53,
-              "taken": false
+              "taken": true
             },
             {
               "block": "75-03",
@@ -17800,14 +16812,14 @@
               "pieceId": "89",
               "routeLabel": "75",
               "page": 53,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "89",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -17968,7 +16980,7 @@
           "boardPage": 54,
           "availabilityStart": "08:45",
           "availabilityEnd": "09:15",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "11-07",
@@ -17980,7 +16992,7 @@
               "pieceId": "96",
               "routeLabel": "11",
               "page": 54,
-              "taken": false
+              "taken": true
             },
             {
               "block": "11-04",
@@ -17992,14 +17004,14 @@
               "pieceId": "96",
               "routeLabel": "7,11",
               "page": 54,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "96",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -18178,7 +17190,7 @@
           "boardPage": 55,
           "availabilityStart": "08:14",
           "availabilityEnd": "08:44",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-17",
@@ -18190,7 +17202,7 @@
               "pieceId": "34",
               "routeLabel": "6",
               "page": 55,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-13",
@@ -18202,14 +17214,14 @@
               "pieceId": "34",
               "routeLabel": "6",
               "page": 55,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "34",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -18718,7 +17730,7 @@
           "boardPage": 57,
           "availabilityStart": "08:30",
           "availabilityEnd": "09:00",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "12-04",
@@ -18730,7 +17742,7 @@
               "pieceId": "106",
               "routeLabel": "12",
               "page": 57,
-              "taken": false
+              "taken": true
             },
             {
               "block": "24-04",
@@ -18742,14 +17754,14 @@
               "pieceId": "106",
               "routeLabel": "20,24,40",
               "page": 57,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "106",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -20248,7 +19260,7 @@
           "boardPage": 62,
           "availabilityStart": "08:16",
           "availabilityEnd": "09:16",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "11-04",
@@ -20260,7 +19272,7 @@
               "pieceId": "93",
               "routeLabel": "11",
               "page": 62,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-18",
@@ -20272,7 +19284,7 @@
               "pieceId": "93",
               "routeLabel": "61",
               "page": 62,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-18",
@@ -20284,13 +19296,13 @@
               "pieceId": "93",
               "routeLabel": "6",
               "page": 62,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "93",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -20662,7 +19674,7 @@
           "boardPage": 64,
           "availabilityStart": "07:25",
           "availabilityEnd": "07:55",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "99-03",
@@ -20674,7 +19686,7 @@
               "pieceId": "454",
               "routeLabel": "61",
               "page": 64,
-              "taken": false
+              "taken": true
             },
             {
               "block": "63-04",
@@ -20686,14 +19698,14 @@
               "pieceId": "454",
               "routeLabel": "62,63",
               "page": 64,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "454",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -20746,7 +19758,7 @@
           "boardPage": 64,
           "availabilityStart": "08:09",
           "availabilityEnd": "08:39",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-14",
@@ -20758,7 +19770,7 @@
               "pieceId": "30",
               "routeLabel": "6",
               "page": 64,
-              "taken": false
+              "taken": true
             },
             {
               "block": "88-16",
@@ -20770,14 +19782,14 @@
               "pieceId": "30",
               "routeLabel": "88,98",
               "page": 64,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "30",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -20819,7 +19831,7 @@
           "shiftId": "377",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -21118,7 +20130,7 @@
           "boardPage": 66,
           "availabilityStart": "07:52",
           "availabilityEnd": "08:22",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "12-11",
@@ -21130,7 +20142,7 @@
               "pieceId": "117",
               "routeLabel": "12",
               "page": 66,
-              "taken": false
+              "taken": true
             },
             {
               "block": "39-10",
@@ -21142,13 +20154,13 @@
               "pieceId": "117",
               "routeLabel": "10,42",
               "page": 66,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "117",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -21298,7 +20310,7 @@
           "boardPage": 66,
           "availabilityStart": "07:53",
           "availabilityEnd": "08:23",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "9-07",
@@ -21310,7 +20322,7 @@
               "pieceId": "73",
               "routeLabel": "9",
               "page": 66,
-              "taken": false
+              "taken": true
             },
             {
               "block": "9-07",
@@ -21322,14 +20334,14 @@
               "pieceId": "73",
               "routeLabel": "18,40",
               "page": 66,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "73",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -22109,7 +21121,7 @@
           "shiftId": "63",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -22312,7 +21324,7 @@
           "boardPage": 70,
           "availabilityStart": "09:02",
           "availabilityEnd": "09:32",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "10-05",
@@ -22324,7 +21336,7 @@
               "pieceId": "81",
               "routeLabel": "10",
               "page": 70,
-              "taken": false
+              "taken": true
             },
             {
               "block": "12-08",
@@ -22336,14 +21348,14 @@
               "pieceId": "81",
               "routeLabel": "35,44",
               "page": 70,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "81",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -22985,7 +21997,7 @@
           "shiftId": "297",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -23662,7 +22674,7 @@
           "boardPage": 75,
           "availabilityStart": "08:25",
           "availabilityEnd": "08:55",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "18-07",
@@ -23674,7 +22686,7 @@
               "pieceId": "147",
               "routeLabel": "18",
               "page": 75,
-              "taken": false
+              "taken": true
             },
             {
               "block": "18-07",
@@ -23686,13 +22698,13 @@
               "pieceId": "147",
               "routeLabel": "88,111,116",
               "page": 75,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "147",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
+          "sat1Taken": true,
           "sat2Taken": false,
           "sun1Taken": false,
           "sun2Taken": false
@@ -23872,7 +22884,7 @@
           "boardPage": 76,
           "availabilityStart": "08:32",
           "availabilityEnd": "09:02",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "86-03",
@@ -23884,7 +22896,7 @@
               "pieceId": "408",
               "routeLabel": "57,86",
               "page": 76,
-              "taken": false
+              "taken": true
             },
             {
               "block": "86-03",
@@ -23896,14 +22908,14 @@
               "pieceId": "408",
               "routeLabel": "11",
               "page": 76,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "408",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -24251,7 +23263,7 @@
           "shiftId": "402",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -24833,7 +23845,7 @@
           "shiftId": "385",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -24886,7 +23898,7 @@
           "boardPage": 80,
           "availabilityStart": "08:52",
           "availabilityEnd": "09:22",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-09",
@@ -24898,7 +23910,7 @@
               "pieceId": "25",
               "routeLabel": "6",
               "page": 80,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-09",
@@ -24910,14 +23922,14 @@
               "pieceId": "25",
               "routeLabel": "7",
               "page": 80,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "25",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -25571,7 +24583,7 @@
           "shiftId": "302",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -26026,7 +25038,7 @@
           "boardPage": 84,
           "availabilityStart": "08:01",
           "availabilityEnd": "08:31",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "6-19",
@@ -26038,7 +25050,7 @@
               "pieceId": "37",
               "routeLabel": "48",
               "page": 84,
-              "taken": false
+              "taken": true
             },
             {
               "block": "6-19",
@@ -26050,14 +25062,14 @@
               "pieceId": "37",
               "routeLabel": "6",
               "page": 84,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
           "shiftId": "37",
           "workSection": "Mixed Relief Work Saturday",
-          "sat1Taken": false,
-          "sat2Taken": false,
+          "sat1Taken": true,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -26099,7 +25111,7 @@
           "shiftId": "219",
           "workSection": "Mixed Relief Work Saturday",
           "sat1Taken": true,
-          "sat2Taken": false,
+          "sat2Taken": true,
           "sun1Taken": false,
           "sun2Taken": false
         },
@@ -27493,7 +26505,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-90-228",
@@ -29605,7 +28617,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-99-75",
@@ -29899,7 +28911,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-100-348",
@@ -30850,7 +29862,7 @@
           "boardPage": 104,
           "availabilityStart": "08:45",
           "availabilityEnd": "09:45",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "14-04",
@@ -30862,7 +29874,7 @@
               "pieceId": "111",
               "routeLabel": "14",
               "page": 104,
-              "taken": false
+              "taken": true
             },
             {
               "block": "14-04",
@@ -30874,7 +29886,7 @@
               "pieceId": "111",
               "routeLabel": "14",
               "page": 104,
-              "taken": false
+              "taken": true
             },
             {
               "block": "14-04",
@@ -30886,7 +29898,7 @@
               "pieceId": "111",
               "routeLabel": "56,57",
               "page": 104,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -30894,8 +29906,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-104-252",
@@ -30937,7 +29949,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-104-390",
@@ -31975,7 +30987,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-108-172",
@@ -32407,7 +31419,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-110-374",
@@ -33307,7 +32319,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-114-192",
@@ -33991,7 +33003,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-117-327",
@@ -34927,7 +33939,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-120-212",
@@ -35191,7 +34203,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-122-194",
@@ -35296,7 +34308,7 @@
           "boardPage": 122,
           "availabilityStart": "08:44",
           "availabilityEnd": "09:14",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "85-03",
@@ -35308,7 +34320,7 @@
               "pieceId": "358",
               "routeLabel": "5,19,88",
               "page": 122,
-              "taken": false
+              "taken": true
             },
             {
               "block": "85-03",
@@ -35320,7 +34332,7 @@
               "pieceId": "358",
               "routeLabel": "85",
               "page": 122,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -35328,8 +34340,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-122-303",
@@ -35542,7 +34554,7 @@
           "boardPage": 123,
           "availabilityStart": "09:03",
           "availabilityEnd": "09:33",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "12-03",
@@ -35554,7 +34566,7 @@
               "pieceId": "90",
               "routeLabel": "12",
               "page": 123,
-              "taken": false
+              "taken": true
             },
             {
               "block": "98-01",
@@ -35566,7 +34578,7 @@
               "pieceId": "90",
               "routeLabel": "90,98",
               "page": 123,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -35574,8 +34586,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-123-120",
@@ -35713,7 +34725,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-124-156",
@@ -36148,7 +35160,7 @@
           "boardPage": 125,
           "availabilityStart": "08:13",
           "availabilityEnd": "08:43",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "9-03",
@@ -36160,7 +35172,7 @@
               "pieceId": "53",
               "routeLabel": "9",
               "page": 125,
-              "taken": false
+              "taken": true
             },
             {
               "block": "9-03",
@@ -36172,7 +35184,7 @@
               "pieceId": "53",
               "routeLabel": "61,62",
               "page": 125,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -36180,7 +35192,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -36481,7 +35493,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-127-244",
@@ -36769,7 +35781,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-128-114",
@@ -37120,7 +36132,7 @@
           "boardPage": 129,
           "availabilityStart": "08:26",
           "availabilityEnd": "08:56",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "35-01",
@@ -37132,7 +36144,7 @@
               "pieceId": "176",
               "routeLabel": "30,35,42",
               "page": 129,
-              "taken": false
+              "taken": true
             },
             {
               "block": "12-06",
@@ -37144,7 +36156,7 @@
               "pieceId": "176",
               "routeLabel": "12",
               "page": 129,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -37152,7 +36164,7 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -37162,7 +36174,7 @@
           "boardPage": 129,
           "availabilityStart": "09:19",
           "availabilityEnd": "09:49",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "7-02",
@@ -37174,7 +36186,7 @@
               "pieceId": "23",
               "routeLabel": "7,85",
               "page": 129,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-02",
@@ -37186,7 +36198,7 @@
               "pieceId": "23",
               "routeLabel": "80,81",
               "page": 129,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -37194,8 +36206,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-130-451",
@@ -37771,7 +36783,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-132-129",
@@ -38437,7 +37449,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-135-440",
@@ -38521,7 +37533,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-135-386",
@@ -38605,7 +37617,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-135-158",
@@ -38983,7 +37995,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-137-369",
@@ -39034,7 +38046,7 @@
           "boardPage": 137,
           "availabilityStart": "08:24",
           "availabilityEnd": "08:54",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "14-01",
@@ -39046,7 +38058,7 @@
               "pieceId": "108",
               "routeLabel": "14",
               "page": 137,
-              "taken": false
+              "taken": true
             },
             {
               "block": "14-01",
@@ -39058,7 +38070,7 @@
               "pieceId": "108",
               "routeLabel": "75,80",
               "page": 137,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -39066,8 +38078,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-137-66",
@@ -39076,7 +38088,7 @@
           "boardPage": 137,
           "availabilityStart": "08:19",
           "availabilityEnd": "08:49",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "10-06",
@@ -39088,7 +38100,7 @@
               "pieceId": "66",
               "routeLabel": "10,48",
               "page": 137,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-18",
@@ -39100,7 +38112,7 @@
               "pieceId": "66",
               "routeLabel": "7",
               "page": 137,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -39108,8 +38120,8 @@
           "workSection": "Mix Odd Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-137-333",
@@ -40876,7 +39888,7 @@
           "boardPage": 145,
           "availabilityStart": "08:39",
           "availabilityEnd": "09:39",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "7-01",
@@ -40888,7 +39900,7 @@
               "pieceId": "21",
               "routeLabel": "7",
               "page": 145,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-01",
@@ -40900,7 +39912,7 @@
               "pieceId": "21",
               "routeLabel": "85",
               "page": 145,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-01",
@@ -40912,7 +39924,7 @@
               "pieceId": "21",
               "routeLabel": "82",
               "page": 145,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -40920,7 +39932,7 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
+          "sun1Taken": true,
           "sun2Taken": false
         },
         {
@@ -41017,7 +40029,7 @@
           "sat1Taken": false,
           "sat2Taken": false,
           "sun1Taken": true,
-          "sun2Taken": false
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-146-122",
@@ -42838,7 +41850,7 @@
           "boardPage": 154,
           "availabilityStart": "07:10",
           "availabilityEnd": "07:40",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "7-15",
@@ -42850,7 +41862,7 @@
               "pieceId": "39",
               "routeLabel": "14",
               "page": 154,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-15",
@@ -42862,7 +41874,7 @@
               "pieceId": "39",
               "routeLabel": "7,895",
               "page": 154,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -42870,8 +41882,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-154-285",
@@ -44392,7 +43404,7 @@
           "boardPage": 160,
           "availabilityStart": "07:29",
           "availabilityEnd": "07:59",
-          "taken": false,
+          "taken": true,
           "pieces": [
             {
               "block": "7-09",
@@ -44404,7 +43416,7 @@
               "pieceId": "32",
               "routeLabel": "7,53,86",
               "page": 160,
-              "taken": false
+              "taken": true
             },
             {
               "block": "7-09",
@@ -44416,7 +43428,7 @@
               "pieceId": "32",
               "routeLabel": "74",
               "page": 160,
-              "taken": false
+              "taken": true
             }
           ],
           "sourcePdf": "2026 Fall Weekend boards TRIP.pdf",
@@ -44424,8 +43436,8 @@
           "workSection": "Mixed Relief Work Sunday",
           "sat1Taken": false,
           "sat2Taken": false,
-          "sun1Taken": false,
-          "sun2Taken": false
+          "sun1Taken": true,
+          "sun2Taken": true
         },
         {
           "id": "bus-weekend-161-305",
@@ -48088,7 +47100,7 @@
           "sun2Taken": true
         }
       ],
-      "updatedAt": "2026-07-29T13:58:30.027181+00:00"
+      "updatedAt": "2026-07-30T03:50:08.704643+00:00"
     },
     {
       "id": "days_off_counter",
@@ -48256,7 +47268,7 @@
           "remaining": 88
         }
       ],
-      "updatedAt": "2026-07-29T13:58:30.027181+00:00"
+      "updatedAt": "2026-07-30T03:50:04.107375+00:00"
     },
     {
       "id": "vacation_tracker",
@@ -48419,7 +47431,7 @@
           "remaining": 18
         }
       ],
-      "updatedAt": "2026-07-29T13:58:25.237133+00:00"
+      "updatedAt": "2026-07-30T03:50:04.111376+00:00"
     },
     {
       "id": "spares",
@@ -48726,14 +47738,14 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 1,
-                  "available": 1
+                  "booked": 2,
+                  "available": 0
                 },
                 {
                   "onTime": "04:30",
                   "limit": 2,
-                  "booked": 1,
-                  "available": 1
+                  "booked": 2,
+                  "available": 0
                 },
                 {
                   "onTime": "05:00",
@@ -48892,8 +47904,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "04:30",
@@ -48996,14 +48008,14 @@
                 {
                   "onTime": "04:00",
                   "limit": 2,
-                  "booked": 0,
-                  "available": 2
+                  "booked": 1,
+                  "available": 1
                 },
                 {
                   "onTime": "04:30",
                   "limit": 2,
-                  "booked": 1,
-                  "available": 1
+                  "booked": 2,
+                  "available": 0
                 },
                 {
                   "onTime": "05:00",
@@ -49156,8 +48168,8 @@
                 {
                   "onTime": "03:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "04:00",
@@ -49268,8 +48280,8 @@
                 {
                   "onTime": "18:30",
                   "limit": 6,
-                  "booked": 3,
-                  "available": 3
+                  "booked": 4,
+                  "available": 2
                 },
                 {
                   "onTime": "06:45",
@@ -49338,14 +48350,14 @@
                 {
                   "onTime": "16:30",
                   "limit": 22,
-                  "booked": 18,
-                  "available": 4
+                  "booked": 19,
+                  "available": 3
                 },
                 {
                   "onTime": "18:30",
                   "limit": 6,
-                  "booked": 4,
-                  "available": 2
+                  "booked": 5,
+                  "available": 1
                 }
               ]
             }
@@ -49388,8 +48400,8 @@
                 {
                   "onTime": "04:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "05:00",
@@ -49536,8 +48548,8 @@
                 {
                   "onTime": "04:00",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "04:30",
@@ -49616,8 +48628,8 @@
                 {
                   "onTime": "02:30",
                   "limit": 1,
-                  "booked": 0,
-                  "available": 1
+                  "booked": 1,
+                  "available": 0
                 },
                 {
                   "onTime": "03:00",
@@ -50628,7 +49640,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-29T13:58:30.027181+00:00"
+      "updatedAt": "2026-07-30T03:50:08.704643+00:00"
     },
     {
       "id": "stat_work",
@@ -72771,7 +71783,7 @@
           "holidayLabel": "Thanksgiving"
         }
       ],
-      "updatedAt": "2026-07-29T13:58:30.027181+00:00"
+      "updatedAt": "2026-07-30T03:50:04.111376+00:00"
     }
   ]
 }
