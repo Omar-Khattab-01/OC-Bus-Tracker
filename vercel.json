@@ -3,6 +3,10 @@
     {
       "path": "/api/track",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/whatsapp-booking-batches",
+      "schedule": "* * * * *"
     }
   ]
 }

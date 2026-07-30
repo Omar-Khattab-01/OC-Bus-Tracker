@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import importlib.util
+import json
 import os
 import re
 import tempfile
@@ -17,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REBUILD_API = ROOT / "api" / "admin" / "rebuild-booking-board.py"
 BUILD_SCRIPT = ROOT / "tools" / "build_booking_boards.py"
+WHATSAPP_BATCH_WAIT_SECONDS = int(os.environ.get("WHATSAPP_BATCH_WAIT_SECONDS", "90") or "90")
 
 
 def load_module(path: Path, name: str):
@@ -168,6 +170,52 @@ def download_media(url: str) -> tuple[bytes, str]:
         raise RuntimeError(f"Media download failed with HTTP {error.code}: {detail[:300]}") from error
 
 
+def supabase_request(method: str, table_path: str, body=None) -> object:
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+    service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not supabase_url or not service_key:
+        raise RuntimeError("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before using WhatsApp booking batches.")
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    request = urllib.request.Request(
+        f"{supabase_url}/rest/v1/{table_path}",
+        data=data,
+        method=method,
+        headers={
+            "apikey": service_key,
+            "Authorization": f"Bearer {service_key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = response.read().decode("utf-8")
+            return json.loads(raw) if raw else None
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Supabase {error.code}: {detail[:500]}") from error
+
+
+def queue_uploads(sender: str, recipient: str, matched: list[dict], uploaded_targets: dict[str, bytes]) -> int:
+    rows = []
+    by_board = {item["board"]: item for item in matched}
+    for board_key, pdf_bytes in uploaded_targets.items():
+        item = by_board.get(board_key) or {}
+        rows.append({
+            "sender": sender,
+            "recipient": recipient,
+            "board_key": board_key,
+            "label": item.get("label") or rebuild_api.TARGETS[board_key]["label"],
+            "source_name": item.get("sourceName") or rebuild_api.TARGETS[board_key]["filename"],
+            "pdf_base64": base64.b64encode(pdf_bytes).decode("ascii"),
+            "status": "queued",
+        })
+    if not rows:
+        return 0
+    inserted = supabase_request("POST", "whatsapp_booking_board_uploads", rows)
+    return len(inserted or rows)
+
+
 def media_items(params: dict[str, str]) -> list[dict]:
     try:
         count = int(str(params.get("NumMedia") or "0"))
@@ -241,16 +289,11 @@ class handler(BaseHTTPRequestHandler):
                 twiml_response(self, f"No booking boards were updated. {' '.join(unmatched)}".strip())
                 return
 
-            with tempfile.TemporaryDirectory(prefix="booking-boards-whatsapp-") as temp_root:
-                temp_source_dir = Path(temp_root) / "Booking_Boards"
-                rebuild_api.copy_sources(temp_source_dir)
-                for key, pdf_bytes in uploaded_targets.items():
-                    (temp_source_dir / rebuild_api.TARGETS[key]["filename"]).write_bytes(pdf_bytes)
-                payload = rebuild_api.build_payload(temp_source_dir)
-                repo, branch, updated_at, payload = rebuild_api.commit_updates(uploaded_targets, payload, list(uploaded_targets.keys()))
-
+            sender = str(params.get("From") or "").strip()
+            recipient = str(params.get("To") or "").strip()
+            queued_count = queue_uploads(sender, recipient, matched, uploaded_targets)
             labels = ", ".join(item["label"] for item in matched)
             extra = f" Unmatched: {' '.join(unmatched)}" if unmatched else ""
-            twiml_response(self, f"Updated {labels}. {len(payload['boards'])} boards rebuilt and committed to {repo}/{branch}. Live site may take about a minute. {updated_at}.{extra}")
+            twiml_response(self, f"Received {queued_count} PDF(s): {labels}. I will wait {WHATSAPP_BATCH_WAIT_SECONDS} seconds after the last forwarded PDF, then update the booking boards once and confirm here.{extra}")
         except Exception as error:
             twiml_response(self, f"Booking board update failed: {str(error)[:900]}")

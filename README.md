@@ -110,6 +110,7 @@ Set these environment variables on the deployed backend:
 ```text
 WHATSAPP_BOOKING_BOARD_TOKEN=long-random-secret
 WHATSAPP_ALLOWED_FROM=whatsapp:+1XXXXXXXXXX
+WHATSAPP_BATCH_WAIT_SECONDS=90
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=account_auth_token_used_for_webhook_signatures
 TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -122,7 +123,9 @@ BOOKING_BOARD_GITHUB_BRANCH=main
 
 `TWILIO_AUTH_TOKEN` must be the Account Auth Token from the Twilio dashboard because Twilio uses it to sign incoming webhooks. The optional `TWILIO_API_KEY_SID` and `TWILIO_API_KEY_SECRET` can be a restricted API key for downloading media attachments.
 
-Forward one or more PDF documents to the WhatsApp number. If the original filename is not available, add a caption such as `daily`, `weekend`, `spare`, `stat`, `days off`, or `vacation`. The webhook also inspects PDF text as a fallback before committing updated PDFs and `data/booking_boards.json` to GitHub.
+Run `supabase/migration_whatsapp_booking_board_uploads.sql` before turning on batching. Forward one or more PDF documents to the WhatsApp number. The webhook stores each matched PDF, waits until no new PDFs arrive from the same sender for `WHATSAPP_BATCH_WAIT_SECONDS`, then the cron endpoint rebuilds and commits the booking boards once and sends one WhatsApp confirmation.
+
+If the original filename is not available, add a caption such as `daily`, `weekend`, `spare`, `stat`, `days off`, or `vacation`. The webhook also inspects PDF text as a fallback before queueing the PDF.
 
 ## Notes
 
