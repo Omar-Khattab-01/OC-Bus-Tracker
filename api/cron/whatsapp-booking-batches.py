@@ -27,7 +27,7 @@ def load_module(path: Path, name: str):
 
 
 rebuild_api = load_module(REBUILD_API, "booking_board_rebuild_api_for_whatsapp_batches")
-WHATSAPP_BATCH_WAIT_SECONDS = int(os.environ.get("WHATSAPP_BATCH_WAIT_SECONDS", "90") or "90")
+WHATSAPP_BATCH_WAIT_SECONDS = int(os.environ.get("WHATSAPP_BATCH_WAIT_SECONDS", "15") or "15")
 
 
 def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict):

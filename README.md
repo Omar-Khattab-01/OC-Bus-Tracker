@@ -110,7 +110,7 @@ Set these environment variables on the deployed backend:
 ```text
 WHATSAPP_BOOKING_BOARD_TOKEN=long-random-secret
 WHATSAPP_ALLOWED_FROM=whatsapp:+1XXXXXXXXXX
-WHATSAPP_BATCH_WAIT_SECONDS=90
+WHATSAPP_BATCH_WAIT_SECONDS=15
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=account_auth_token_used_for_webhook_signatures
 TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

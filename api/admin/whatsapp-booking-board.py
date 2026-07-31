@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REBUILD_API = ROOT / "api" / "admin" / "rebuild-booking-board.py"
 BUILD_SCRIPT = ROOT / "tools" / "build_booking_boards.py"
-WHATSAPP_BATCH_WAIT_SECONDS = int(os.environ.get("WHATSAPP_BATCH_WAIT_SECONDS", "90") or "90")
+WHATSAPP_BATCH_WAIT_SECONDS = int(os.environ.get("WHATSAPP_BATCH_WAIT_SECONDS", "15") or "15")
 
 
 def load_module(path: Path, name: str):
