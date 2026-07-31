@@ -263,9 +263,13 @@ def get_existing_booking_board_payload(repo: str, branch: str, token: str) -> di
     try:
         existing = get_github_file(repo, branch, "data/booking_boards.json", token)
         encoded = str(existing.get("content") or "")
-        if not encoded:
-            return {}
-        return json.loads(base64.b64decode(encoded).decode("utf-8"))
+        if encoded:
+            return json.loads(base64.b64decode(encoded).decode("utf-8"))
+        download_url = str(existing.get("download_url") or "").strip()
+        if download_url:
+            with urllib.request.urlopen(download_url, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        return {}
     except Exception:
         return {}
 
