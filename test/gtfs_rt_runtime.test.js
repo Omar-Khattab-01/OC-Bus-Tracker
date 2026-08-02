@@ -1,0 +1,83 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const test = require('node:test');
+const {
+  buildRealtimeIndexes,
+  findDirectVehiclePositionsForBlock,
+} = require('../lib/gtfs_rt_runtime');
+
+function tripUpdate(tripId, vehicleId) {
+  return {
+    tripUpdate: {
+      trip: { tripId },
+      vehicle: vehicleId ? { id: vehicleId } : null,
+    },
+  };
+}
+
+function vehiclePosition(vehicleId, tripId = '', routeId = '') {
+  return {
+    vehicle: {
+      vehicle: { id: vehicleId },
+      trip: tripId ? { tripId, routeId } : null,
+      position: { latitude: 45.4, longitude: -75.7 },
+    },
+  };
+}
+
+test('VehiclePositions overrides a conflicting TripUpdates vehicle assignment', () => {
+  const realtime = buildRealtimeIndexes(
+    { entity: [tripUpdate('13643070', '6502')] },
+    { entity: [vehiclePosition('6502'), vehiclePosition('4830', '13643070', '53')] }
+  );
+  const staticIndex = {
+    tripsById: new Map([['13643070', {
+      tripId: '13643070',
+      routeId: '53',
+      routeShortName: '53',
+      blockId: '53-03',
+    }]]),
+  };
+  const direct = findDirectVehiclePositionsForBlock('53-03', staticIndex, realtime);
+
+  assert.equal(direct[0].vehicleId, '4830');
+  assert.equal(realtime.positionsByVehicleId.has('6502'), true);
+  assert.equal(realtime.positionsByVehicleId.has('4830'), true);
+});
+
+test('an internally inconsistent VehiclePosition trip is rejected', () => {
+  const realtime = buildRealtimeIndexes(
+    { entity: [] },
+    { entity: [vehiclePosition('6634', '15298070', '6')] }
+  );
+  const staticIndex = {
+    tripsById: new Map([['15298070', {
+      tripId: '15298070',
+      routeId: '56',
+      routeShortName: '56',
+      blockId: '53-03',
+    }]]),
+  };
+
+  assert.deepEqual(findDirectVehiclePositionsForBlock('53-03', staticIndex, realtime), []);
+});
+
+test('TripUpdates remains the fallback when no VehiclePosition claims the trip', () => {
+  const realtime = buildRealtimeIndexes(
+    { entity: [tripUpdate('trip-2', '7001')] },
+    { entity: [vehiclePosition('7001')] }
+  );
+
+  assert.equal(realtime.vehicleByTripId.get('trip-2'), '7001');
+});
+
+test('a VehiclePosition without a trip does not create a trip assignment', () => {
+  const realtime = buildRealtimeIndexes(
+    { entity: [] },
+    { entity: [vehiclePosition('6502')] }
+  );
+
+  assert.equal(realtime.vehicleByTripId.size, 0);
+  assert.equal(realtime.positionsByVehicleId.has('6502'), true);
+});
