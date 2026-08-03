@@ -3751,7 +3751,80 @@ async function handleLiveLookupFeedbackAdmin(req, res) {
     res.status(500).json({ ok: false, error: 'The feedback log could not be loaded.' });
     return;
   }
-  res.json({ ok: true, feedback: data || [] });
+  let feedback = data || [];
+  const status = String(req.query.status || '').trim().toLowerCase();
+  const issueType = String(req.query.issueType || '').trim();
+  const lookupType = String(req.query.lookupType || '').trim();
+  const search = String(req.query.search || '').trim().toLowerCase();
+  if (['open', 'resolved'].includes(status)) feedback = feedback.filter((item) => (item.status || 'open') === status);
+  if (issueType) feedback = feedback.filter((item) => item.issue_type === issueType);
+  if (['bus', 'block'].includes(lookupType)) feedback = feedback.filter((item) => item.lookup_type === lookupType);
+  if (search) {
+    feedback = feedback.filter((item) => [item.lookup_value, item.block, item.reported_bus_number, item.correct_bus_number, item.comment, item.location_text]
+      .some((value) => String(value || '').toLowerCase().includes(search)));
+  }
+  res.json({ ok: true, feedback });
+}
+
+async function authorizeIncidentFeedbackAdmin(req, res) {
+  if (!adminSupabase) {
+    res.status(501).json({ ok: false, error: 'Feedback storage is not configured yet.' });
+    return false;
+  }
+  const authorization = String(req.get('authorization') || '').trim();
+  const accessToken = authorization.toLowerCase().startsWith('bearer ') ? authorization.slice(7).trim() : '';
+  if (!accessToken) {
+    res.status(401).json({ ok: false, error: 'Sign in with the authorized admin account.' });
+    return false;
+  }
+  const { data, error } = await adminSupabase.auth.getUser(accessToken);
+  if (error || String(data?.user?.email || '').trim().toLowerCase() !== INCIDENT_FEEDBACK_ADMIN_EMAIL) {
+    res.status(403).json({ ok: false, error: 'This account does not have access to the feedback log.' });
+    return false;
+  }
+  return true;
+}
+
+function isFeedbackId(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+}
+
+async function handleLiveLookupFeedbackUpdate(req, res) {
+  if (!await authorizeIncidentFeedbackAdmin(req, res)) return;
+  if (!isFeedbackId(req.params.id)) return res.status(400).json({ ok: false, error: 'Invalid feedback ID.' });
+  const updates = {};
+  if (Object.prototype.hasOwnProperty.call(req.body, 'issueType')) {
+    const value = String(req.body.issueType || '').trim();
+    if (value && !['incorrect_bus_number', 'wrong_bus_location', 'wrong_paddle_information'].includes(value)) {
+      return res.status(400).json({ ok: false, error: 'Invalid feedback type.' });
+    }
+    updates.issue_type = value || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(req.body, 'correctBusNumber')) {
+    const value = String(req.body.correctBusNumber || '').trim();
+    if (value && !/^\d{4}$/.test(value)) return res.status(400).json({ ok: false, error: 'Correct bus number must contain four digits.' });
+    updates.correct_bus_number = value || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(req.body, 'comment')) updates.comment = String(req.body.comment || '').trim().slice(0, 2000) || null;
+  if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {
+    const value = String(req.body.status || '').trim().toLowerCase();
+    if (!['open', 'resolved'].includes(value)) return res.status(400).json({ ok: false, error: 'Invalid feedback status.' });
+    updates.status = value;
+    updates.resolved_at = value === 'resolved' ? new Date().toISOString() : null;
+  }
+  if (!Object.keys(updates).length) return res.status(400).json({ ok: false, error: 'No changes were provided.' });
+  updates.updated_at = new Date().toISOString();
+  const { data, error } = await adminSupabase.from('live_lookup_feedback').update(updates).eq('id', req.params.id).select('*').single();
+  if (error) return res.status(500).json({ ok: false, error: 'The feedback could not be updated.' });
+  res.json({ ok: true, feedback: data });
+}
+
+async function handleLiveLookupFeedbackDelete(req, res) {
+  if (!await authorizeIncidentFeedbackAdmin(req, res)) return;
+  if (!isFeedbackId(req.params.id)) return res.status(400).json({ ok: false, error: 'Invalid feedback ID.' });
+  const { error } = await adminSupabase.from('live_lookup_feedback').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ ok: false, error: 'The feedback could not be deleted.' });
+  res.json({ ok: true });
 }
 
 function normalizeBookingBoardUploadName(name) {
@@ -4376,6 +4449,8 @@ app.get('/api/gtfs-lookup', handleGtfsLookup);
 app.get('/api/gtfs-debug', handleGtfsDebug);
 app.post('/api/live-lookup-feedback', handleLiveLookupFeedback);
 app.get('/api/admin/live-lookup-feedback', handleLiveLookupFeedbackAdmin);
+app.patch('/api/admin/live-lookup-feedback/:id', handleLiveLookupFeedbackUpdate);
+app.delete('/api/admin/live-lookup-feedback/:id', handleLiveLookupFeedbackDelete);
 app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/api/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);

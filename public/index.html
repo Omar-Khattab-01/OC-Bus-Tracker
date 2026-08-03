@@ -182,6 +182,22 @@
       display: grid;
     }
 
+    .header-actions > .status,
+    .header-actions > #clearChatBtn,
+    .header-actions > #accountBtn,
+    .header-actions > #canadaDayPaddlesBtn,
+    .header-actions > #civicHolidayPaddlesBtn,
+    .header-actions > #fallPaddlesBtn,
+    .header-actions > #fallBookingBoardBtn,
+    .header-actions > #shuttlesPageBtn,
+    .header-actions > #supportBtn {
+      display: none;
+    }
+
+    .header-actions > .mobile-menu-btn {
+      display: inline-flex;
+    }
+
     .mobile-menu .menu-section-label {
       font-size: 11px;
       letter-spacing: 0.08em;
@@ -1399,38 +1415,6 @@
       width: 64px;
     }
 
-    @media (max-width: 1100px) {
-      .header {
-        align-items: flex-start;
-      }
-
-      .brand {
-        flex: 1 1 auto;
-        min-width: 0;
-      }
-
-      .header-actions {
-        flex: 0 0 auto;
-        justify-content: flex-end;
-      }
-
-      .header-actions > .status,
-      .header-actions > #clearChatBtn,
-      .header-actions > #accountBtn,
-      .header-actions > #canadaDayPaddlesBtn,
-      .header-actions > #civicHolidayPaddlesBtn,
-      .header-actions > #fallPaddlesBtn,
-      .header-actions > #fallBookingBoardBtn,
-      .header-actions > #shuttlesPageBtn,
-      .header-actions > #supportBtn {
-        display: none;
-      }
-
-      .header-actions > .mobile-menu-btn {
-        display: inline-flex;
-      }
-    }
-
     @media (max-width: 700px) {
       body {
         padding: 8px;
@@ -1731,6 +1715,7 @@
           <button id="mobileFallBookingBoardBtn" class="header-btn" type="button">Fall Booking Board</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileBusDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
+          <button id="mobileFeedbackAdminBtn" class="header-btn" type="button" hidden>Feedback Incidents</button>
           <button id="mobileSupportBtn" class="header-btn" type="button">Support</button>
           <button id="mobileAccountBtn" class="header-btn" type="button">Account</button>
           <button id="mobileClearChatBtn" class="header-btn" type="button">Clear Chat</button>
@@ -1957,6 +1942,7 @@
     const mobileFallBookingBoardBtn = document.getElementById('mobileFallBookingBoardBtn');
     const mobileShuttlesPageBtn = document.getElementById('mobileShuttlesPageBtn');
     const mobileBusDefectsBtn = document.getElementById('mobileBusDefectsBtn');
+    const mobileFeedbackAdminBtn = document.getElementById('mobileFeedbackAdminBtn');
     const mobileSupportBtn = document.getElementById('mobileSupportBtn');
     const mobileAccountBtn = document.getElementById('mobileAccountBtn');
     const mobileClearChatBtn = document.getElementById('mobileClearChatBtn');
@@ -3842,6 +3828,7 @@
         myWorkBtn.hidden = true;
         busDefectsBtn.hidden = true;
         mobileBusDefectsBtn.hidden = true;
+        mobileFeedbackAdminBtn.hidden = true;
         return;
       }
       accountBtn.textContent = currentUser ? 'Settings' : 'Account';
@@ -3850,6 +3837,7 @@
       myWorkBtn.hidden = !currentUser;
       busDefectsBtn.hidden = !busDefectAccessAllowed;
       mobileBusDefectsBtn.hidden = !busDefectAccessAllowed;
+      mobileFeedbackAdminBtn.hidden = String(currentUser?.email || '').trim().toLowerCase() !== 'omar.hosam2000@gmail.com';
     }
 
     async function openTodaysWork() {
@@ -5540,6 +5528,10 @@
     mobileBusDefectsBtn.addEventListener('click', () => {
       closeMobileMenu();
       openBusDefectsPage();
+    });
+    mobileFeedbackAdminBtn.addEventListener('click', () => {
+      closeMobileMenu();
+      window.location.href = '/incident-feedback-admin';
     });
     mobileSupportBtn.addEventListener('click', () => {
       closeMobileMenu();

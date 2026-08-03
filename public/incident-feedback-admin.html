@@ -1,140 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Result Feedback Log</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Feedback Incident Manager</title>
   <style>
-    :root { color-scheme: dark; --bg:#0d1117; --panel:#151b23; --line:#303a47; --text:#f3f6fa; --muted:#a8b3c1; --red:#da291c; --amber:#ffb348; }
-    * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
-    main { width:min(1100px,calc(100% - 32px)); margin:0 auto; padding:30px 0 60px; }
-    header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; flex-wrap:wrap; margin-bottom:20px; }
-    h1 { margin:0; font-size:clamp(28px,5vw,46px); line-height:1; }
-    p { color:var(--muted); line-height:1.5; }
-    a { color:#a9c9ff; text-decoration:none; }
-    .access,.entry,.empty { border:1px solid var(--line); background:var(--panel); border-radius:14px; padding:16px; }
-    .access { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)) auto; gap:10px; margin-bottom:20px; }
-    input,button { border-radius:10px; border:1px solid var(--line); padding:11px 13px; font:inherit; }
-    input { background:#0d1117; color:var(--text); }
-    button { border-color:var(--red); background:var(--red); color:white; font-weight:800; cursor:pointer; }
-    button:disabled { opacity:.55; cursor:wait; }
-    #status { grid-column:1/-1; min-height:20px; color:var(--muted); font-size:13px; }
-    #log { display:grid; gap:12px; }
-    .entry-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-    .entry h2 { margin:0; font-size:20px; }
-    .time { color:var(--muted); font-size:13px; }
-    .numbers { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
-    .number { border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#0f141b; }
-    .number span { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
-    .number strong { display:block; margin-top:3px; font-size:22px; }
-    .wrong strong { color:#ff7f7f; text-decoration:line-through; }
-    .correct strong { color:#75dda5; }
-    .comment { margin:0; color:var(--text); white-space:pre-wrap; }
-    .details { margin-top:12px; color:var(--muted); font-size:13px; line-height:1.5; }
-    .badge { display:inline-block; border:1px solid rgba(255,179,72,.35); color:var(--amber); border-radius:999px; padding:4px 8px; font-size:11px; text-transform:uppercase; }
-    @media (max-width:600px) { .access { grid-template-columns:1fr; } }
+    :root{color-scheme:dark;--bg:#0d1117;--panel:#151b23;--line:#303a47;--text:#f3f6fa;--muted:#a8b3c1;--red:#da291c;--amber:#ffb348;--green:#53d28c}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 10% 0,rgba(218,41,28,.18),transparent 30%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{width:min(1180px,calc(100% - 32px));margin:auto;padding:28px 0 60px} header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px} h1{margin:0;font-size:clamp(30px,5vw,48px);line-height:1} p{color:var(--muted);line-height:1.5} a{color:#a9c9ff;text-decoration:none}
+    .panel,.entry,.empty{border:1px solid var(--line);background:rgba(21,27,35,.96);border-radius:14px;padding:16px}.access{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr)) auto;gap:10px;margin-bottom:14px}.filters{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:10px;margin-bottom:18px}
+    input,select,textarea,button{border-radius:10px;border:1px solid var(--line);padding:11px 13px;font:inherit}input,select,textarea{background:#0d1117;color:var(--text);min-width:0}button{border-color:var(--red);background:var(--red);color:white;font-weight:800;cursor:pointer}button.secondary{background:#202936;border-color:var(--line)}button.success{background:#137a49;border-color:#23965f}button.danger{background:#4b1717;border-color:#8c2929}button:disabled{opacity:.55;cursor:wait}
+    #status{grid-column:1/-1;min-height:20px;color:var(--muted);font-size:13px}.summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.summary span,.badge{border:1px solid var(--line);border-radius:999px;padding:5px 9px;color:var(--muted);font-size:12px}.badge{display:inline-block;color:var(--amber);border-color:rgba(255,179,72,.35);text-transform:uppercase}.badge.resolved{color:var(--green);border-color:rgba(83,210,140,.35)}
+    #log{display:grid;gap:12px}.entry.resolved{opacity:.78}.entry-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.entry h2{margin:6px 0 0;font-size:20px}.time{color:var(--muted);font-size:13px}.numbers{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.number{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#0f141b}.number span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}.number strong{display:block;margin-top:3px;font-size:21px}.wrong strong{color:#ff8989}.correct strong{color:#75dda5}.comment{white-space:pre-wrap}.details{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{padding:8px 11px;font-size:13px}.edit-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.edit-form textarea{grid-column:1/-1;resize:vertical}.edit-form .actions{grid-column:1/-1;margin:0}
+    [hidden]{display:none!important}@media(max-width:760px){.access,.filters,.edit-form{grid-template-columns:1fr}.edit-form textarea,.edit-form .actions{grid-column:1}.filters button{width:100%}}
   </style>
 </head>
-<body>
-  <main>
-    <header>
-      <div>
-        <h1>Live Result Feedback</h1>
-        <p>Private incident log for investigating reported bus-number mismatches.</p>
-      </div>
-      <a href="/">Back to tracker</a>
-    </header>
-    <section class="access" aria-label="Admin access">
-      <input id="email" type="email" autocomplete="username" value="omar.hosam2000@gmail.com" aria-label="Email">
-      <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
-      <button id="loadBtn" type="button">Sign In</button>
-      <div id="status" role="status" aria-live="polite"></div>
-    </section>
-    <section id="log" aria-live="polite"></section>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script>
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const loadBtn = document.getElementById('loadBtn');
-    const statusEl = document.getElementById('status');
-    const logEl = document.getElementById('log');
-    let supabaseClient = null;
+<body><main>
+  <header><div><h1>Feedback Incidents</h1><p>Private dashboard for investigating live lookup reports.</p></div><a href="/">Back to tracker</a></header>
+  <section class="panel access" aria-label="Owner access">
+    <input id="email" type="email" autocomplete="username" value="omar.hosam2000@gmail.com" aria-label="Email">
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+    <button id="loadBtn" type="button">Sign In</button><div id="status" role="status" aria-live="polite"></div>
+  </section>
+  <section id="manager" hidden>
+    <form id="filterForm" class="panel filters">
+      <input id="search" type="search" placeholder="Search bus, paddle, location or comment" aria-label="Search reports">
+      <select id="statusFilter" aria-label="Status"><option value="">All statuses</option><option value="open">Open</option><option value="resolved">Resolved</option></select>
+      <select id="issueFilter" aria-label="Issue type"><option value="">All issue types</option><option value="incorrect_bus_number">Incorrect bus number</option><option value="wrong_bus_location">Wrong bus location</option><option value="wrong_paddle_information">Wrong paddle information</option></select>
+      <select id="lookupFilter" aria-label="Lookup type"><option value="">All lookups</option><option value="block">Paddle</option><option value="bus">Bus</option></select>
+      <button type="submit">Apply Filters</button>
+    </form>
+    <div id="summary" class="summary"></div><section id="log" aria-live="polite"></section>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const ownerEmail='omar.hosam2000@gmail.com';
+  const emailInput=document.getElementById('email'),passwordInput=document.getElementById('password'),loadBtn=document.getElementById('loadBtn'),statusEl=document.getElementById('status'),managerEl=document.getElementById('manager'),filterForm=document.getElementById('filterForm'),logEl=document.getElementById('log'),summaryEl=document.getElementById('summary');
+  const issueLabels={incorrect_bus_number:'Incorrect bus number',wrong_bus_location:'Wrong bus location',wrong_paddle_information:'Wrong paddle information'};
+  let supabaseClient=null,currentSession=null,feedbackItems=[];
+  const escapeHtml=(v)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const fmt=(v)=>v?new Date(v).toLocaleString():'Unknown time';
 
-    function escapeHtml(value) {
-      return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
+  function renderEntry(item){const resolved=(item.status||'open')==='resolved';return `<article class="entry${resolved?' resolved':''}" data-entry-id="${item.id}">
+    <div class="entry-head"><div><span class="badge${resolved?' resolved':''}">${escapeHtml(resolved?'Resolved':issueLabels[item.issue_type]||'Open feedback')}</span><h2>${item.lookup_type==='bus'?'Bus':'Paddle'} lookup: ${escapeHtml(item.lookup_value)}</h2></div><time class="time">Reported ${escapeHtml(fmt(item.lookup_generated_at||item.created_at))}</time></div>
+    <div class="numbers"><div class="number wrong"><span>Site showed</span><strong>${escapeHtml(item.reported_bus_number)}</strong></div><div class="number correct"><span>Correct bus</span><strong>${escapeHtml(item.correct_bus_number||'Not provided')}</strong></div></div>
+    <div class="comment">${escapeHtml(item.comment||'No comment provided.')}</div><div class="details">${item.block?`Block: ${escapeHtml(item.block)} · `:''}${item.location_text?`Location: ${escapeHtml(item.location_text)} · `:''}Submitted: ${escapeHtml(fmt(item.created_at))}${item.resolved_at?` · Resolved: ${escapeHtml(fmt(item.resolved_at))}`:''}</div>
+    <div class="actions"><button class="${resolved?'secondary':'success'}" type="button" data-action="toggle">${resolved?'Reopen':'Mark Resolved'}</button><button class="secondary" type="button" data-action="edit">Edit</button><button class="danger" type="button" data-action="delete">Delete</button></div>
+    <form class="edit-form" data-edit-form hidden><select name="issueType"><option value="">No issue selected</option>${Object.entries(issueLabels).map(([v,l])=>`<option value="${v}"${item.issue_type===v?' selected':''}>${l}</option>`).join('')}</select><input name="correctBusNumber" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" value="${escapeHtml(item.correct_bus_number||'')}" placeholder="Correct bus number"><textarea name="comment" rows="4" maxlength="2000" placeholder="Comment">${escapeHtml(item.comment||'')}</textarea><div class="actions"><button type="submit">Save Changes</button><button class="secondary" type="button" data-action="cancel">Cancel</button></div></form>
+  </article>`}
 
-    function renderEntry(item) {
-      const lookupLabel = item.lookup_type === 'bus' ? 'Bus lookup' : 'Paddle lookup';
-      const created = item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown time';
-      const issueLabels = {
-        incorrect_bus_number: 'Incorrect bus number',
-        wrong_bus_location: 'Wrong bus location',
-        wrong_paddle_information: 'Wrong paddle information',
-      };
-      return `<article class="entry">
-        <div class="entry-head"><div><span class="badge">${escapeHtml(issueLabels[item.issue_type] || 'Live result feedback')}</span><h2>${escapeHtml(lookupLabel)}: ${escapeHtml(item.lookup_value)}</h2></div><time class="time">${escapeHtml(created)}</time></div>
-        <div class="numbers"><div class="number wrong"><span>Site showed</span><strong>${escapeHtml(item.reported_bus_number)}</strong></div><div class="number correct"><span>Correct bus</span><strong>${escapeHtml(item.correct_bus_number || 'Not provided')}</strong></div></div>
-        <p class="comment">${escapeHtml(item.comment || 'No comment provided.')}</p>
-        <div class="details">${item.block ? `Block: ${escapeHtml(item.block)} · ` : ''}${item.location_text ? `Location: ${escapeHtml(item.location_text)} · ` : ''}Source: ${escapeHtml(item.live_source || 'Live feed')}</div>
-      </article>`;
-    }
-
-    async function fetchFeedback(accessToken) {
-      const response = await fetch('/api/admin/live-lookup-feedback?limit=250', { headers: { Authorization: `Bearer ${accessToken}` } });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not load the feedback log.');
-      const items = Array.isArray(result.feedback) ? result.feedback : [];
-      logEl.innerHTML = items.length ? items.map(renderEntry).join('') : '<div class="empty">No feedback has been submitted yet.</div>';
-      statusEl.textContent = `${items.length} incident${items.length === 1 ? '' : 's'} loaded for omar.hosam2000@gmail.com.`;
-      loadBtn.textContent = 'Refresh Feedback';
-    }
-
-    async function signInAndLoad() {
-      loadBtn.disabled = true;
-      statusEl.textContent = 'Signing in…';
-      try {
-        let { data: sessionData } = await supabaseClient.auth.getSession();
-        let session = sessionData.session;
-        if (!session) {
-          const email = emailInput.value.trim().toLowerCase();
-          const password = passwordInput.value;
-          if (!email || !password) throw new Error('Enter your email and password.');
-          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          session = data.session;
-        }
-        if (String(session?.user?.email || '').toLowerCase() !== 'omar.hosam2000@gmail.com') {
-          await supabaseClient.auth.signOut();
-          throw new Error('This account does not have access to the feedback log.');
-        }
-        await fetchFeedback(session.access_token);
-      } catch (error) {
-        logEl.innerHTML = '';
-        statusEl.textContent = error.message || 'Could not load the feedback log.';
-      } finally { loadBtn.disabled = false; }
-    }
-
-    async function initialize() {
-      const response = await fetch('/api/supabase-config');
-      const config = await response.json();
-      if (!config.enabled || !window.supabase) {
-        statusEl.textContent = 'Supabase sign-in is not configured.';
-        loadBtn.disabled = true;
-        return;
-      }
-      supabaseClient = window.supabase.createClient(config.url, config.anonKey);
-      const { data } = await supabaseClient.auth.getSession();
-      if (data.session?.user?.email?.toLowerCase() === 'omar.hosam2000@gmail.com') {
-        await fetchFeedback(data.session.access_token).catch((error) => { statusEl.textContent = error.message; });
-      }
-    }
-
-    loadBtn.addEventListener('click', signInAndLoad);
-    passwordInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') signInAndLoad(); });
-    initialize();
-  </script>
-</body>
-</html>
+  async function api(path,options={}){const token=currentSession?.access_token;if(!token)throw new Error('Please sign in again.');const response=await fetch(path,{...options,headers:{Authorization:`Bearer ${token}`,...(options.body?{'Content-Type':'application/json'}:{}),...(options.headers||{})}});const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok)throw new Error(result.error||'Request failed.');return result}
+  async function loadFeedback(){statusEl.textContent='Loading reports…';const params=new URLSearchParams({limit:'250'});const values={search:document.getElementById('search').value.trim(),status:document.getElementById('statusFilter').value,issueType:document.getElementById('issueFilter').value,lookupType:document.getElementById('lookupFilter').value};Object.entries(values).forEach(([k,v])=>{if(v)params.set(k,v)});const result=await api(`/api/admin/live-lookup-feedback?${params}`);feedbackItems=result.feedback||[];logEl.innerHTML=feedbackItems.length?feedbackItems.map(renderEntry).join(''):'<div class="empty">No reports match these filters.</div>';const open=feedbackItems.filter(x=>(x.status||'open')==='open').length;summaryEl.innerHTML=`<span>${feedbackItems.length} shown</span><span>${open} open</span><span>${feedbackItems.length-open} resolved</span>`;statusEl.textContent=`Loaded for ${ownerEmail}.`;managerEl.hidden=false;loadBtn.textContent='Refresh'}
+  async function signInAndLoad(){loadBtn.disabled=true;try{let {data}=await supabaseClient.auth.getSession();currentSession=data.session;if(!currentSession){const signed=await supabaseClient.auth.signInWithPassword({email:emailInput.value.trim(),password:passwordInput.value});if(signed.error)throw signed.error;currentSession=signed.data.session}if(currentSession?.user?.email?.toLowerCase()!==ownerEmail){await supabaseClient.auth.signOut();throw new Error('This account does not have access.')}await loadFeedback()}catch(e){statusEl.textContent=e.message;managerEl.hidden=true}finally{loadBtn.disabled=false}}
+  filterForm.addEventListener('submit',e=>{e.preventDefault();loadFeedback().catch(err=>statusEl.textContent=err.message)});
+  logEl.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button)return;const entry=button.closest('[data-entry-id]'),id=entry?.dataset.entryId,item=feedbackItems.find(x=>x.id===id);if(!item)return;const action=button.dataset.action;if(action==='edit'){entry.querySelector('[data-edit-form]').hidden=false;return}if(action==='cancel'){entry.querySelector('[data-edit-form]').hidden=true;return}if(action==='delete'){if(!confirm('Delete this feedback report permanently?'))return;try{await api(`/api/admin/live-lookup-feedback/${id}`,{method:'DELETE'});await loadFeedback()}catch(err){statusEl.textContent=err.message}return}if(action==='toggle'){try{await api(`/api/admin/live-lookup-feedback/${id}`,{method:'PATCH',body:JSON.stringify({status:(item.status||'open')==='resolved'?'open':'resolved'})});await loadFeedback()}catch(err){statusEl.textContent=err.message}}});
+  logEl.addEventListener('submit',async e=>{const form=e.target.closest('[data-edit-form]');if(!form)return;e.preventDefault();const id=form.closest('[data-entry-id]').dataset.entryId;const fields=new FormData(form);try{await api(`/api/admin/live-lookup-feedback/${id}`,{method:'PATCH',body:JSON.stringify({issueType:fields.get('issueType'),correctBusNumber:fields.get('correctBusNumber'),comment:fields.get('comment')})});await loadFeedback()}catch(err){statusEl.textContent=err.message}});
+  async function initialize(){try{const response=await fetch('/api/supabase-config'),config=await response.json();if(!config.enabled||!window.supabase)throw new Error('Supabase sign-in is not configured.');supabaseClient=window.supabase.createClient(config.url,config.anonKey);const {data}=await supabaseClient.auth.getSession();currentSession=data.session;if(currentSession?.user?.email?.toLowerCase()===ownerEmail)await loadFeedback()}catch(e){statusEl.textContent=e.message}}
+  loadBtn.addEventListener('click',signInAndLoad);passwordInput.addEventListener('keydown',e=>{if(e.key==='Enter')signInAndLoad()});initialize();
+</script></body></html>
