@@ -39,6 +39,7 @@ const BOOKING_BOARDS_BUILD_SCRIPT = path.join(__dirname, 'tools', 'build_booking
 const PYTHON_BIN = String(process.env.PYTHON_BIN || '').trim();
 const PYTHON_VENDOR_DIR = path.join(__dirname, 'vendor', 'python');
 const BOOKING_BOARD_ADMIN_TOKEN = String(process.env.BOOKING_BOARD_ADMIN_TOKEN || '').trim();
+const INCIDENT_FEEDBACK_ADMIN_EMAIL = String(process.env.INCIDENT_FEEDBACK_ADMIN_EMAIL || 'omar.hosam2000@gmail.com').trim().toLowerCase();
 const WHATSAPP_BOOKING_BOARD_TOKEN = String(process.env.WHATSAPP_BOOKING_BOARD_TOKEN || BOOKING_BOARD_ADMIN_TOKEN || '').trim();
 const WHATSAPP_ALLOWED_FROM = String(process.env.WHATSAPP_ALLOWED_FROM || '').split(',').map((item) => item.trim()).filter(Boolean);
 const WHATSAPP_PUBLIC_WEBHOOK_URL = String(process.env.WHATSAPP_PUBLIC_WEBHOOK_URL || '').trim();
@@ -3665,6 +3666,92 @@ function isAdminBookingBoardRequest(req) {
   ) && providedToken.length === BOOKING_BOARD_ADMIN_TOKEN.length;
 }
 
+function normalizeLiveLookupFeedback(body = {}) {
+  const issueType = String(body.issueType || '').trim();
+  const lookupType = String(body.lookupType || '').trim().toLowerCase();
+  const lookupValue = String(body.lookupValue || '').trim().slice(0, 80);
+  const reportedBusNumber = String(body.reportedBusNumber || '').trim();
+  const correctBusNumber = String(body.correctBusNumber || '').trim();
+  const comment = String(body.comment || '').trim().slice(0, 2000);
+  if (issueType && issueType !== 'incorrect_bus_number') return { error: 'The selected feedback type is invalid.' };
+  if (!['bus', 'block'].includes(lookupType) || !lookupValue) return { error: 'The lookup details are missing.' };
+  if (!/^\d{4}$/.test(reportedBusNumber)) return { error: 'The displayed bus number is missing or invalid.' };
+  if (correctBusNumber && !/^\d{4}$/.test(correctBusNumber)) return { error: 'The correct bus number must contain four digits.' };
+  return {
+    value: {
+      issue_type: issueType || null,
+      lookup_type: lookupType,
+      lookup_value: lookupValue,
+      block: String(body.block || '').trim().slice(0, 40) || null,
+      reported_bus_number: reportedBusNumber,
+      correct_bus_number: correctBusNumber || null,
+      comment: comment || null,
+      live_source: String(body.liveSource || '').trim().slice(0, 120) || null,
+      location_text: String(body.locationText || '').trim().slice(0, 500) || null,
+      lookup_generated_at: body.lookupGeneratedAt && !Number.isNaN(Date.parse(body.lookupGeneratedAt))
+        ? new Date(body.lookupGeneratedAt).toISOString()
+        : null,
+    },
+  };
+}
+
+async function handleLiveLookupFeedback(req, res) {
+  const normalized = normalizeLiveLookupFeedback(req.body);
+  if (normalized.error) {
+    res.status(400).json({ ok: false, error: normalized.error });
+    return;
+  }
+  if (!adminSupabase) {
+    res.status(501).json({ ok: false, error: 'Feedback storage is not configured yet.' });
+    return;
+  }
+  const { data, error } = await adminSupabase
+    .from('live_lookup_feedback')
+    .insert(normalized.value)
+    .select('id, created_at')
+    .single();
+  if (error) {
+    console.error('Live lookup feedback insert failed:', error.message);
+    res.status(500).json({ ok: false, error: 'The feedback could not be saved. Please try again.' });
+    return;
+  }
+  res.status(201).json({ ok: true, id: data.id, createdAt: data.created_at });
+}
+
+async function handleLiveLookupFeedbackAdmin(req, res) {
+  if (!adminSupabase) {
+    res.status(501).json({ ok: false, error: 'Feedback storage is not configured yet.' });
+    return;
+  }
+  const authorization = String(req.get('authorization') || '').trim();
+  const accessToken = authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice(7).trim()
+    : '';
+  if (!accessToken) {
+    res.status(401).json({ ok: false, error: 'Sign in with the authorized admin account.' });
+    return;
+  }
+  const { data: authData, error: authError } = await adminSupabase.auth.getUser(accessToken);
+  const signedInEmail = String(authData?.user?.email || '').trim().toLowerCase();
+  if (authError || !signedInEmail || signedInEmail !== INCIDENT_FEEDBACK_ADMIN_EMAIL) {
+    res.status(403).json({ ok: false, error: 'This account does not have access to the feedback log.' });
+    return;
+  }
+  const requestedLimit = Number(req.query.limit || 100);
+  const limit = Math.min(250, Math.max(1, Number.isFinite(requestedLimit) ? requestedLimit : 100));
+  const { data, error } = await adminSupabase
+    .from('live_lookup_feedback')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Live lookup feedback fetch failed:', error.message);
+    res.status(500).json({ ok: false, error: 'The feedback log could not be loaded.' });
+    return;
+  }
+  res.json({ ok: true, feedback: data || [] });
+}
+
 function normalizeBookingBoardUploadName(name) {
   return String(name || '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -4285,6 +4372,8 @@ app.get('/api/shuttle', handleShuttle);
 app.get('/api/shuttles', handleShuttlesCatalog);
 app.get('/api/gtfs-lookup', handleGtfsLookup);
 app.get('/api/gtfs-debug', handleGtfsDebug);
+app.post('/api/live-lookup-feedback', handleLiveLookupFeedback);
+app.get('/api/admin/live-lookup-feedback', handleLiveLookupFeedbackAdmin);
 app.get('/api/cron/live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/api/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
 app.get('/refresh-live-bus-paddles', handleRefreshLiveBusPaddles);
@@ -4343,6 +4432,9 @@ app.get('/support', (_req, res) => {
 });
 app.get('/booking-board-admin', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-board-admin.html'));
+});
+app.get('/incident-feedback-admin', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'incident-feedback-admin.html'));
 });
 app.get('/shuttles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'shuttles.html'));

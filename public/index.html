@@ -518,6 +518,36 @@
       align-items: center;
     }
 
+    .live-feedback-stack {
+      display: grid;
+      justify-items: end;
+      gap: 5px;
+    }
+
+    .feedback-icon-btn {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(255, 179, 72, 0.38);
+      border-radius: 999px;
+      background: rgba(255, 179, 72, 0.1);
+      color: var(--warn);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .feedback-icon-btn:hover,
+    .feedback-icon-btn:focus-visible {
+      background: rgba(255, 179, 72, 0.2);
+      outline: 2px solid rgba(255, 179, 72, 0.3);
+      outline-offset: 2px;
+    }
+
     .card-link-btn {
       appearance: none;
       border: 1px solid rgba(158, 194, 255, 0.28);
@@ -1778,6 +1808,42 @@
     </section>
   </div>
 
+  <div id="feedbackOverlay" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="feedbackTitle">Report a Live Result</h2>
+          <p id="feedbackMeta" class="modal-meta"></p>
+        </div>
+        <button id="closeFeedbackBtn" class="close-btn" type="button" aria-label="Close feedback form">x</button>
+      </header>
+      <div class="modal-body">
+        <form id="feedbackForm" class="section-card">
+          <label class="field-stack">
+            <span class="field-label">What was incorrect?</span>
+            <select id="feedbackIssueType" class="select-input">
+              <option value="">Select an issue</option>
+              <option value="incorrect_bus_number">Incorrect bus number</option>
+            </select>
+          </label>
+          <label class="field-stack">
+            <span class="field-label">Correct bus number</span>
+            <input id="feedbackCorrectBus" class="text-input" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{4}" minlength="4" maxlength="4" placeholder="Example: 4830">
+          </label>
+          <label class="field-stack">
+            <span class="field-label">Comment</span>
+            <textarea id="feedbackComment" class="text-input" rows="5" maxlength="2000" placeholder="Tell us what you observed."></textarea>
+          </label>
+          <div id="feedbackStatus" class="subtle-text" role="status" aria-live="polite"></div>
+          <div class="section-actions">
+            <button id="feedbackCancelBtn" class="link-btn" type="button">Cancel</button>
+            <button id="feedbackSubmitBtn" class="btn" type="submit">Submit Feedback</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
   <script src="/oc-header.js"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -1847,6 +1913,16 @@
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
     const confirmOkBtn = document.getElementById('confirmOkBtn');
     const closeConfirmBtn = document.getElementById('closeConfirmBtn');
+    const feedbackOverlay = document.getElementById('feedbackOverlay');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const feedbackMeta = document.getElementById('feedbackMeta');
+    const feedbackIssueType = document.getElementById('feedbackIssueType');
+    const feedbackCorrectBus = document.getElementById('feedbackCorrectBus');
+    const feedbackComment = document.getElementById('feedbackComment');
+    const feedbackStatus = document.getElementById('feedbackStatus');
+    const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
+    const feedbackCancelBtn = document.getElementById('feedbackCancelBtn');
+    const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
     const supportBanner = document.getElementById('supportBanner');
     const dismissSupportBannerBtn = document.getElementById('dismissSupportBannerBtn');
     const SUPPORT_BANNER_DISMISS_KEY = 'oc-operators-tools:support-banner-dismissed:v2';
@@ -1854,6 +1930,7 @@
     let supabaseEnabled = false;
     let currentUser = null;
     let currentProfile = null;
+    let pendingLiveFeedback = null;
     let accountNotice = {
       text: '',
       tone: '',
@@ -4524,7 +4601,10 @@
             <div class="bus">#${bus.busNumber}</div>
             <div class="card-actions">
               ${jumpTargetId ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">&#8595;</button>` : ''}
-              <span class="pill">live</span>
+              <div class="live-feedback-stack">
+                <span class="pill">live</span>
+                <button class="feedback-icon-btn" type="button" title="Report an incorrect bus number" aria-label="Report an incorrect bus number" data-live-feedback="1" data-reported-bus="${escapeAttribute(bus.busNumber)}" data-lookup-type="${data.mode === 'bus' ? 'bus' : 'block'}" data-lookup-value="${escapeAttribute(data.mode === 'bus' ? (data.busNumber || bus.busNumber) : (data.block || ''))}" data-block="${escapeAttribute(data.block || '')}" data-live-source="${escapeAttribute(data.liveSource || '')}" data-location="${escapeAttribute(bus.locationText || '')}" data-lookup-generated-at="${escapeAttribute(data.generatedAt || '')}">!</button>
+              </div>
             </div>
           </div>
           ${tripLabel ? `<div class="loc">${tripLabel}</div>` : ''}
@@ -4574,6 +4654,62 @@
       mapOverlay.hidden = true;
       mapBody.innerHTML = '';
       document.body.style.overflow = '';
+    }
+
+    function openLiveFeedbackModal(target) {
+      pendingLiveFeedback = {
+        reportedBusNumber: String(target.dataset.reportedBus || '').trim(),
+        lookupType: String(target.dataset.lookupType || '').trim(),
+        lookupValue: String(target.dataset.lookupValue || '').trim(),
+        block: String(target.dataset.block || '').trim(),
+        liveSource: String(target.dataset.liveSource || '').trim(),
+        locationText: String(target.dataset.location || '').trim(),
+        lookupGeneratedAt: String(target.dataset.lookupGeneratedAt || '').trim(),
+      };
+      feedbackForm.reset();
+      feedbackForm.querySelectorAll('input, textarea, select').forEach((field) => { field.disabled = false; });
+      feedbackStatus.textContent = '';
+      feedbackSubmitBtn.disabled = false;
+      feedbackSubmitBtn.textContent = 'Submit Feedback';
+      feedbackMeta.textContent = `The site showed bus ${pendingLiveFeedback.reportedBusNumber} for ${pendingLiveFeedback.lookupType === 'bus' ? 'bus' : 'paddle'} ${pendingLiveFeedback.lookupValue}.`;
+      feedbackOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      feedbackIssueType.focus();
+    }
+
+    function closeLiveFeedbackModal() {
+      feedbackOverlay.hidden = true;
+      pendingLiveFeedback = null;
+      feedbackForm.reset();
+      feedbackStatus.textContent = '';
+      document.body.style.overflow = '';
+    }
+
+    async function submitLiveFeedback(event) {
+      event.preventDefault();
+      if (!pendingLiveFeedback || !feedbackForm.reportValidity()) return;
+      feedbackSubmitBtn.disabled = true;
+      feedbackStatus.textContent = 'Submitting feedback…';
+      try {
+        const response = await fetch('/api/live-lookup-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...pendingLiveFeedback,
+            issueType: feedbackIssueType.value,
+            correctBusNumber: feedbackCorrectBus.value.trim(),
+            comment: feedbackComment.value.trim(),
+          }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Feedback could not be submitted.');
+        feedbackStatus.textContent = 'Thank you. Your feedback was saved for investigation.';
+        feedbackForm.querySelectorAll('input, textarea, select').forEach((field) => { field.disabled = true; });
+        feedbackSubmitBtn.textContent = 'Submitted';
+      } catch (error) {
+        feedbackStatus.textContent = error.message || 'Feedback could not be submitted. Please try again.';
+        feedbackSubmitBtn.disabled = false;
+      }
     }
 
     function openConfirmModal(message, meta = 'Please confirm before continuing.') {
@@ -5321,6 +5457,9 @@
     closeAccountBtn.addEventListener('click', closeAccountModal);
     closeMapBtn.addEventListener('click', closeMapModal);
     closeConfirmBtn.addEventListener('click', () => closeConfirmModal(false));
+    closeFeedbackBtn.addEventListener('click', closeLiveFeedbackModal);
+    feedbackCancelBtn.addEventListener('click', closeLiveFeedbackModal);
+    feedbackForm.addEventListener('submit', submitLiveFeedback);
     confirmCancelBtn.addEventListener('click', () => closeConfirmModal(false));
     confirmOkBtn.addEventListener('click', () => closeConfirmModal(true));
     paddleOverlay.addEventListener('click', (event) => {
@@ -5337,6 +5476,9 @@
     });
     confirmOverlay.addEventListener('click', (event) => {
       if (event.target === confirmOverlay) closeConfirmModal(false);
+    });
+    feedbackOverlay.addEventListener('click', (event) => {
+      if (event.target === feedbackOverlay) closeLiveFeedbackModal();
     });
     paddleBody.addEventListener('click', (event) => {
       const jumpTarget = event.target.closest('[data-scroll-to]');
@@ -5362,6 +5504,11 @@
       closeMobileMenu();
     });
     chat.addEventListener('click', async (event) => {
+      const feedbackTarget = event.target.closest('[data-live-feedback]');
+      if (feedbackTarget) {
+        openLiveFeedbackModal(feedbackTarget);
+        return;
+      }
       const saveTodayWorkBtn = event.target.closest('[data-save-live-today-work]');
       if (saveTodayWorkBtn) {
         const expiry = {
@@ -5399,6 +5546,11 @@
       openMapModal(target.dataset.bus, target.dataset.label, target.dataset.lat, target.dataset.lon);
     });
     todayWorkView.addEventListener('click', async (event) => {
+      const feedbackTarget = event.target.closest('[data-live-feedback]');
+      if (feedbackTarget) {
+        openLiveFeedbackModal(feedbackTarget);
+        return;
+      }
       const navTarget = event.target.closest('[data-today-work-nav="lookup"]');
       if (navTarget) {
         setMainView('chat');
@@ -5575,6 +5727,8 @@
       }
       if (event.key === 'Escape' && !mapOverlay.hidden) {
         closeMapModal();
+      } else if (event.key === 'Escape' && !feedbackOverlay.hidden) {
+        closeLiveFeedbackModal();
       } else if (event.key === 'Escape' && !confirmOverlay.hidden) {
         closeConfirmModal(false);
       }

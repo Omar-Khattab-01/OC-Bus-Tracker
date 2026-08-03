@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Result Feedback Log</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1117; --panel:#151b23; --line:#303a47; --text:#f3f6fa; --muted:#a8b3c1; --red:#da291c; --amber:#ffb348; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(1100px,calc(100% - 32px)); margin:0 auto; padding:30px 0 60px; }
+    header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; flex-wrap:wrap; margin-bottom:20px; }
+    h1 { margin:0; font-size:clamp(28px,5vw,46px); line-height:1; }
+    p { color:var(--muted); line-height:1.5; }
+    a { color:#a9c9ff; text-decoration:none; }
+    .access,.entry,.empty { border:1px solid var(--line); background:var(--panel); border-radius:14px; padding:16px; }
+    .access { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)) auto; gap:10px; margin-bottom:20px; }
+    input,button { border-radius:10px; border:1px solid var(--line); padding:11px 13px; font:inherit; }
+    input { background:#0d1117; color:var(--text); }
+    button { border-color:var(--red); background:var(--red); color:white; font-weight:800; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:wait; }
+    #status { grid-column:1/-1; min-height:20px; color:var(--muted); font-size:13px; }
+    #log { display:grid; gap:12px; }
+    .entry-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .entry h2 { margin:0; font-size:20px; }
+    .time { color:var(--muted); font-size:13px; }
+    .numbers { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+    .number { border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#0f141b; }
+    .number span { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+    .number strong { display:block; margin-top:3px; font-size:22px; }
+    .wrong strong { color:#ff7f7f; text-decoration:line-through; }
+    .correct strong { color:#75dda5; }
+    .comment { margin:0; color:var(--text); white-space:pre-wrap; }
+    .details { margin-top:12px; color:var(--muted); font-size:13px; line-height:1.5; }
+    .badge { display:inline-block; border:1px solid rgba(255,179,72,.35); color:var(--amber); border-radius:999px; padding:4px 8px; font-size:11px; text-transform:uppercase; }
+    @media (max-width:600px) { .access { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Live Result Feedback</h1>
+        <p>Private incident log for investigating reported bus-number mismatches.</p>
+      </div>
+      <a href="/">Back to tracker</a>
+    </header>
+    <section class="access" aria-label="Admin access">
+      <input id="email" type="email" autocomplete="username" value="omar.hosam2000@gmail.com" aria-label="Email">
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+      <button id="loadBtn" type="button">Sign In</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </section>
+    <section id="log" aria-live="polite"></section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loadBtn = document.getElementById('loadBtn');
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    let supabaseClient = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function renderEntry(item) {
+      const lookupLabel = item.lookup_type === 'bus' ? 'Bus lookup' : 'Paddle lookup';
+      const created = item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown time';
+      return `<article class="entry">
+        <div class="entry-head"><div><span class="badge">${item.issue_type === 'incorrect_bus_number' ? 'Incorrect bus number' : 'Live result feedback'}</span><h2>${escapeHtml(lookupLabel)}: ${escapeHtml(item.lookup_value)}</h2></div><time class="time">${escapeHtml(created)}</time></div>
+        <div class="numbers"><div class="number wrong"><span>Site showed</span><strong>${escapeHtml(item.reported_bus_number)}</strong></div><div class="number correct"><span>Correct bus</span><strong>${escapeHtml(item.correct_bus_number || 'Not provided')}</strong></div></div>
+        <p class="comment">${escapeHtml(item.comment || 'No comment provided.')}</p>
+        <div class="details">${item.block ? `Block: ${escapeHtml(item.block)} · ` : ''}${item.location_text ? `Location: ${escapeHtml(item.location_text)} · ` : ''}Source: ${escapeHtml(item.live_source || 'Live feed')}</div>
+      </article>`;
+    }
+
+    async function fetchFeedback(accessToken) {
+      const response = await fetch('/api/admin/live-lookup-feedback?limit=250', { headers: { Authorization: `Bearer ${accessToken}` } });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not load the feedback log.');
+      const items = Array.isArray(result.feedback) ? result.feedback : [];
+      logEl.innerHTML = items.length ? items.map(renderEntry).join('') : '<div class="empty">No feedback has been submitted yet.</div>';
+      statusEl.textContent = `${items.length} incident${items.length === 1 ? '' : 's'} loaded for omar.hosam2000@gmail.com.`;
+      loadBtn.textContent = 'Refresh Feedback';
+    }
+
+    async function signInAndLoad() {
+      loadBtn.disabled = true;
+      statusEl.textContent = 'Signing in…';
+      try {
+        let { data: sessionData } = await supabaseClient.auth.getSession();
+        let session = sessionData.session;
+        if (!session) {
+          const email = emailInput.value.trim().toLowerCase();
+          const password = passwordInput.value;
+          if (!email || !password) throw new Error('Enter your email and password.');
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          session = data.session;
+        }
+        if (String(session?.user?.email || '').toLowerCase() !== 'omar.hosam2000@gmail.com') {
+          await supabaseClient.auth.signOut();
+          throw new Error('This account does not have access to the feedback log.');
+        }
+        await fetchFeedback(session.access_token);
+      } catch (error) {
+        logEl.innerHTML = '';
+        statusEl.textContent = error.message || 'Could not load the feedback log.';
+      } finally { loadBtn.disabled = false; }
+    }
+
+    async function initialize() {
+      const response = await fetch('/api/supabase-config');
+      const config = await response.json();
+      if (!config.enabled || !window.supabase) {
+        statusEl.textContent = 'Supabase sign-in is not configured.';
+        loadBtn.disabled = true;
+        return;
+      }
+      supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session?.user?.email?.toLowerCase() === 'omar.hosam2000@gmail.com') {
+        await fetchFeedback(data.session.access_token).catch((error) => { statusEl.textContent = error.message; });
+      }
+    }
+
+    loadBtn.addEventListener('click', signInAndLoad);
+    passwordInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') signInAndLoad(); });
+    initialize();
+  </script>
+</body>
+</html>
