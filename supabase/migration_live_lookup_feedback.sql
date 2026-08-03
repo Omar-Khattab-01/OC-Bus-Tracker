@@ -12,6 +12,7 @@ create table if not exists public.live_lookup_feedback (
   live_source text,
   location_text text,
   lookup_generated_at timestamptz,
+  realtime_evidence jsonb,
   status text not null default 'open' check (status in ('open', 'resolved')),
   resolved_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
@@ -29,6 +30,7 @@ alter table public.live_lookup_feedback alter column comment drop not null;
 alter table public.live_lookup_feedback add column if not exists status text not null default 'open';
 alter table public.live_lookup_feedback add column if not exists resolved_at timestamptz;
 alter table public.live_lookup_feedback add column if not exists updated_at timestamptz not null default timezone('utc', now());
+alter table public.live_lookup_feedback add column if not exists realtime_evidence jsonb;
 
 alter table public.live_lookup_feedback drop constraint if exists live_lookup_feedback_status_check;
 alter table public.live_lookup_feedback add constraint live_lookup_feedback_status_check check (status in ('open', 'resolved'));

@@ -15,6 +15,7 @@ if (typeof process.loadEnvFile === 'function' && fs.existsSync(path.join(__dirna
 }
 
 const {
+  captureRealtimeEvidence,
   debugGtfsState,
   getGtfsWarmupStatus,
   isConfigured: isGtfsRtConfigured,
@@ -3707,6 +3708,15 @@ async function handleLiveLookupFeedback(req, res) {
     res.status(501).json({ ok: false, error: 'Feedback storage is not configured yet.' });
     return;
   }
+  try {
+    normalized.value.realtime_evidence = await captureRealtimeEvidence(normalized.value.reported_bus_number);
+  } catch (evidenceError) {
+    normalized.value.realtime_evidence = {
+      capturedAt: new Date().toISOString(),
+      requestedBusNumber: normalized.value.reported_bus_number,
+      error: String(evidenceError?.message || 'Feed evidence was unavailable.').slice(0, 500),
+    };
+  }
   const { data, error } = await adminSupabase
     .from('live_lookup_feedback')
     .insert(normalized.value)
@@ -3756,12 +3766,30 @@ async function handleLiveLookupFeedbackAdmin(req, res) {
   const issueType = String(req.query.issueType || '').trim();
   const lookupType = String(req.query.lookupType || '').trim();
   const search = String(req.query.search || '').trim().toLowerCase();
+  const datePreset = String(req.query.datePreset || '').trim().toLowerCase();
+  const fromDate = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.fromDate || '')) ? String(req.query.fromDate) : '';
+  const toDate = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.toDate || '')) ? String(req.query.toDate) : '';
   if (['open', 'resolved'].includes(status)) feedback = feedback.filter((item) => (item.status || 'open') === status);
   if (issueType) feedback = feedback.filter((item) => item.issue_type === issueType);
   if (['bus', 'block'].includes(lookupType)) feedback = feedback.filter((item) => item.lookup_type === lookupType);
   if (search) {
     feedback = feedback.filter((item) => [item.lookup_value, item.block, item.reported_bus_number, item.correct_bus_number, item.comment, item.location_text]
       .some((value) => String(value || '').toLowerCase().includes(search)));
+  }
+  const reportOttawaDate = (item) => {
+    const value = item.lookup_generated_at || item.created_at;
+    const date = value ? new Date(value) : null;
+    return date && !Number.isNaN(date.getTime()) ? getOttawaDateString(date) : '';
+  };
+  if (datePreset === 'today') {
+    const today = getOttawaDateString();
+    feedback = feedback.filter((item) => reportOttawaDate(item) === today);
+  } else if (datePreset === 'yesterday') {
+    const yesterday = getOttawaDateString(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    feedback = feedback.filter((item) => reportOttawaDate(item) === yesterday);
+  } else if (datePreset === 'range') {
+    if (fromDate) feedback = feedback.filter((item) => reportOttawaDate(item) >= fromDate);
+    if (toDate) feedback = feedback.filter((item) => reportOttawaDate(item) <= toDate);
   }
   res.json({ ok: true, feedback });
 }
