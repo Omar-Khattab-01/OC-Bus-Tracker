@@ -82,6 +82,7 @@
       background: var(--card);
       backdrop-filter: blur(12px);
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
       overflow: hidden;
       animation: enter 420ms ease;
@@ -204,6 +205,7 @@
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto auto minmax(0, 1fr) auto auto;
       min-height: 0;
+      min-width: 0;
     }
 
     .support-banner,
@@ -856,12 +858,14 @@
 
     .composer form {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
+      min-width: 0;
     }
 
     .input {
       width: 100%;
+      min-width: 0;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: rgba(10, 14, 18, 0.85);
@@ -1372,6 +1376,38 @@
       width: 64px;
     }
 
+    @media (max-width: 1100px) {
+      .header {
+        align-items: flex-start;
+      }
+
+      .brand {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .header-actions {
+        flex: 0 0 auto;
+        justify-content: flex-end;
+      }
+
+      .header-actions > .status,
+      .header-actions > #clearChatBtn,
+      .header-actions > #accountBtn,
+      .header-actions > #canadaDayPaddlesBtn,
+      .header-actions > #civicHolidayPaddlesBtn,
+      .header-actions > #fallPaddlesBtn,
+      .header-actions > #fallBookingBoardBtn,
+      .header-actions > #shuttlesPageBtn,
+      .header-actions > #supportBtn {
+        display: none;
+      }
+
+      .header-actions > .mobile-menu-btn {
+        display: inline-flex;
+      }
+    }
+
     @media (max-width: 700px) {
       body {
         padding: 8px;
@@ -1824,6 +1860,8 @@
             <select id="feedbackIssueType" class="select-input">
               <option value="">Select an issue</option>
               <option value="incorrect_bus_number">Incorrect bus number</option>
+              <option value="wrong_bus_location">Wrong bus location</option>
+              <option value="wrong_paddle_information">Wrong paddle information</option>
             </select>
           </label>
           <label class="field-stack">
@@ -1840,6 +1878,26 @@
             <button id="feedbackSubmitBtn" class="btn" type="submit">Submit Feedback</button>
           </div>
         </form>
+      </div>
+    </section>
+  </div>
+
+  <div id="feedbackSuccessOverlay" class="overlay" hidden>
+    <section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="feedbackSuccessTitle" style="max-width:460px;">
+      <header class="modal-head">
+        <div>
+          <h2 id="feedbackSuccessTitle">Report Submitted</h2>
+          <p class="modal-meta">Your report was submitted for investigation.</p>
+        </div>
+        <button id="closeFeedbackSuccessBtn" class="close-btn" type="button" aria-label="Close submission confirmation">x</button>
+      </header>
+      <div class="modal-body">
+        <section class="section-card">
+          <div class="notice ok">Thank you. The lookup details and request time were included automatically.</div>
+          <div class="section-actions">
+            <button id="feedbackSuccessOkBtn" class="btn" type="button">Close</button>
+          </div>
+        </section>
       </div>
     </section>
   </div>
@@ -1923,6 +1981,9 @@
     const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
     const feedbackCancelBtn = document.getElementById('feedbackCancelBtn');
     const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+    const feedbackSuccessOverlay = document.getElementById('feedbackSuccessOverlay');
+    const closeFeedbackSuccessBtn = document.getElementById('closeFeedbackSuccessBtn');
+    const feedbackSuccessOkBtn = document.getElementById('feedbackSuccessOkBtn');
     const supportBanner = document.getElementById('supportBanner');
     const dismissSupportBannerBtn = document.getElementById('dismissSupportBannerBtn');
     const SUPPORT_BANNER_DISMISS_KEY = 'oc-operators-tools:support-banner-dismissed:v2';
@@ -1931,6 +1992,7 @@
     let currentUser = null;
     let currentProfile = null;
     let pendingLiveFeedback = null;
+    let feedbackSuccessTimer = null;
     let accountNotice = {
       text: '',
       tone: '',
@@ -4685,6 +4747,22 @@
       document.body.style.overflow = '';
     }
 
+    function closeFeedbackSuccessModal() {
+      feedbackSuccessOverlay.hidden = true;
+      if (feedbackSuccessTimer) window.clearTimeout(feedbackSuccessTimer);
+      feedbackSuccessTimer = null;
+      document.body.style.overflow = '';
+    }
+
+    function openFeedbackSuccessModal() {
+      closeLiveFeedbackModal();
+      feedbackSuccessOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      feedbackSuccessOkBtn.focus();
+      if (feedbackSuccessTimer) window.clearTimeout(feedbackSuccessTimer);
+      feedbackSuccessTimer = window.setTimeout(closeFeedbackSuccessModal, 5000);
+    }
+
     async function submitLiveFeedback(event) {
       event.preventDefault();
       if (!pendingLiveFeedback || !feedbackForm.reportValidity()) return;
@@ -4703,9 +4781,7 @@
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.ok) throw new Error(result.error || 'Feedback could not be submitted.');
-        feedbackStatus.textContent = 'Thank you. Your feedback was saved for investigation.';
-        feedbackForm.querySelectorAll('input, textarea, select').forEach((field) => { field.disabled = true; });
-        feedbackSubmitBtn.textContent = 'Submitted';
+        openFeedbackSuccessModal();
       } catch (error) {
         feedbackStatus.textContent = error.message || 'Feedback could not be submitted. Please try again.';
         feedbackSubmitBtn.disabled = false;
@@ -5460,6 +5536,8 @@
     closeFeedbackBtn.addEventListener('click', closeLiveFeedbackModal);
     feedbackCancelBtn.addEventListener('click', closeLiveFeedbackModal);
     feedbackForm.addEventListener('submit', submitLiveFeedback);
+    closeFeedbackSuccessBtn.addEventListener('click', closeFeedbackSuccessModal);
+    feedbackSuccessOkBtn.addEventListener('click', closeFeedbackSuccessModal);
     confirmCancelBtn.addEventListener('click', () => closeConfirmModal(false));
     confirmOkBtn.addEventListener('click', () => closeConfirmModal(true));
     paddleOverlay.addEventListener('click', (event) => {
@@ -5479,6 +5557,9 @@
     });
     feedbackOverlay.addEventListener('click', (event) => {
       if (event.target === feedbackOverlay) closeLiveFeedbackModal();
+    });
+    feedbackSuccessOverlay.addEventListener('click', (event) => {
+      if (event.target === feedbackSuccessOverlay) closeFeedbackSuccessModal();
     });
     paddleBody.addEventListener('click', (event) => {
       const jumpTarget = event.target.closest('[data-scroll-to]');
@@ -5727,6 +5808,8 @@
       }
       if (event.key === 'Escape' && !mapOverlay.hidden) {
         closeMapModal();
+      } else if (event.key === 'Escape' && !feedbackSuccessOverlay.hidden) {
+        closeFeedbackSuccessModal();
       } else if (event.key === 'Escape' && !feedbackOverlay.hidden) {
         closeLiveFeedbackModal();
       } else if (event.key === 'Escape' && !confirmOverlay.hidden) {

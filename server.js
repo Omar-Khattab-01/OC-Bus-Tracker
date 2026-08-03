@@ -3673,7 +3673,9 @@ function normalizeLiveLookupFeedback(body = {}) {
   const reportedBusNumber = String(body.reportedBusNumber || '').trim();
   const correctBusNumber = String(body.correctBusNumber || '').trim();
   const comment = String(body.comment || '').trim().slice(0, 2000);
-  if (issueType && issueType !== 'incorrect_bus_number') return { error: 'The selected feedback type is invalid.' };
+  if (issueType && !['incorrect_bus_number', 'wrong_bus_location', 'wrong_paddle_information'].includes(issueType)) {
+    return { error: 'The selected feedback type is invalid.' };
+  }
   if (!['bus', 'block'].includes(lookupType) || !lookupValue) return { error: 'The lookup details are missing.' };
   if (!/^\d{4}$/.test(reportedBusNumber)) return { error: 'The displayed bus number is missing or invalid.' };
   if (correctBusNumber && !/^\d{4}$/.test(correctBusNumber)) return { error: 'The correct bus number must contain four digits.' };

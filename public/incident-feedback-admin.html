@@ -69,8 +69,13 @@
     function renderEntry(item) {
       const lookupLabel = item.lookup_type === 'bus' ? 'Bus lookup' : 'Paddle lookup';
       const created = item.created_at ? new Date(item.created_at).toLocaleString() : 'Unknown time';
+      const issueLabels = {
+        incorrect_bus_number: 'Incorrect bus number',
+        wrong_bus_location: 'Wrong bus location',
+        wrong_paddle_information: 'Wrong paddle information',
+      };
       return `<article class="entry">
-        <div class="entry-head"><div><span class="badge">${item.issue_type === 'incorrect_bus_number' ? 'Incorrect bus number' : 'Live result feedback'}</span><h2>${escapeHtml(lookupLabel)}: ${escapeHtml(item.lookup_value)}</h2></div><time class="time">${escapeHtml(created)}</time></div>
+        <div class="entry-head"><div><span class="badge">${escapeHtml(issueLabels[item.issue_type] || 'Live result feedback')}</span><h2>${escapeHtml(lookupLabel)}: ${escapeHtml(item.lookup_value)}</h2></div><time class="time">${escapeHtml(created)}</time></div>
         <div class="numbers"><div class="number wrong"><span>Site showed</span><strong>${escapeHtml(item.reported_bus_number)}</strong></div><div class="number correct"><span>Correct bus</span><strong>${escapeHtml(item.correct_bus_number || 'Not provided')}</strong></div></div>
         <p class="comment">${escapeHtml(item.comment || 'No comment provided.')}</p>
         <div class="details">${item.block ? `Block: ${escapeHtml(item.block)} · ` : ''}${item.location_text ? `Location: ${escapeHtml(item.location_text)} · ` : ''}Source: ${escapeHtml(item.live_source || 'Live feed')}</div>

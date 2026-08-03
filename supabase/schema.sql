@@ -69,7 +69,7 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.live_lookup_feedback (
   id uuid primary key default gen_random_uuid(),
-  issue_type text check (issue_type is null or issue_type in ('incorrect_bus_number')),
+  issue_type text check (issue_type is null or issue_type in ('incorrect_bus_number', 'wrong_bus_location', 'wrong_paddle_information')),
   lookup_type text not null check (lookup_type in ('bus', 'block')),
   lookup_value text not null check (length(trim(lookup_value)) > 0),
   block text,
@@ -93,7 +93,7 @@ alter table public.live_lookup_feedback alter column comment drop not null;
 
 alter table public.live_lookup_feedback drop constraint if exists live_lookup_feedback_issue_type_check;
 alter table public.live_lookup_feedback add constraint live_lookup_feedback_issue_type_check
-  check (issue_type is null or issue_type in ('incorrect_bus_number'));
+  check (issue_type is null or issue_type in ('incorrect_bus_number', 'wrong_bus_location', 'wrong_paddle_information'));
 
 alter table public.live_lookup_feedback drop constraint if exists live_lookup_feedback_correct_bus_number_check;
 alter table public.live_lookup_feedback add constraint live_lookup_feedback_correct_bus_number_check
