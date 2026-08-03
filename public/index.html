@@ -258,6 +258,29 @@
       text-decoration: underline;
     }
 
+    .footer-feedback-hint {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--oc-mist);
+      text-align: center;
+    }
+
+    .footer-feedback-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-grid;
+      place-items: center;
+      flex: none;
+      border: 1px solid rgba(255, 179, 72, 0.38);
+      border-radius: 999px;
+      background: rgba(255, 179, 72, 0.1);
+      color: var(--warn);
+      font-weight: 800;
+      line-height: 1;
+    }
+
     .support-banner-close {
       appearance: none;
       width: 28px;
@@ -1765,6 +1788,7 @@
       </section>
 
       <footer class="main-support-footer">
+        <span class="footer-feedback-hint"><span class="footer-feedback-icon" aria-hidden="true">!</span> See something incorrect in a live result? Tap the icon beside “Live” to report it.</span>
         <span>Built and maintained independently.</span>
         <a href="/support">Support the project</a>
       </footer>
