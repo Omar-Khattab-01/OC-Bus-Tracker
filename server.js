@@ -2620,6 +2620,35 @@ function buildCurrentTripSummaryFromGtfsPosition(position = null) {
   });
 }
 
+function getPublicLocationStatusForBlock(block) {
+  const paddle = buildPaddleResponse(block);
+  const trips = Array.isArray(paddle?.trips) ? paddle.trips : [];
+  const finalTrip = trips.length ? trips[trips.length - 1] : null;
+  const finalEndSeconds = Number(finalTrip?.timelineEndSeconds);
+  const compareSeconds = paddle?.carryover ? getOttawaNowSeconds() + 24 * 3600 : getOttawaNowSeconds();
+
+  return {
+    paddle,
+    afterFinalTrip: Number.isFinite(finalEndSeconds) && compareSeconds > finalEndSeconds,
+  };
+}
+
+function hasPublicGtfsTripContext(position = null) {
+  return Boolean(String(position?.tripId || position?.trip_id || '').trim());
+}
+
+function filterPublicLiveResult(payload = null) {
+  if (!payload?.block) return payload;
+  const status = getPublicLocationStatusForBlock(payload.block);
+  if (!status.afterFinalTrip) return payload;
+
+  return {
+    ...payload,
+    buses: [],
+    gtfsMatch: null,
+  };
+}
+
 function normalizeHeadsign(value) {
   return String(value || '')
     .toLowerCase()
@@ -2862,7 +2891,7 @@ async function fetchLiveResult(block) {
       const gtfsResult = await fetchGtfsBlockFallback(block, paddleTrips);
       timings.gtfsMs = Date.now() - startedAt;
       if (gtfsResult) {
-        return { ...gtfsResult, timings };
+        return filterPublicLiveResult({ ...gtfsResult, timings });
       }
     }
 
@@ -2877,7 +2906,7 @@ async function fetchLiveResult(block) {
 
 async function fetchLiveResultWithFallback(block) {
   const startedAt = Date.now();
-  const payload = await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS);
+  const payload = filterPublicLiveResult(await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS));
   return {
     ...payload,
     timings: {
@@ -3112,23 +3141,26 @@ async function handleBusLookup(busNumber, res) {
       try {
         let cachedBlock = storedMapping?.block || null;
         const gtfsPayload = await lookupBusPositionWithGtfsRt(busNumber);
-        if (gtfsPayload?.position) {
-          if (!cachedBlock && gtfsPayload.position.blockId) {
+        if (gtfsPayload?.position && hasPublicGtfsTripContext(gtfsPayload.position)) {
+          if (gtfsPayload.position.blockId) {
             cachedBlock = await resolveCanonicalBlock(gtfsPayload.position.blockId).catch(() => null) || normalizeBlock(gtfsPayload.position.blockId);
           }
-          const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null);
-          payload = {
-            busNumber: String(busNumber),
-            block: cachedBlock || null,
-            buses: [gtfsBus],
-            gtfsPosition: gtfsPayload.position,
-            gtfsMatched: gtfsMatched?.matched || null,
-            parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
-            liveSource: 'gtfs-rt',
-            timings: {
-              gtfsMs: Date.now() - gtfsStartedAt,
-            },
-          };
+          const publicLocationStatus = cachedBlock ? getPublicLocationStatusForBlock(cachedBlock) : null;
+          if (!publicLocationStatus?.afterFinalTrip) {
+            const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null);
+            payload = {
+              busNumber: String(busNumber),
+              block: cachedBlock || null,
+              buses: [gtfsBus],
+              gtfsPosition: gtfsPayload.position,
+              gtfsMatched: gtfsMatched?.matched || null,
+              parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
+              liveSource: 'gtfs-rt',
+              timings: {
+                gtfsMs: Date.now() - gtfsStartedAt,
+              },
+            };
+          }
         }
       } catch (_) {
         // Report no GTFS-RT result below.
@@ -3153,11 +3185,16 @@ async function handleBusLookup(busNumber, res) {
       totalLookupMs: Date.now() - startedAt,
     };
     const paddle = payload.block ? buildPaddleResponse(payload.block) : null;
+    const publicLocationStatus = payload.block ? getPublicLocationStatusForBlock(payload.block) : null;
     const currentTrip = buildCurrentTripSummary(
-      paddle?.activeTrip ||
-      payload?.gtfsMatched?.paddleTrip ||
-      (payload.liveSource === 'gtfs-rt' ? buildCurrentTripSummaryFromGtfsPosition(payload.gtfsPosition || null) : null) ||
-      storedMapping
+      publicLocationStatus?.afterFinalTrip
+        ? null
+        : (
+          paddle?.activeTrip ||
+          payload?.gtfsMatched?.paddleTrip ||
+          (payload.liveSource === 'gtfs-rt' ? buildCurrentTripSummaryFromGtfsPosition(payload.gtfsPosition || null) : null) ||
+          storedMapping
+        )
     );
     const paddleOptions = payload.block ? getPaddleOptionsForBlock(payload.block) : [];
 
@@ -3228,7 +3265,10 @@ async function handleLookup(req, res) {
     const payload = await fetchLiveResultWithFallback(block);
     const responseMs = Date.now() - startedAt;
     const paddle = buildPaddleResponse(block);
-    const currentTrip = buildCurrentTripSummary(paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip);
+    const publicLocationStatus = getPublicLocationStatusForBlock(block);
+    const currentTrip = buildCurrentTripSummary(
+      publicLocationStatus.afterFinalTrip ? null : (paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip)
+    );
     const paddleOptions = getPaddleOptionsForBlock(block);
     if (Array.isArray(payload?.buses) && payload.buses.length) {
       for (const bus of payload.buses) {
