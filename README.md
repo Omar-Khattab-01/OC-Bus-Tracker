@@ -95,38 +95,6 @@ When Supabase is configured, operators can:
 - Supabase Auth + Postgres
 - Vercel
 
-## WhatsApp Fall Booking Board Updates
-
-The site can accept Fall booking board PDFs from a Twilio WhatsApp webhook and rebuild the live booking board data without using the admin page.
-
-Configure the Twilio WhatsApp incoming-message webhook to:
-
-```text
-https://YOUR_SITE/api/admin/whatsapp-booking-board?token=YOUR_WHATSAPP_BOOKING_BOARD_TOKEN
-```
-
-Set these environment variables on the deployed backend:
-
-```text
-WHATSAPP_BOOKING_BOARD_TOKEN=long-random-secret
-WHATSAPP_ALLOWED_FROM=whatsapp:+1XXXXXXXXXX
-WHATSAPP_BATCH_WAIT_SECONDS=15
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=account_auth_token_used_for_webhook_signatures
-TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_API_KEY_SECRET=restricted_api_key_secret
-WHATSAPP_PUBLIC_WEBHOOK_URL=https://YOUR_SITE/api/admin/whatsapp-booking-board?token=YOUR_WHATSAPP_BOOKING_BOARD_TOKEN
-BOOKING_BOARD_GITHUB_TOKEN=github_pat_or_fine_grained_token
-BOOKING_BOARD_GITHUB_REPO=Omar-Khattab-01/OC-Bus-Tracker
-BOOKING_BOARD_GITHUB_BRANCH=main
-```
-
-`TWILIO_AUTH_TOKEN` must be the Account Auth Token from the Twilio dashboard because Twilio uses it to sign incoming webhooks. The optional `TWILIO_API_KEY_SID` and `TWILIO_API_KEY_SECRET` can be a restricted API key for downloading media attachments.
-
-Run `supabase/migration_whatsapp_booking_board_uploads.sql` before turning on batching. Forward one or more PDF documents to the WhatsApp number. The webhook stores each matched PDF, waits until no new PDFs arrive from the same sender for `WHATSAPP_BATCH_WAIT_SECONDS`, then the cron endpoint rebuilds and commits the booking boards once and sends one WhatsApp confirmation.
-
-If the original filename is not available, add a caption such as `daily`, `weekend`, `spare`, `stat`, `days off`, or `vacation`. The webhook also inspects PDF text as a fallback before queueing the PDF.
-
 ## Notes
 
 - Live bus data depends on upstream availability and may occasionally be missing even when a paddle is scheduled active.
