@@ -2821,7 +2821,7 @@ async function handleBusLookup(busNumber, res) {
           }
           const publicLocationStatus = cachedBlock ? getPublicLocationStatusForBlock(cachedBlock) : null;
           if (!publicLocationStatus?.afterFinalTrip) {
-            const scheduledBreak = Boolean(storedMapping && publicLocationStatus?.paddle?.activeBreak);
+            const scheduledBreak = Boolean(publicLocationStatus?.paddle?.activeBreak);
             let gtfsBus = {
               ...buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null),
               assignmentStatus: hasCurrentTrip ? 'confirmed' : 'break',
