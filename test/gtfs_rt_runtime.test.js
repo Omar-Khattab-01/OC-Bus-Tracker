@@ -5,6 +5,8 @@ const test = require('node:test');
 const {
   buildRealtimeIndexes,
   findDirectVehiclePositionsForBlock,
+  hasRealtimeTripIdMismatch,
+  listAvailableBlocks,
 } = require('../lib/gtfs_rt_runtime');
 
 function tripUpdate(tripId, vehicleId) {
@@ -80,4 +82,34 @@ test('a VehiclePosition without a trip does not create a trip assignment', () =>
 
   assert.equal(realtime.vehicleByTripId.size, 0);
   assert.equal(realtime.positionsByVehicleId.has('6502'), true);
+});
+
+test('available blocks come from official GTFS static trip block IDs', () => {
+  const staticIndex = {
+    tripsById: new Map([
+      ['trip-1', { blockId: '44-07' }],
+      ['trip-2', { blockId: '6-2' }],
+      ['trip-3', { blockId: '44-07' }],
+      ['trip-4', { blockId: '' }],
+    ]),
+  };
+
+  assert.deepEqual(listAvailableBlocks(staticIndex), ['6-2', '44-07']);
+});
+
+test('a realtime trip ID missing from static GTFS triggers mismatch detection', () => {
+  const staticIndex = {
+    tripsById: new Map([['known-trip', { blockId: '44-07' }]]),
+  };
+  const matchingRealtime = buildRealtimeIndexes(
+    { entity: [tripUpdate('known-trip', '6590')] },
+    { entity: [vehiclePosition('6590', 'known-trip', '44')] }
+  );
+  const changedRealtime = buildRealtimeIndexes(
+    { entity: [tripUpdate('new-friday-trip', '6590')] },
+    { entity: [vehiclePosition('6590', 'new-friday-trip', '44')] }
+  );
+
+  assert.equal(hasRealtimeTripIdMismatch(staticIndex, matchingRealtime), false);
+  assert.equal(hasRealtimeTripIdMismatch(staticIndex, changedRealtime), true);
 });
