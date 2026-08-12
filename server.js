@@ -26,6 +26,12 @@ const {
   warmGtfsRtCaches,
 } = require('./lib/gtfs_rt_runtime');
 const {
+  DEFAULT_MAX_ASSIGNMENT_AGE_MS,
+  canUseRetainedAssignmentForPosition,
+  isRetainableAssignment,
+  selectNewestAssignments,
+} = require('./lib/live_bus_assignment');
+const {
   SHUTTLE_DAY_OPTIONS,
   SHUTTLE_DEFINITIONS,
   SHUTTLES_BY_SERVICE_DAY,
@@ -62,7 +68,9 @@ const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
-const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
+const LIVE_BUS_ASSIGNMENT_MAX_AGE_MS = Number(
+  process.env.LIVE_BUS_ASSIGNMENT_MAX_AGE_MS || DEFAULT_MAX_ASSIGNMENT_AGE_MS
+);
 const APRIL19_PADDLE_SWITCH_DATE = '2026-04-19';
 const SUMMER_WEEKDAY_PADDLE_SWITCH_DATE = '2026-06-29';
 const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
@@ -700,7 +708,7 @@ function addLiveBusMappingToBoardIndex(indexByBlock, busNumber, value) {
   if (!block) return;
 
   const existing = indexByBlock.get(block) || new Map();
-  existing.set(normalizedBus, {
+  const entry = {
     busNumber: normalizedBus,
     block,
     paddleId: String(value.paddleId || '').trim(),
@@ -711,7 +719,15 @@ function addLiveBusMappingToBoardIndex(indexByBlock, busNumber, value) {
     startTime: String(value.startTime || '').trim(),
     endTime: String(value.endTime || '').trim(),
     verifiedAt: String(value.verifiedAt || '').trim(),
-  });
+  };
+  const newestExistingTimestamp = Math.max(
+    ...Array.from(existing.values()).map((item) => Date.parse(item.verifiedAt) || 0),
+    0
+  );
+  const entryTimestamp = Date.parse(entry.verifiedAt) || 0;
+  if (entryTimestamp < newestExistingTimestamp) return;
+  if (entryTimestamp > newestExistingTimestamp) existing.clear();
+  existing.set(normalizedBus, entry);
   indexByBlock.set(block, existing);
 }
 
@@ -723,7 +739,7 @@ async function getLiveBusMappingsByBlock() {
   }
 
   if (adminSupabase) {
-    const cutoffIso = new Date(Date.now() - LIVE_BUS_MAPPING_TTL_MS).toISOString();
+    const cutoffIso = new Date(Date.now() - LIVE_BUS_ASSIGNMENT_MAX_AGE_MS).toISOString();
     const { data, error } = await adminSupabase
       .from('live_bus_paddles')
       .select('bus_number, block, paddle_id, service_day, route, trip_number, headsign, start_time, end_time, verified_at')
@@ -925,10 +941,13 @@ function rememberLiveBusPaddleMapping(busNumber, value) {
 }
 
 function isLiveBusMappingFresh(value) {
-  if (!value?.block || !value?.verifiedAt) return false;
-  const verifiedAtMs = Date.parse(String(value.verifiedAt));
-  if (!Number.isFinite(verifiedAtMs)) return false;
-  return Date.now() - verifiedAtMs <= LIVE_BUS_MAPPING_TTL_MS;
+  if (!value?.block) return false;
+  const status = getPublicLocationStatusForBlock(value.block);
+  return isRetainableAssignment(value, {
+    maxAgeMs: LIVE_BUS_ASSIGNMENT_MAX_AGE_MS,
+    paddleCarryover: Boolean(status?.paddle?.carryover),
+    afterFinalTrip: !status?.paddle || status.afterFinalTrip,
+  });
 }
 
 async function persistLiveBusPaddleMappings(mappings) {
@@ -956,10 +975,11 @@ async function persistLiveBusPaddleMappings(mappings) {
     throw upsertError;
   }
 
+  const staleBefore = new Date(Date.now() - LIVE_BUS_ASSIGNMENT_MAX_AGE_MS).toISOString();
   const { error: deleteError } = await adminSupabase
     .from('live_bus_paddles')
     .delete()
-    .lt('verified_at', snapshotIso);
+    .lt('verified_at', staleBefore);
   if (deleteError) {
     throw deleteError;
   }
@@ -1009,7 +1029,7 @@ async function getStoredLiveBusPaddleMapping(busNumber) {
     return null;
   }
 
-  const cutoffIso = new Date(Date.now() - LIVE_BUS_MAPPING_TTL_MS).toISOString();
+  const cutoffIso = new Date(Date.now() - LIVE_BUS_ASSIGNMENT_MAX_AGE_MS).toISOString();
   const { data, error } = await adminSupabase
     .from('live_bus_paddles')
     .select('bus_number, block, paddle_id, service_day, route, trip_number, headsign, start_time, end_time, verified_at')
@@ -1035,8 +1055,63 @@ async function getStoredLiveBusPaddleMapping(busNumber) {
     endTime: data.end_time,
     verifiedAt: data.verified_at,
   };
+  if (!isLiveBusMappingFresh(mapping)) return null;
   rememberLiveBusPaddleMapping(normalizedBus, mapping);
   return mapping;
+}
+
+async function getStoredLiveBusPaddleMappingsForBlock(block) {
+  const normalizedBlock = normalizeBlock(block);
+  if (!normalizedBlock) return [];
+  const candidatesByBus = new Map();
+
+  for (const [busNumber, value] of liveBusPaddleCache.entries()) {
+    if (normalizeBlock(value?.block) !== normalizedBlock) continue;
+    candidatesByBus.set(busNumber, { busNumber, ...value, block: normalizedBlock });
+  }
+
+  if (adminSupabase) {
+    const cutoffIso = new Date(Date.now() - LIVE_BUS_ASSIGNMENT_MAX_AGE_MS).toISOString();
+    const { data, error } = await adminSupabase
+      .from('live_bus_paddles')
+      .select('bus_number, block, paddle_id, service_day, route, trip_number, headsign, start_time, end_time, verified_at')
+      .eq('block', normalizedBlock)
+      .gte('verified_at', cutoffIso)
+      .order('verified_at', { ascending: false });
+    if (error) throw error;
+
+    for (const row of data || []) {
+      const busNumber = String(row.bus_number || '').trim();
+      if (!busNumber) continue;
+      const mapping = {
+        busNumber,
+        block: normalizedBlock,
+        paddleId: row.paddle_id,
+        serviceDay: row.service_day,
+        route: row.route,
+        tripNumber: row.trip_number,
+        headsign: row.headsign,
+        startTime: row.start_time,
+        endTime: row.end_time,
+        verifiedAt: row.verified_at,
+      };
+      const cached = candidatesByBus.get(busNumber);
+      if (!cached || Date.parse(mapping.verifiedAt) > Date.parse(cached.verifiedAt)) {
+        candidatesByBus.set(busNumber, mapping);
+      }
+    }
+  }
+
+  const status = getPublicLocationStatusForBlock(normalizedBlock);
+  const selected = selectNewestAssignments(Array.from(candidatesByBus.values()), {
+    maxAgeMs: LIVE_BUS_ASSIGNMENT_MAX_AGE_MS,
+    paddleCarryover: Boolean(status?.paddle?.carryover),
+    afterFinalTrip: !status?.paddle || status.afterFinalTrip,
+  });
+  for (const mapping of selected) {
+    rememberLiveBusPaddleMapping(mapping.busNumber, mapping);
+  }
+  return selected;
 }
 
 function describeNextShuttleStop(shuttle) {
@@ -2430,9 +2505,65 @@ async function fetchLiveResult(block) {
   return job;
 }
 
+async function fetchRetainedLiveResult(block) {
+  const mappings = await getStoredLiveBusPaddleMappingsForBlock(block);
+  if (!mappings.length) return null;
+
+  const buses = [];
+  for (const mapping of mappings) {
+    let officialPosition = null;
+    try {
+      const lookup = await lookupBusPositionWithGtfsRt(mapping.busNumber);
+      officialPosition = lookup?.position || null;
+    } catch (_) {
+      officialPosition = null;
+    }
+
+    const positionTripId = String(officialPosition?.tripId || '').trim();
+    if (!canUseRetainedAssignmentForPosition(mapping, officialPosition)) {
+      continue;
+    }
+
+    const bus = officialPosition
+      ? buildGtfsLocationForBus(mapping.busNumber, officialPosition)
+      : {
+          busNumber: String(mapping.busNumber),
+          locationText: 'On break; live location unavailable',
+          latitude: null,
+          longitude: null,
+        };
+    if (!positionTripId && !/^On break\b/i.test(bus.locationText)) {
+      bus.locationText = `On break — ${bus.locationText}`;
+    }
+    buses.push({
+      ...bus,
+      assignmentStatus: positionTripId ? 'confirmed' : 'break',
+      assignmentVerifiedAt: mapping.verifiedAt,
+    });
+  }
+
+  if (!buses.length) return null;
+  return {
+    block,
+    buses,
+    liveSource: 'gtfs-rt-retained-assignment',
+    retainedAssignment: true,
+  };
+}
+
 async function fetchLiveResultWithFallback(block) {
   const startedAt = Date.now();
-  const payload = filterPublicLiveResult(await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS));
+  let payload = filterPublicLiveResult(await withTimeout(fetchLiveResult(block), RUN_TIMEOUT_MS));
+  if (!Array.isArray(payload?.buses) || payload.buses.length === 0) {
+    const retained = await fetchRetainedLiveResult(block).catch(() => null);
+    if (retained) {
+      payload = {
+        ...payload,
+        ...retained,
+        timings: payload?.timings || {},
+      };
+    }
+  }
   return {
     ...payload,
     timings: {
@@ -2667,13 +2798,23 @@ async function handleBusLookup(busNumber, res) {
       try {
         let cachedBlock = storedMapping?.block || null;
         const gtfsPayload = await lookupBusPositionWithGtfsRt(busNumber);
-        if (gtfsPayload?.position && hasPublicGtfsTripContext(gtfsPayload.position)) {
-          if (gtfsPayload.position.blockId) {
+        const hasCurrentTrip = hasPublicGtfsTripContext(gtfsPayload?.position);
+        if (gtfsPayload?.position && (hasCurrentTrip || cachedBlock)) {
+          if (hasCurrentTrip && gtfsPayload.position.blockId) {
             cachedBlock = await resolveCanonicalBlock(gtfsPayload.position.blockId).catch(() => null) || normalizeBlock(gtfsPayload.position.blockId);
+          } else if (hasCurrentTrip) {
+            cachedBlock = null;
           }
           const publicLocationStatus = cachedBlock ? getPublicLocationStatusForBlock(cachedBlock) : null;
           if (!publicLocationStatus?.afterFinalTrip) {
-            const gtfsBus = buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null);
+            const gtfsBus = {
+              ...buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null),
+              assignmentStatus: hasCurrentTrip ? 'confirmed' : 'break',
+              assignmentVerifiedAt: hasCurrentTrip ? null : storedMapping?.verifiedAt || null,
+            };
+            if (!hasCurrentTrip && !/^On break\b/i.test(gtfsBus.locationText)) {
+              gtfsBus.locationText = `On break — ${gtfsBus.locationText}`;
+            }
             payload = {
               busNumber: String(busNumber),
               block: cachedBlock || null,
@@ -2681,7 +2822,8 @@ async function handleBusLookup(busNumber, res) {
               gtfsPosition: gtfsPayload.position,
               gtfsMatched: gtfsMatched?.matched || null,
               parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
-              liveSource: 'gtfs-rt',
+              liveSource: hasCurrentTrip ? 'gtfs-rt' : 'gtfs-rt-retained-assignment',
+              retainedAssignment: !hasCurrentTrip,
               timings: {
                 gtfsMs: Date.now() - gtfsStartedAt,
               },
@@ -2713,7 +2855,7 @@ async function handleBusLookup(busNumber, res) {
     const paddle = payload.block ? buildPaddleResponse(payload.block) : null;
     const publicLocationStatus = payload.block ? getPublicLocationStatusForBlock(payload.block) : null;
     const currentTrip = buildCurrentTripSummary(
-      publicLocationStatus?.afterFinalTrip
+      publicLocationStatus?.afterFinalTrip || payload.retainedAssignment
         ? null
         : (
           paddle?.activeTrip ||
@@ -2724,7 +2866,7 @@ async function handleBusLookup(busNumber, res) {
     );
     const paddleOptions = payload.block ? getPaddleOptionsForBlock(payload.block) : [];
 
-    if (payload.block && Array.isArray(payload.buses) && payload.buses.length) {
+    if (payload.block && !payload.retainedAssignment && Array.isArray(payload.buses) && payload.buses.length) {
       for (const bus of payload.buses) {
         rememberLiveBusPaddleMapping(bus.busNumber, {
           block: payload.block,
@@ -2793,10 +2935,12 @@ async function handleLookup(req, res) {
     const paddle = buildPaddleResponse(block);
     const publicLocationStatus = getPublicLocationStatusForBlock(block);
     const currentTrip = buildCurrentTripSummary(
-      publicLocationStatus.afterFinalTrip ? null : (paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip)
+      publicLocationStatus.afterFinalTrip || payload?.retainedAssignment
+        ? null
+        : (paddle?.activeTrip || payload?.gtfsMatch?.paddleTrip)
     );
     const paddleOptions = getPaddleOptionsForBlock(block);
-    if (Array.isArray(payload?.buses) && payload.buses.length) {
+    if (!payload?.retainedAssignment && Array.isArray(payload?.buses) && payload.buses.length) {
       for (const bus of payload.buses) {
         rememberLiveBusPaddleMapping(bus.busNumber, {
           block,

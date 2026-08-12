@@ -7,7 +7,9 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
-const LIVE_BUS_MAPPING_TTL_MS = Number(process.env.LIVE_BUS_MAPPING_TTL_MS || 20 * 60 * 1000);
+const LIVE_BUS_ASSIGNMENT_MAX_AGE_MS = Number(
+  process.env.LIVE_BUS_ASSIGNMENT_MAX_AGE_MS || 30 * 60 * 60 * 1000
+);
 const CRON_FETCH_CONCURRENCY = Math.max(1, Math.min(6, Number(process.env.CRON_FETCH_CONCURRENCY || 4)));
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
@@ -277,7 +279,7 @@ module.exports = async function handler(req, res) {
       if (upsertError) throw upsertError;
     }
 
-    const staleBefore = new Date(Date.now() - LIVE_BUS_MAPPING_TTL_MS).toISOString();
+    const staleBefore = new Date(Date.now() - LIVE_BUS_ASSIGNMENT_MAX_AGE_MS).toISOString();
     const { error: deleteError } = await adminSupabase
       .from('live_bus_paddles')
       .delete()
