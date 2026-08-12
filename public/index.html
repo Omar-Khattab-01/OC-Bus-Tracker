@@ -2010,6 +2010,13 @@
     let accountAuthMode = 'signin';
     let accountResetMode = false;
     let accountRecoveryMode = false;
+    let forcedPasswordReset = {
+      required: false,
+      email: '',
+      emailSent: false,
+      error: '',
+    };
+    let forcedPasswordResetPromise = null;
     let accountViewMode = 'settings';
     let accountOptions = {
       weekday: [],
@@ -2738,6 +2745,10 @@
 
     function normalizeEmail(value) {
       return String(value || '').trim().toLowerCase();
+    }
+
+    function isOttawaEmail(value) {
+      return normalizeEmail(value).endsWith('@ottawa.ca');
     }
 
     function normalizeBusAccessRole(value) {
@@ -3904,6 +3915,23 @@
         return;
       }
 
+      if (forcedPasswordReset.required && !accountRecoveryMode) {
+        accountMeta.textContent = 'Password reset required';
+        accountBody.innerHTML = `
+          <section class="section-card">
+            ${renderAccountNotice()}
+            <div class="field-label">Protect your City of Ottawa account</div>
+            <p class="subtle-text">You must reset the password for ${escapeHtml(forcedPasswordReset.email)} before using this site.</p>
+            <p class="subtle-text"><strong>Do not use or reuse your City of Ottawa network password.</strong> Choose a unique password that is only for OC Operator Tools.</p>
+            <div class="section-actions">
+              <button id="resendForcedResetBtn" class="btn" type="button">${forcedPasswordReset.emailSent ? 'Send Reset Email Again' : 'Send Reset Email'}</button>
+            </div>
+          </section>
+        `;
+        wireAccountModalEvents();
+        return;
+      }
+
       const isSignup = !currentUser && accountAuthMode === 'signup';
       const isReset = !currentUser && !isSignup && accountResetMode;
       const isRecovery = accountRecoveryMode;
@@ -3919,6 +3947,7 @@
         accountBody.innerHTML = isSignup ? `
           <section class="section-card">
             ${renderAccountNotice()}
+            <p class="subtle-text"><strong>Using an @ottawa.ca email?</strong> Do not use or reuse your City of Ottawa network password. Choose a unique password for this site.</p>
             <div class="stack-form">
               <label class="field-stack">
                 <span class="field-label">Username</span>
@@ -3949,6 +3978,7 @@
         ` : isRecovery ? `
           <section class="section-card">
             ${renderAccountNotice()}
+            <p class="subtle-text"><strong>Do not use or reuse your City of Ottawa network password.</strong> Choose a unique password for this site.</p>
             <div class="stack-form">
               <label class="field-stack">
                 <span class="field-label">New Password</span>
@@ -4128,6 +4158,7 @@
       const saveSettingsBtn = document.getElementById('saveSettingsBtn');
       const requestPasswordResetBtn = document.getElementById('requestPasswordResetBtn');
       const signOutBtn = document.getElementById('signOutBtn');
+      const resendForcedResetBtn = document.getElementById('resendForcedResetBtn');
       const addWeekdayBlockBtn = document.getElementById('addWeekdayBlockBtn');
       const addSaturdayBlockBtn = document.getElementById('addSaturdayBlockBtn');
       const addSundayBlockBtn = document.getElementById('addSundayBlockBtn');
@@ -4147,6 +4178,7 @@
       if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
       if (requestPasswordResetBtn) requestPasswordResetBtn.addEventListener('click', sendSignedInPasswordResetEmail);
       if (signOutBtn) signOutBtn.addEventListener('click', signOutUser);
+      if (resendForcedResetBtn) resendForcedResetBtn.addEventListener('click', sendForcedPasswordResetEmail);
       if (addWeekdayBlockBtn) addWeekdayBlockBtn.addEventListener('click', () => addBlockToProfile('weekday'));
       if (addSaturdayBlockBtn) addSaturdayBlockBtn.addEventListener('click', () => addBlockToProfile('saturday'));
       if (addSundayBlockBtn) addSundayBlockBtn.addEventListener('click', () => addBlockToProfile('sunday'));
@@ -4333,6 +4365,70 @@
       await syncProfileWorkChanges();
     }
 
+    async function sendForcedPasswordResetEmail() {
+      const email = forcedPasswordReset.email;
+      if (!email) return;
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: getAuthRedirectUrl(),
+      });
+      forcedPasswordReset.emailSent = !error;
+      forcedPasswordReset.error = error?.message || '';
+      setAccountNotice(error
+        ? (error.message || 'Could not send the password reset email. Try again shortly.')
+        : 'Password reset email sent. Open it to choose a new password.', error ? 'warn' : 'ok');
+      renderAccountModal();
+    }
+
+    async function enforceRequiredPasswordReset(session) {
+      const user = session?.user;
+      const email = normalizeEmail(user?.email);
+      if (!user || accountRecoveryMode || !isOttawaEmail(email)) return false;
+      if (forcedPasswordReset.required && forcedPasswordReset.email === email) return true;
+      if (forcedPasswordResetPromise) return forcedPasswordResetPromise;
+
+      forcedPasswordResetPromise = (async () => {
+        const { data, error } = await supabaseClient
+          .from('password_reset_requirements')
+          .select('required_at, completed_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (error || !data || data.completed_at) return false;
+
+        forcedPasswordReset = {
+          required: true,
+          email,
+          emailSent: false,
+          error: '',
+        };
+        const resetResult = await supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: getAuthRedirectUrl(),
+        });
+        forcedPasswordReset.emailSent = !resetResult.error;
+        forcedPasswordReset.error = resetResult.error?.message || '';
+        try {
+          await supabaseClient.auth.signOut({ scope: 'global' });
+        } catch (_) {
+          // The database migration already revoked older refresh sessions.
+        }
+        currentUser = null;
+        currentProfile = null;
+        accountAuthMode = 'signin';
+        accountResetMode = false;
+        setAccountNotice(resetResult.error
+          ? (resetResult.error.message || 'Your password must be reset. Use the button below to retry the email.')
+          : 'Password reset email sent. Open it to choose a new password.', resetResult.error ? 'warn' : 'ok');
+        openAccountModal();
+        updateAccountButton();
+        return true;
+      })();
+
+      try {
+        return await forcedPasswordResetPromise;
+      } finally {
+        forcedPasswordResetPromise = null;
+      }
+    }
+
     async function signInWithPassword() {
       clearAccountFieldErrors();
       const email = document.getElementById('authEmail')?.value?.trim() || '';
@@ -4344,13 +4440,15 @@
         return;
       }
 
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
         markAccountFieldError('authEmail');
         markAccountFieldError('authPassword');
         setAccountNotice(error.message || 'Sign in failed.', 'warn');
         return;
       }
+      if (data?.session) await handleSession(data.session);
+      if (forcedPasswordReset.required) return;
       setAccountNotice('', '');
       closeAccountModal();
     }
@@ -4480,6 +4578,7 @@
         return;
       }
 
+      forcedPasswordReset = { required: false, email: '', emailSent: false, error: '' };
       setAccountRecoveryMode(false);
       closeAccountModal();
       addMessage('Your password has been updated.', 'bot');
@@ -4588,6 +4687,16 @@
 
     async function handleSession(session) {
       const wasSignedIn = Boolean(currentUser);
+      if (await enforceRequiredPasswordReset(session)) {
+        currentUser = null;
+        currentProfile = null;
+        busDefectAccessLoaded = true;
+        busDefectAccessAllowed = false;
+        busDefectAccessRole = '';
+        updateAccountButton();
+        renderAccountModal();
+        return;
+      }
       currentUser = session?.user || null;
       busDefectAccessLoaded = false;
       busDefectAccessAllowed = false;
