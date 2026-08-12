@@ -4467,6 +4467,11 @@
         setAccountNotice('Enter your username, email, and both password fields first.', 'warn');
         return;
       }
+      if (isOttawaEmail(email)) {
+        markAccountFieldError('authEmail');
+        setAccountNotice('City of Ottawa email addresses cannot be used to create an account. Use a personal email address, and never use your City of Ottawa password.', 'warn');
+        return;
+      }
       if (password !== passwordConfirm) {
         markAccountFieldError('authPassword');
         markAccountFieldError('authPasswordConfirm');
