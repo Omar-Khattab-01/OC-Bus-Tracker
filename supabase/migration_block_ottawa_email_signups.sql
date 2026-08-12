@@ -13,7 +13,7 @@ begin
     return jsonb_build_object(
       'error', jsonb_build_object(
         'http_code', 403,
-        'message', 'City of Ottawa email addresses cannot be used to create an account. Use a personal email address and never use your City of Ottawa password.'
+        'message', 'City of Ottawa email addresses cannot be used to create an account. Use a personal email address.'
       )
     );
   end if;
