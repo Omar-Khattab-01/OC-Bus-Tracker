@@ -5,6 +5,7 @@ const test = require('node:test');
 const {
   canUseRetainedAssignmentForPosition,
   isRetainableAssignment,
+  maskLocationForScheduledBreak,
   selectNewestAssignments,
 } = require('../lib/live_bus_assignment');
 
@@ -54,4 +55,30 @@ test('a new official block assignment overrides the retained block', () => {
     { block: '11-02' },
     { tripId: 'new-trip', blockId: '61-04' }
   ), false);
+});
+
+test('a scheduled break hides retained live coordinates and uses only the break label', () => {
+  assert.deepEqual(maskLocationForScheduledBreak({
+    busNumber: '4744',
+    locationText: 'Near Terry Fox Station',
+    latitude: 45.301,
+    longitude: -75.91,
+    assignmentStatus: 'confirmed',
+  }, true), {
+    busNumber: '4744',
+    locationText: 'On break',
+    latitude: null,
+    longitude: null,
+    assignmentStatus: 'break',
+  });
+});
+
+test('a non-break response keeps its live location', () => {
+  const bus = {
+    busNumber: '4744',
+    locationText: 'Near Terry Fox Station',
+    latitude: 45.301,
+    longitude: -75.91,
+  };
+  assert.equal(maskLocationForScheduledBreak(bus, false), bus);
 });

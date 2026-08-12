@@ -4778,7 +4778,10 @@
         String(existingTodayWork.variantId || '') === String(todayWorkEntry.variantId || '')
       );
       return data.buses.map((bus) => {
-        const hasCoords = Number.isFinite(Number(bus.latitude)) && Number.isFinite(Number(bus.longitude));
+        const hasCoords = bus.latitude !== null && bus.latitude !== undefined && bus.latitude !== '' &&
+          bus.longitude !== null && bus.longitude !== undefined && bus.longitude !== '' &&
+          Number.isFinite(Number(bus.latitude)) && Number.isFinite(Number(bus.longitude));
+        const statusLabel = bus.assignmentStatus === 'break' || data.scheduledBreak ? 'break' : 'live';
         const tripLabel = currentTrip && currentTrip.label
           ? `Current trip: ${escapeHtml(currentTrip.label)}${currentTrip.tripNumber ? ` (Trip ${escapeHtml(currentTrip.tripNumber)})` : ''}`
           : '';
@@ -4789,7 +4792,7 @@
             <div class="card-actions">
               ${jumpTargetId ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">&#8595;</button>` : ''}
               <div class="live-feedback-stack">
-                <span class="pill">live</span>
+                <span class="pill">${statusLabel}</span>
                 <button class="feedback-icon-btn" type="button" title="Report an incorrect bus number" aria-label="Report an incorrect bus number" data-live-feedback="1" data-reported-bus="${escapeAttribute(bus.busNumber)}" data-lookup-type="${data.mode === 'bus' ? 'bus' : 'block'}" data-lookup-value="${escapeAttribute(data.mode === 'bus' ? (data.busNumber || bus.busNumber) : (data.block || ''))}" data-block="${escapeAttribute(data.block || '')}" data-live-source="${escapeAttribute(data.liveSource || '')}" data-location="${escapeAttribute(bus.locationText || '')}" data-lookup-generated-at="${escapeAttribute(data.generatedAt || '')}">!</button>
               </div>
             </div>

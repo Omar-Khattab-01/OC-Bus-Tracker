@@ -29,6 +29,7 @@ const {
   DEFAULT_MAX_ASSIGNMENT_AGE_MS,
   canUseRetainedAssignmentForPosition,
   isRetainableAssignment,
+  maskLocationForScheduledBreak,
   selectNewestAssignments,
 } = require('./lib/live_bus_assignment');
 const {
@@ -2508,6 +2509,8 @@ async function fetchLiveResult(block) {
 async function fetchRetainedLiveResult(block) {
   const mappings = await getStoredLiveBusPaddleMappingsForBlock(block);
   if (!mappings.length) return null;
+  const publicLocationStatus = getPublicLocationStatusForBlock(block);
+  const scheduledBreak = Boolean(publicLocationStatus?.paddle?.activeBreak);
 
   const buses = [];
   for (const mapping of mappings) {
@@ -2535,11 +2538,11 @@ async function fetchRetainedLiveResult(block) {
     if (!positionTripId && !/^On break\b/i.test(bus.locationText)) {
       bus.locationText = `On break — ${bus.locationText}`;
     }
-    buses.push({
+    buses.push(maskLocationForScheduledBreak({
       ...bus,
       assignmentStatus: positionTripId ? 'confirmed' : 'break',
       assignmentVerifiedAt: mapping.verifiedAt,
-    });
+    }, scheduledBreak));
   }
 
   if (!buses.length) return null;
@@ -2548,6 +2551,7 @@ async function fetchRetainedLiveResult(block) {
     buses,
     liveSource: 'gtfs-rt-retained-assignment',
     retainedAssignment: true,
+    scheduledBreak,
   };
 }
 
@@ -2563,6 +2567,16 @@ async function fetchLiveResultWithFallback(block) {
         timings: payload?.timings || {},
       };
     }
+  }
+  const scheduledBreak = Boolean(getPublicLocationStatusForBlock(block)?.paddle?.activeBreak);
+  if (scheduledBreak && Array.isArray(payload?.buses) && payload.buses.length) {
+    payload = {
+      ...payload,
+      buses: payload.buses.map((bus) => maskLocationForScheduledBreak(bus, true)),
+      liveSource: 'gtfs-rt-retained-assignment',
+      retainedAssignment: true,
+      scheduledBreak: true,
+    };
   }
   return {
     ...payload,
@@ -2807,7 +2821,8 @@ async function handleBusLookup(busNumber, res) {
           }
           const publicLocationStatus = cachedBlock ? getPublicLocationStatusForBlock(cachedBlock) : null;
           if (!publicLocationStatus?.afterFinalTrip) {
-            const gtfsBus = {
+            const scheduledBreak = Boolean(storedMapping && publicLocationStatus?.paddle?.activeBreak);
+            let gtfsBus = {
               ...buildGtfsLocationForBus(busNumber, gtfsPayload.position, gtfsMatched?.matched || null),
               assignmentStatus: hasCurrentTrip ? 'confirmed' : 'break',
               assignmentVerifiedAt: hasCurrentTrip ? null : storedMapping?.verifiedAt || null,
@@ -2815,6 +2830,7 @@ async function handleBusLookup(busNumber, res) {
             if (!hasCurrentTrip && !/^On break\b/i.test(gtfsBus.locationText)) {
               gtfsBus.locationText = `On break — ${gtfsBus.locationText}`;
             }
+            gtfsBus = maskLocationForScheduledBreak(gtfsBus, scheduledBreak);
             payload = {
               busNumber: String(busNumber),
               block: cachedBlock || null,
@@ -2822,8 +2838,9 @@ async function handleBusLookup(busNumber, res) {
               gtfsPosition: gtfsPayload.position,
               gtfsMatched: gtfsMatched?.matched || null,
               parked: !cachedBlock && locationSuggestsParked(gtfsBus?.locationText),
-              liveSource: hasCurrentTrip ? 'gtfs-rt' : 'gtfs-rt-retained-assignment',
-              retainedAssignment: !hasCurrentTrip,
+              liveSource: hasCurrentTrip && !scheduledBreak ? 'gtfs-rt' : 'gtfs-rt-retained-assignment',
+              retainedAssignment: !hasCurrentTrip || scheduledBreak,
+              scheduledBreak,
               timings: {
                 gtfsMs: Date.now() - gtfsStartedAt,
               },
