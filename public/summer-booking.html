@@ -703,7 +703,6 @@
       </div>
       <div class="header-actions">
         <a class="header-link" href="/">Back to Live Lookup</a>
-        <a id="fallBookingLink" class="header-link" href="/booking-boards" hidden>Fall Booking Board</a>
         <a class="header-link" href="/support">Support</a>
         <button id="clearChatBtn" class="header-btn" type="button">Clear Chat</button>
         <div id="status" class="status">Ready</div>
@@ -753,7 +752,6 @@
     const pageTitle = document.getElementById('pageTitle');
     const pageSubtitle = document.getElementById('pageSubtitle');
     const pageHint = document.getElementById('pageHint');
-    const fallBookingLink = document.getElementById('fallBookingLink');
     const statusEl = document.getElementById('status');
     const sendBtn = document.getElementById('sendBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
@@ -844,7 +842,6 @@
     pageSubtitle.textContent = pageConfig.subtitle;
     pageHint.textContent = pageConfig.hint;
     document.title = pageConfig.title;
-    fallBookingLink.hidden = !isFallPaddlesPage;
     function buildPdfViewerHref(item) {
       if (item.doc) return `/fall-pdf-viewer?doc=${encodeURIComponent(item.doc)}`;
       return item.href || '#';

@@ -4257,7 +4257,7 @@ app.get('/fall-paddles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
 app.get('/booking-boards', (_req, res) => {
-  sendHtmlNoCache(res, path.join(__dirname, 'public', 'booking-boards.html'));
+  res.status(404).type('text/plain').send('Booking boards are offline.');
 });
 app.get('/support', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'support.html'));
