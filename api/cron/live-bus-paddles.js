@@ -11,6 +11,10 @@ const LIVE_BUS_ASSIGNMENT_MAX_AGE_MS = Number(
   process.env.LIVE_BUS_ASSIGNMENT_MAX_AGE_MS || 30 * 60 * 60 * 1000
 );
 const CRON_FETCH_CONCURRENCY = Math.max(1, Math.min(6, Number(process.env.CRON_FETCH_CONCURRENCY || 4)));
+const LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES = Math.max(
+  0,
+  Number(process.env.LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES || 120)
+);
 
 const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -197,6 +201,15 @@ async function fetchLiveBlockPayload(baseUrl, block) {
 
 async function buildLiveBusPaddleMappings(baseUrl) {
   const activePaddles = getActivePaddlesForNow();
+  if (LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES && activePaddles.length > LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES) {
+    const error = new Error(
+      `Live bus refresh skipped: ${activePaddles.length} active paddles exceeds limit ${LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES}.`
+    );
+    error.code = 'too_many_active_paddles';
+    error.activePaddles = activePaddles.length;
+    error.limit = LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES;
+    throw error;
+  }
   const mappings = new Map();
   let index = 0;
 

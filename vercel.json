@@ -1,17 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/live-bus-paddles",
-      "schedule": "*/10 * * * *"
-    },
-    {
       "path": "/api/cron/whatsapp-booking-batches",
       "schedule": "* * * * *"
     }
-  ],
-  "functions": {
-    "api/cron/live-bus-paddles.js": {
-      "maxDuration": 300
-    }
-  }
+  ]
 }
