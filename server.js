@@ -2306,7 +2306,16 @@ async function fetchAvailableBlocks() {
   try {
     return await getOfficialGtfsBlocks();
   } catch (err) {
-    throw new Error(`Failed to read official OC Transpo GTFS block list: ${err.message}`);
+    console.warn(`Falling back to local paddle block list: ${String(err?.message || err)}`);
+    const index = loadPaddleIndex();
+    const blocks = new Set();
+    for (const runs of Object.values(index?.service_days || {})) {
+      for (const paddleId of Object.keys(runs || {})) {
+        const block = paddleIdToBlockLabel(paddleId);
+        if (block) blocks.add(block);
+      }
+    }
+    return Array.from(blocks).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
 }
 
