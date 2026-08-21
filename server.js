@@ -2307,26 +2307,23 @@ async function fetchAvailableBlocks() {
     return await getOfficialGtfsBlocks();
   } catch (err) {
     console.warn(`Falling back to local paddle block list: ${String(err?.message || err)}`);
-    const index = loadPaddleIndex();
-    const blocks = new Set();
-    for (const runs of Object.values(index?.service_days || {})) {
-      for (const paddleId of Object.keys(runs || {})) {
-        const block = paddleIdToBlockLabel(paddleId);
-        if (block) blocks.add(block);
-      }
-    }
-    return Array.from(blocks).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    return getLocalPaddleBlocks();
   }
 }
 
-function blockNumericKey(block) {
-  const [a, b] = String(block || '').split('-');
-  if (!/^\d+$/.test(a || '') || !/^\d+$/.test(b || '')) return null;
-  return `${Number(a)}-${Number(b)}`;
+function getLocalPaddleBlocks() {
+  const index = loadPaddleIndex();
+  const blocks = new Set();
+  for (const runs of Object.values(index?.service_days || {})) {
+    for (const paddleId of Object.keys(runs || {})) {
+      const block = paddleIdToBlockLabel(paddleId);
+      if (block) blocks.add(block);
+    }
+  }
+  return Array.from(blocks).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
-async function resolveCanonicalBlock(inputBlock) {
-  const available = await fetchAvailableBlocks();
+function resolveBlockFromAvailableBlocks(inputBlock, available) {
   const exact = available.find((b) => b === inputBlock);
   if (exact) return exact;
 
@@ -2339,6 +2336,18 @@ async function resolveCanonicalBlock(inputBlock) {
     if (key && !keyToCanonical.has(key)) keyToCanonical.set(key, b);
   }
   return keyToCanonical.get(inputKey) || null;
+}
+
+function blockNumericKey(block) {
+  const [a, b] = String(block || '').split('-');
+  if (!/^\d+$/.test(a || '') || !/^\d+$/.test(b || '')) return null;
+  return `${Number(a)}-${Number(b)}`;
+}
+
+async function resolveCanonicalBlock(inputBlock) {
+  const localBlock = resolveBlockFromAvailableBlocks(inputBlock, getLocalPaddleBlocks());
+  if (localBlock) return localBlock;
+  return resolveBlockFromAvailableBlocks(inputBlock, await fetchAvailableBlocks());
 }
 
 async function resolveBlockForBus(busNumber) {
