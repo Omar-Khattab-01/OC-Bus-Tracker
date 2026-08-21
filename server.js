@@ -72,10 +72,6 @@ const CRON_SECRET = String(process.env.CRON_SECRET || '').trim();
 const LIVE_BUS_ASSIGNMENT_MAX_AGE_MS = Number(
   process.env.LIVE_BUS_ASSIGNMENT_MAX_AGE_MS || DEFAULT_MAX_ASSIGNMENT_AGE_MS
 );
-const LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES = Math.max(
-  0,
-  Number(process.env.LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES || 120)
-);
 const APRIL19_PADDLE_SWITCH_DATE = '2026-04-19';
 const SUMMER_WEEKDAY_PADDLE_SWITCH_DATE = '2026-06-29';
 const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
@@ -791,7 +787,16 @@ function buildBoardMapFromLiveMappings(mappings) {
 async function buildTodayBoardPayload() {
   const now = new Date();
   const nowSeconds = getOttawaNowSeconds();
-  const liveMappingsByBlock = await getLiveBusMappingsByBlock().catch(() => new Map());
+  let liveMappingsByBlock = await getLiveBusMappingsByBlock().catch(() => new Map());
+  if (countLiveBusesInBoardMap(liveMappingsByBlock) === 0 && isGtfsRtConfigured()) {
+    const rebuiltMappings = await buildLiveBusPaddleMappings().catch(() => null);
+    if (rebuiltMappings instanceof Map && rebuiltMappings.size) {
+      liveMappingsByBlock = buildBoardMapFromLiveMappings(rebuiltMappings);
+      if (adminSupabase) {
+        await persistLiveBusPaddleMappings(rebuiltMappings).catch(() => null);
+      }
+    }
+  }
   const activePaddles = getTodayBoardPaddlesForNow().map((entry) => {
     const compareSeconds = entry.carryover ? nowSeconds + 24 * 3600 : nowSeconds;
     const buses = liveMappingsByBlock.get(entry.block) || [];
@@ -862,15 +867,6 @@ async function buildTodayBoardPayload() {
 async function buildLiveBusPaddleMappings() {
   const activePaddles = getActivePaddlesForNow();
   if (!activePaddles.length) return new Map();
-  if (LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES && activePaddles.length > LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES) {
-    const error = new Error(
-      `Live bus refresh skipped: ${activePaddles.length} active paddles exceeds limit ${LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES}.`
-    );
-    error.code = 'too_many_active_paddles';
-    error.activePaddles = activePaddles.length;
-    error.limit = LIVE_BUS_REFRESH_MAX_ACTIVE_PADDLES;
-    throw error;
-  }
 
   const mappings = new Map();
   const concurrency = Math.min(Math.max(2, TRACK_CONCURRENCY), 6);
