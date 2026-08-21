@@ -65,6 +65,7 @@ let fallPdfSearchIndexMtimeMs = 0;
 const PORT = Number(process.env.PORT || 7860);
 const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS || 25000);
 const TRACK_CONCURRENCY = Math.max(1, Number(process.env.TRACK_CONCURRENCY || 6));
+const DIRECT_GTFS_LIVE_LOOKUP_ENABLED = process.env.DIRECT_GTFS_LIVE_LOOKUP_ENABLED === '1' || !process.env.VERCEL;
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = String(process.env.SUPABASE_ANON_KEY || '').trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
@@ -2454,7 +2455,7 @@ function filterPublicLiveResult(payload = null) {
 }
 
 async function fetchGtfsBlockFallback(block, trips) {
-  if (!isGtfsRtConfigured() || !Array.isArray(trips) || !trips.length) {
+  if (!DIRECT_GTFS_LIVE_LOOKUP_ENABLED || !isGtfsRtConfigured() || !Array.isArray(trips) || !trips.length) {
     return null;
   }
 
@@ -2525,6 +2526,7 @@ async function fetchLiveResult(block) {
 }
 
 async function fetchRetainedLiveResult(block) {
+  if (!DIRECT_GTFS_LIVE_LOOKUP_ENABLED) return null;
   const mappings = await getStoredLiveBusPaddleMappingsForBlock(block);
   if (!mappings.length) return null;
   const publicLocationStatus = getPublicLocationStatusForBlock(block);
@@ -2825,7 +2827,7 @@ async function handleBusLookup(busNumber, res) {
     ).catch(() => null);
     let gtfsMatched = null;
 
-    if (isGtfsRtConfigured()) {
+    if (DIRECT_GTFS_LIVE_LOOKUP_ENABLED && isGtfsRtConfigured()) {
       const gtfsStartedAt = Date.now();
       try {
         let cachedBlock = storedMapping?.block || null;
