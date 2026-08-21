@@ -48,6 +48,25 @@ test('VehiclePositions overrides a conflicting TripUpdates vehicle assignment', 
   assert.equal(realtime.positionsByVehicleId.has('4830'), true);
 });
 
+test('block matching treats unpadded and padded OC block IDs as equivalent', () => {
+  const realtime = buildRealtimeIndexes(
+    { entity: [] },
+    { entity: [vehiclePosition('6502', 'trip-44-7', '44')] }
+  );
+  const staticIndex = {
+    tripsById: new Map([['trip-44-7', {
+      tripId: 'trip-44-7',
+      routeId: '44',
+      routeShortName: '44',
+      blockId: '44-07',
+    }]]),
+    stopsById: new Map(),
+  };
+  const direct = findDirectVehiclePositionsForBlock('44-7', staticIndex, realtime);
+
+  assert.equal(direct[0].vehicleId, '6502');
+});
+
 test('an internally inconsistent VehiclePosition trip is rejected', () => {
   const realtime = buildRealtimeIndexes(
     { entity: [] },
