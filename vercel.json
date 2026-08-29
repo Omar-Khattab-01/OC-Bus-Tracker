@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/whatsapp-booking-batches",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/gtfs-static-check",
+      "schedule": "* * * * *"
     }
   ],
   "functions": {

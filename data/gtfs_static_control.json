@@ -1,0 +1,24 @@
+{
+  "enabled": false,
+  "timezone": "America/Toronto",
+  "schedule": [],
+  "lastCheckedAt": "2026-08-24T13:28:18.000Z",
+  "lastScheduledCheckKey": "",
+  "lastChangeDetectedAt": "",
+  "lastRebuildRequestedAt": "",
+  "lastRebuildRequestStatus": "",
+  "remote": {
+    "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
+    "lastModified": "Thu, 20 Aug 2026 21:48:11 GMT",
+    "etag": "0x8DEFF04BADDEDB3",
+    "contentLength": 114291946
+  },
+  "index": {
+    "generatedAt": "2026-08-21T20:58:50.395Z",
+    "feedVersion": "S1000512-S1000514",
+    "feedStartDate": "20260814",
+    "feedEndDate": "20260920",
+    "tripCount": 156133,
+    "stopCount": 5859
+  }
+}

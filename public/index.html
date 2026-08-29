@@ -4987,6 +4987,31 @@
       `;
     }
 
+    const POST_TRIP_CHECK_TEXT = 'Conduct Post Trip Checks at the End of Each Trip and at the End of the Line';
+
+    function splitPostTripCheckText(text) {
+      const value = String(text || '').trim();
+      if (!value) return { notice: '', directions: '' };
+      const prefixPattern = /^(?:(?:Weekdays|Saturday|Sunday|Canada Day|Civic Holiday|Reduced Week)\s+)?Conduct Post Trip Checks at the End of Each Trip and at the End of the Line\.?\s*/i;
+      const directions = value.replace(prefixPattern, '').trim();
+      return {
+        notice: directions !== value ? POST_TRIP_CHECK_TEXT : '',
+        directions,
+      };
+    }
+
+    function renderPostTripCheckNotice(trips) {
+      const firstTrip = Array.isArray(trips) ? trips[0] : null;
+      const split = splitPostTripCheckText(firstTrip?.start_directions || '');
+      if (!split.notice) return '';
+      return `
+        <section class="direction-block">
+          <div class="direction-label">Post Trip Checks</div>
+          <div class="direction-text">${escapeHtml(split.notice)}</div>
+        </section>
+      `;
+    }
+
     function buildPaddleSummaryCard(data, options = {}) {
       const jumpTargetId = String(options.jumpTargetId || '').trim();
       const jumpButton = jumpTargetId
@@ -5205,7 +5230,8 @@
     }
 
     function renderPaddleTrips(trips, garage, activeTrip, activeBreak) {
-      return trips.map((trip, index) => {
+      const postTripCheckNotice = renderPostTripCheckNotice(trips);
+      const tripMarkup = trips.map((trip, index) => {
         const nextTrip = trips[index + 1] || null;
         const isActive = Boolean(
           activeTrip &&
@@ -5236,9 +5262,12 @@
             <div class="direction-text">${escapeHtml(trip.notes)}</div>
           </div>
         ` : '';
+        const startDirectionText = index === 0
+          ? splitPostTripCheckText(trip.start_directions).directions
+          : trip.start_directions;
         const startDirections = renderDirectionBlock(
           'Garage to trip start',
-          trip.start_directions,
+          startDirectionText,
           garage,
           trip.start_stop
         );
@@ -5279,6 +5308,7 @@
           </div>
         `;
       }).join('');
+      return `${postTripCheckNotice}${tripMarkup}`;
     }
 
     function openPaddleModal(data) {

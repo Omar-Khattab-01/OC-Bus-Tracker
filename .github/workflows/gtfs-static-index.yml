@@ -1,0 +1,51 @@
+name: Rebuild GTFS static index
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for the rebuild
+        required: false
+        default: manual
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gtfs-static-index
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Download official OC Transpo GTFS
+        run: curl --fail --location --retry 3 --output "${RUNNER_TEMP}/GTFSExport.zip" "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip"
+
+      - name: Build static index
+        run: node tools/build_gtfs_static_index.js "${RUNNER_TEMP}/GTFSExport.zip" data/gtfs_static_index.json.gz
+
+      - name: Commit updated index
+        run: |
+          if git diff --quiet -- data/gtfs_static_index.json.gz; then
+            echo "GTFS static index is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/gtfs_static_index.json.gz
+          git commit -m "Rebuild GTFS static index"
+          git push

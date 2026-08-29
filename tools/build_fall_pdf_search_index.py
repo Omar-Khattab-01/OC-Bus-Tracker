@@ -9,18 +9,11 @@ OUTPUT_PATH = ROOT / "data" / "fall_pdf_search_index.json"
 
 DOCUMENTS = [
     {
-        "id": "fall_weekday_low",
-        "title": "Fall Paddle Weekday 5-56",
+        "id": "fall_weekday",
+        "title": "Fall Paddle Weekday",
         "kind": "Paddle",
-        "path": "Fall Booking/Fall Paddles/DailyFall(5-01 to 56-09).pdf",
-        "url": "/fall-paddles/files/DailyFall%285-01%20to%2056-09%29.pdf",
-    },
-    {
-        "id": "fall_weekday_high",
-        "title": "Fall Paddle Weekday 57-724",
-        "kind": "Paddle",
-        "path": "Fall Booking/Fall Paddles/DailyFall(57-01 to 724-15).pdf",
-        "url": "/fall-paddles/files/DailyFall%2857-01%20to%20724-15%29.pdf",
+        "path": "Fall Booking/Fall Paddles/FallPaddlesWeekday.pdf",
+        "url": "/fall-paddles/files/FallPaddlesWeekday.pdf",
     },
     {
         "id": "fall_am_pm",

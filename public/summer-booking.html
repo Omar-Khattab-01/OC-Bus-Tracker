@@ -779,8 +779,7 @@
           notFoundLabel: 'Fall paddle',
           paddleName: 'Fall Paddle',
           pdfLinks: [
-            { label: 'Wkdy 5-56', doc: 'fall_weekday_low' },
-            { label: 'Wkdy 57-724', doc: 'fall_weekday_high' },
+            { label: 'Weekday', doc: 'fall_weekday' },
             { label: 'AM/PM', doc: 'fall_am_pm' },
             { label: 'Sat', doc: 'fall_saturday' },
             { label: 'Sun', doc: 'fall_sunday' },
@@ -957,6 +956,31 @@
       `;
     }
 
+    const POST_TRIP_CHECK_TEXT = 'Conduct Post Trip Checks at the End of Each Trip and at the End of the Line';
+
+    function splitPostTripCheckText(text) {
+      const value = String(text || '').trim();
+      if (!value) return { notice: '', directions: '' };
+      const prefixPattern = /^(?:(?:Weekdays|Saturday|Sunday|Canada Day|Civic Holiday|Reduced Week)\s+)?Conduct Post Trip Checks at the End of Each Trip and at the End of the Line\.?\s*/i;
+      const directions = value.replace(prefixPattern, '').trim();
+      return {
+        notice: directions !== value ? POST_TRIP_CHECK_TEXT : '',
+        directions,
+      };
+    }
+
+    function renderPostTripCheckNotice(trips) {
+      const firstTrip = Array.isArray(trips) ? trips[0] : null;
+      const split = splitPostTripCheckText(firstTrip?.start_directions || '');
+      if (!split.notice) return '';
+      return `
+        <section class="direction-block">
+          <div class="direction-label">Post Trip Checks</div>
+          <div class="direction-text">${escapeHtml(split.notice)}</div>
+        </section>
+      `;
+    }
+
     function buildPaddleSummaryCard(data) {
       return `
         <section class="summary-card">
@@ -968,7 +992,8 @@
     }
 
     function renderPaddleTrips(trips, garage, activeTrip, activeBreak) {
-      return trips.map((trip, index) => {
+      const postTripCheckNotice = renderPostTripCheckNotice(trips);
+      const tripMarkup = trips.map((trip, index) => {
         const nextTrip = trips[index + 1] || null;
         const isActive = Boolean(
           activeTrip &&
@@ -999,7 +1024,10 @@
             <div class="direction-text">${escapeHtml(trip.notes)}</div>
           </div>
         ` : '';
-        const startDirections = renderDirectionBlock('Garage to trip start', trip.start_directions, garage, trip.start_stop);
+        const startDirectionText = index === 0
+          ? splitPostTripCheckText(trip.start_directions).directions
+          : trip.start_directions;
+        const startDirections = renderDirectionBlock('Garage to trip start', startDirectionText, garage, trip.start_stop);
         const nextDirections = renderDirectionBlock(
           nextTrip ? `Trip ${trip.trip_number} to Trip ${nextTrip.trip_number}` : `Trip ${trip.trip_number} to garage`,
           trip.next_directions,
@@ -1033,6 +1061,7 @@
           </div>
         `;
       }).join('');
+      return `${postTripCheckNotice}${tripMarkup}`;
     }
 
     function buildPaddleDetailHtml(data) {

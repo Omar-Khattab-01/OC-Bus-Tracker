@@ -165,33 +165,27 @@ PADDLE_VARIANTS = {
         "label": "Fall paddles",
         "activation_date": "2026-08-31",
         "sources": {
-            "Fall Booking/Fall Paddles/DailyFall(5-01 to 56-09).pdf": {
-                "source_id": "fall_weekday_low",
-                "label": "Fall weekdays 5-01 to 56-09",
-                "service_day": "weekday",
-                "category": "regular",
-            },
-            "Fall Booking/Fall Paddles/DailyFall(57-01 to 724-15).pdf": {
-                "source_id": "fall_weekday_high",
-                "label": "Fall weekdays 57-01 to 724-15",
+            "Fall Booking/Fall Paddles/FallPaddlesWeekday.pdf": {
+                "source_id": "fall_weekday_main",
+                "label": "Weekdays",
                 "service_day": "weekday",
                 "category": "regular",
             },
             "Fall Booking/Fall Paddles/DailyFall(AM PM).pdf": {
                 "source_id": "fall_weekday_am_pm",
-                "label": "Fall AM/PM paddles",
+                "label": "AM/PM paddles",
                 "service_day": "weekday",
                 "category": "express_900",
             },
             "Fall Booking/Fall Paddles/FallPaddlesSaturday.pdf": {
                 "source_id": "fall_saturday_main",
-                "label": "Fall Saturday paddles",
+                "label": "Saturday paddles",
                 "service_day": "saturday",
                 "category": "regular",
             },
             "Fall Booking/Fall Paddles/FallPaddleSunday.pdf": {
                 "source_id": "fall_sunday_main",
-                "label": "Fall Sunday paddles",
+                "label": "Sunday paddles",
                 "service_day": "sunday",
                 "category": "regular",
             },
@@ -622,6 +616,11 @@ def build_index():
                 "label": variant_meta["label"],
                 "activation_date": variant_meta.get("activation_date"),
                 "service_days": {service_day: {} for service_day in SERVICE_DAYS},
+            }
+            source_summaries = {
+                source_id: summary
+                for source_id, summary in source_summaries.items()
+                if summary.get("variant_id") != variant_id
             }
         else:
             runs_by_variant[variant_id]["label"] = variant_meta["label"]
