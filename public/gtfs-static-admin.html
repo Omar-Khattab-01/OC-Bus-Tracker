@@ -235,12 +235,12 @@
       `).join('');
     }
 
-    function collectSchedule() {
+    function collectSchedule(requireComplete = true) {
       return [...scheduleRows.querySelectorAll('.schedule-row')].map((element) => {
         const days = [...element.querySelectorAll('[data-day]:checked')].map((input) => input.dataset.day);
         const time = element.querySelector('[data-time]').value;
-        if (!time) throw new Error('Choose a time for every schedule row.');
-        if (!days.length) throw new Error('Select at least one day in every schedule row.');
+        if (requireComplete && !time) throw new Error('Choose a time for every schedule row.');
+        if (requireComplete && !days.length) throw new Error('Select at least one day in every schedule row.');
         return { id: element.dataset.id, days, time };
       });
     }
@@ -299,6 +299,7 @@
     });
 
     document.getElementById('addRowBtn').addEventListener('click', () => {
+      schedule = collectSchedule(false);
       schedule.push({ id: crypto.randomUUID(), days: ['monday'], time: '09:00' });
       renderSchedule();
     });
@@ -306,7 +307,8 @@
     scheduleRows.addEventListener('click', (event) => {
       const button = event.target.closest('[data-remove]');
       if (!button) return;
-      schedule = collectSchedule().filter((row) => row.id !== button.closest('.schedule-row').dataset.id);
+      button.closest('.schedule-row').remove();
+      schedule = collectSchedule(false);
       renderSchedule();
     });
 
