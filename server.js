@@ -86,7 +86,7 @@ const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
 const SUMMER_SUNDAY_PADDLE_SWITCH_DATE = '2026-06-28';
 const SUMMER_PADDLE_VARIANT_ID = 'june29';
 const FALL_PADDLE_VARIANT_ID = 'fall';
-const FALL_PADDLE_SWITCH_AT = String(process.env.FALL_PADDLE_SWITCH_AT || '2026-08-30T12:00:00-04:00').trim();
+const FALL_PADDLE_SWITCH_AT = String(process.env.FALL_PADDLE_SWITCH_AT || '2026-08-30T00:00:00-04:00').trim();
 const REGULAR_PADDLE_SERVICE_DAYS = ['weekday', 'saturday', 'sunday'];
 const SPECIAL_PADDLE_SERVICE_DAYS = ['easter_monday', 'canada_day', 'civic_holiday'];
 
