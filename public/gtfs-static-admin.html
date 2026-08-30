@@ -288,7 +288,8 @@
     document.getElementById('checkBtn').addEventListener('click', async () => {
       const data = await run('Checking official OC Transpo metadata…', () => api('POST', { action: 'check' }));
       if (data) {
-        setStatus(data.changed ? 'Official metadata differs from the saved baseline.' : 'Official metadata matches the saved baseline.', data.changed ? 'warn' : 'ok');
+        const saved = data.committed ? ' Saved the latest metadata.' : ' GitHub write access is not configured here, so it was not saved.';
+        setStatus(`${data.changed ? 'Official metadata differs from the saved baseline.' : 'Official metadata matches the saved baseline.'}${saved}`, data.changed ? 'warn' : 'ok');
       }
     });
 

@@ -3714,7 +3714,7 @@ async function handleGtfsStaticAdmin(req, res) {
 
     const action = String(req.body?.action || '').trim().toLowerCase();
     if (action === 'check') {
-      const result = await checkGtfsStaticControl();
+      const result = await checkGtfsStaticControl({ persist: Boolean(GTFS_STATIC_GITHUB_TOKEN) });
       res.json({ ...result, config: getGtfsStaticAdminConfig() });
       return;
     }
