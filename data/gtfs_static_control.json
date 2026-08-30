@@ -1,16 +1,8 @@
 {
-  "enabled": true,
+  "enabled": false,
   "timezone": "America/Toronto",
-  "schedule": [
-    {
-      "id": "cec6f161-a5cb-45ec-a433-6575a176c7e5",
-      "days": [
-        "sunday"
-      ],
-      "time": "00:05"
-    }
-  ],
-  "lastCheckedAt": "2026-08-30T11:09:12.789Z",
+  "schedule": [],
+  "lastCheckedAt": "2026-08-30T11:01:30.573Z",
   "lastScheduledCheckKey": "",
   "lastChangeDetectedAt": "",
   "lastRebuildRequestedAt": "2026-08-30T10:35:44.113Z",
