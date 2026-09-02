@@ -1,7 +1,15 @@
 {
-  "enabled": false,
+  "enabled": true,
   "timezone": "America/Toronto",
-  "schedule": [],
+  "schedule": [
+    {
+      "id": "adbbcba6-78e1-4764-9d1a-7e74737bf517",
+      "days": [
+        "friday"
+      ],
+      "time": "02:20"
+    }
+  ],
   "lastCheckedAt": "2026-09-02T20:31:16.163Z",
   "lastScheduledCheckKey": "",
   "lastChangeDetectedAt": "",
