@@ -10,23 +10,23 @@
       "time": "02:20"
     }
   ],
-  "lastCheckedAt": "2026-09-08T13:10:54.568Z",
+  "lastCheckedAt": "2026-09-10T13:40:47.505Z",
   "lastScheduledCheckKey": "2026-09-04T02:20",
   "lastChangeDetectedAt": "2026-09-04T06:20:39.054Z",
   "lastRebuildRequestedAt": "2026-09-10T13:39:00.253Z",
-  "lastRebuildRequestStatus": "workflow-dispatched",
+  "lastRebuildRequestStatus": "index-current",
   "remote": {
     "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
-    "lastModified": "Fri, 04 Sep 2026 00:48:26 GMT",
-    "etag": "0x8DF0A1E3ACCFABD",
-    "contentLength": 56128429
+    "lastModified": "Thu, 10 Sep 2026 00:36:16 GMT",
+    "etag": "0x8DF0ED386470907",
+    "contentLength": 54758123
   },
   "index": {
-    "generatedAt": "2026-09-04T06:28:59.371Z",
-    "feedVersion": "S1000515",
-    "feedStartDate": "20260904",
-    "feedEndDate": "20261004",
-    "tripCount": 69207,
-    "stopCount": 5847
+    "generatedAt": "2026-09-10T13:40:47.030Z",
+    "feedVersion": "S1000517",
+    "feedStartDate": "20260910",
+    "feedEndDate": "20261010",
+    "tripCount": 75249,
+    "stopCount": 5844
   }
 }
