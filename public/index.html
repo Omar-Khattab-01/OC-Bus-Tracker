@@ -4760,10 +4760,10 @@
 
     function buildLiveCardsHtml(data, options = {}) {
       if (!data || !Array.isArray(data.buses) || !data.buses.length) return '';
-      const currentTrip = data.currentTrip || null;
+      const currentTrip = data.mode === 'bus' ? null : data.currentTrip || null;
       const debugSummary = buildDebugSummary(data);
       const jumpTargetId = options.jumpTargetId ? String(options.jumpTargetId) : '';
-      const todayWorkEntry = !currentUser ? getActiveDayTodayWorkEntry(data) : null;
+      const todayWorkEntry = data.mode !== 'bus' && !currentUser ? getActiveDayTodayWorkEntry(data) : null;
       const existingTodayWork = readTodayWork();
       const alreadySavedToTodayWork = Boolean(
         todayWorkEntry &&
@@ -5571,7 +5571,7 @@
           addMessage(debugText ? `${data.reply}\n${debugText}` : data.reply, 'bot');
         }
         addCards(data);
-        if ((Array.isArray(data.paddleOptions) && data.paddleOptions.length) || data.paddleAvailable) {
+        if (data.mode !== 'bus' && ((Array.isArray(data.paddleOptions) && data.paddleOptions.length) || data.paddleAvailable)) {
           addPaddleActions(data.block, data.paddleOptions || []);
         }
         if (data.shuttleOptions) {

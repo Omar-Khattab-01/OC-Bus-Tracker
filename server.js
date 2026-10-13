@@ -2820,15 +2820,6 @@ function formatBusReply(payload) {
   for (const bus of buses) {
     lines.push(`${bus.locationText}`);
   }
-  if (payload?.currentTrip?.label) {
-    const tripSuffix = payload.currentTrip.tripNumber ? ` (Trip ${payload.currentTrip.tripNumber})` : '';
-    lines.push(`Current trip: ${payload.currentTrip.label}${tripSuffix}`);
-  }
-  if (payload.block) {
-    lines.push(`Current block: ${payload.block}`);
-  } else if (payload.parked) {
-    lines.push('Status: parked');
-  }
   return lines.join('\n');
 }
 
@@ -2927,8 +2918,6 @@ async function handleBusLookup(busNumber, res) {
           storedMapping
         )
     );
-    const paddleOptions = payload.block ? getPaddleOptionsForBlock(payload.block) : [];
-
     if (payload.block && !payload.retainedAssignment && Array.isArray(payload.buses) && payload.buses.length) {
       for (const bus of payload.buses) {
         rememberLiveBusPaddleMapping(bus.busNumber, {
@@ -2948,15 +2937,13 @@ async function handleBusLookup(busNumber, res) {
       ok: true,
       mode: 'bus',
       busNumber: payload.busNumber,
-      block: payload.block,
       buses: payload.buses,
-      currentTrip,
-      paddleAvailable: Boolean(paddle),
-      paddleOptions,
+      paddleAvailable: false,
+      paddleOptions: [],
       cached: false,
       responseMs: payload.timings.totalLookupMs,
       timings: payload.timings,
-      reply: formatBusReply({ ...payload, currentTrip }),
+      reply: formatBusReply(payload),
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {
