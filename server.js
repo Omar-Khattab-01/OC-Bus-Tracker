@@ -152,6 +152,8 @@ const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   : null;
 
 const app = express();
+// Stripe signature verification needs the unparsed body, before the global JSON parser.
+app.use('/api/support', require('./lib/supporters').createSupportRouter({ db: adminSupabase }));
 app.use(express.json({ limit: '120mb' }));
 app.get('/', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'index.html'));
