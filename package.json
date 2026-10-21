@@ -17,6 +17,7 @@
     "express": "^4.21.2",
     "pdfjs-dist": "^4.10.38",
     "protobufjs": "^8.0.1",
+    "stripe": "^23.0.0",
     "unzipper": "^0.12.3"
   }
 }
