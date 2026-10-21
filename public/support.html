@@ -5,24 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Support OC OPERATORS TOOLS</title>
   <style>
-    .support-management { margin: 24px 0 0; padding-top: 24px; border-top: 1px solid var(--border); }
-    .support-management h3 { margin: 0 0 10px; font-size: 20px; }
-    .support-management p { color: var(--oc-mist); font-size: 14px; line-height: 1.6; }
-    .support-management a { color: var(--oc-white); text-underline-offset: 3px; }
-    .support-restore-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 16px; }
-    .support-restore-form label { display: grid; gap: 6px; flex: 1 1 220px; min-width: 0; font-size: 13px; }
-    .support-restore-form input { width: 100%; min-width: 0; padding: 12px; color: var(--oc-white); background: #171c22;
-      border: 1px solid var(--border); border-radius: 6px; font: inherit; }
-    .support-management button { cursor: pointer; font: inherit; }
-    .support-management button:disabled { opacity: .6; cursor: wait; }
-    .support-management [hidden] { display: none !important; }
-    .support-management .support-button { white-space: normal; max-width: 100%; min-width: 0; text-align: center;
-      border-radius: 6px; font-size: 14px; line-height: 1.4; }
-    .support-management-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-    #supporterReceipt { padding: 16px 0; border-bottom: 1px solid var(--border); }
-    #supporterReceipt[hidden] { display: none; }
-    #supporterReceipt h3 { margin: 0 0 8px; }
-    #supporterReceipt p { color: var(--oc-mist); line-height: 1.6; }
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
     :root {
@@ -412,10 +394,6 @@
     </header>
 
     <section class="main">
-      <section id="supporterReceipt" aria-live="polite" hidden>
-        <h3 id="supporterReceiptTitle"></h3>
-        <p id="supporterReceiptMessage"></p>
-      </section>
       <div class="support-hero">
         <div class="intro">
           <h2>Support OC OPERATORS TOOLS</h2>
@@ -479,28 +457,10 @@
           </div>
         </section>
       </div>
-      <section class="support-management" aria-labelledby="manageSupportTitle">
-        <h3 id="manageSupportTitle">Already a supporter?</h3>
-        <p>Thank you. Manage or cancel your monthly support, update your payment method, or view your receipts.</p>
-        <div class="support-management-actions">
-          <a class="support-button" id="manageSupportButton" href="https://billing.stripe.com/p/login/6oU28r6xFavE7Fp3wg0VO00">Manage or cancel monthly support</a>
-        </div>
-        <p>Using another device? Verify the email you used at checkout to restore your supporter recognition. No password needed.</p>
-        <form class="support-restore-form" id="restoreSupportForm">
-          <label for="supporterEmail">Payment email
-            <input id="supporterEmail" name="email" type="email" autocomplete="email" required maxlength="254" />
-          </label>
-          <button class="support-button" id="restoreSupportButton" type="submit">Email me a verification link</button>
-        </form>
-        <p id="supportManagementNotice" role="status" aria-live="polite"></p>
-        <button class="support-button" id="syncSupportButton" type="button" hidden>Import existing contributions</button>
-      </section>
     </section>
   </main>
 
   <script src="/oc-header.js"></script>
-  <script src="/vendor/supabase.js"></script>
-  <script src="/support.js" defer></script>
   <script>
     const ONE_TIME_SUPPORT_3_URL = 'https://buy.stripe.com/3cIeVd4px8nw5xh5Eo0VO02';
     const ONE_TIME_SUPPORT_5_URL = 'https://buy.stripe.com/7sYbJ109h33c1h15Eo0VO01';
@@ -508,7 +468,7 @@
     const ONE_TIME_SUPPORT_20_URL = 'https://buy.stripe.com/4gM5kDaNVgU26Blgj20VO04';
     const CUSTOM_AMOUNT_SUPPORT_URL = 'https://buy.stripe.com/4gM00j09h33cf7RaYI0VO05';
     const MONTHLY_SUPPORT_URL = 'https://buy.stripe.com/6oU28r6xFavE7Fp3wg0VO00';
-    const supportButtons = document.querySelectorAll('[data-support-link]');
+    const supportButtons = document.querySelectorAll('.support-button');
     const setupNote = document.getElementById('setupNote');
 
     const supportLinks = {
@@ -528,7 +488,7 @@
         return;
       }
 
-      button.href = window.location.protocol === 'file:' ? url : `/api/support/checkout?option=${encodeURIComponent(button.dataset.supportLink)}`;
+      button.href = url;
       button.target = '_blank';
       button.rel = 'noopener noreferrer';
     });

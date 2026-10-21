@@ -14,9 +14,6 @@
     }
   ],
   "functions": {
-    "api/support/*.js": {
-      "maxDuration": 60
-    },
     "api/admin/gtfs-static.js": {
       "maxDuration": 60
     },

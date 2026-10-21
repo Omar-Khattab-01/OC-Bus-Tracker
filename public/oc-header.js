@@ -43,41 +43,6 @@
         min-width: 0;
       }
 
-      .oc-is-supporter #supportBanner,
-      .oc-is-supporter .main-support-footer,
-      .oc-is-supporter .oc-support-footer,
-      .oc-is-supporter .support-note-card {
-        display: none !important;
-      }
-
-      .oc-supporter-banner[hidden] { display: none; }
-      .oc-is-supporter .oc-meta-bar { flex-wrap: wrap; }
-      .oc-supporter-banner {
-        display: flex;
-        flex: 1 0 100%;
-        width: 100%;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 6px 12px;
-        padding: 7px 10px;
-        border-left: 3px solid #e25d53;
-        background: #401f24;
-        color: #fff3f1;
-        font-size: 12px;
-        line-height: 1.5;
-        min-width: 0;
-        max-width: 100%;
-        overflow-wrap: anywhere;
-      }
-      .oc-supporter-banner[data-kind="one-time"] {
-        border-left-color: #54c8ae;
-        background: #173c35;
-        color: #e6fff7;
-      }
-      .oc-supporter-banner strong { font-weight: 600; }
-      .oc-supporter-banner span { flex: 1 1 180px; }
-      .oc-supporter-banner a { color: inherit; text-underline-offset: 3px; }
-
       .brand-link:hover .badge,
       .brand-link:focus-visible .badge {
         transform: translateY(-1px);
@@ -509,9 +474,8 @@
     return overlay;
   }
 
-  async function initSupportMessage() {
+  function initSupportMessage() {
     updateSupportLinks();
-    if (window.OCSupport) await window.OCSupport.ready;
     if (isSupportPage() || document.getElementById('ocSupportMessageOverlay')) return;
 
     if (new URLSearchParams(window.location.search || '').get('showSupportMessage') === '1') {
@@ -538,10 +502,9 @@
     });
 
     document.body.appendChild(overlay);
-    const supporter = window.OCSupport?.status;
-    if (!isSupportMessageDismissed() && !supporter?.suppressPrompts && supporter?.available !== false) {
+    if (!isSupportMessageDismissed()) {
       window.setTimeout(() => {
-        if (!window.OCSupport?.status.suppressPrompts && !isSupportMessageDismissed()) overlay.hidden = false;
+        overlay.hidden = false;
       }, 550);
     }
   }
@@ -549,11 +512,7 @@
   ensureHeaderStyles();
   makeBrandClickable();
   injectMetaBar();
-  const supportScript = document.createElement('script');
-  supportScript.src = window.location.protocol === 'file:' ? 'support-status.js' : '/support-status.js';
-  supportScript.onload = initSupportMessage;
-  supportScript.onerror = initSupportMessage;
-  document.head.appendChild(supportScript);
+  initSupportMessage();
 
   window.__ocHeaderDebug = {
     getTorontoDateParts,

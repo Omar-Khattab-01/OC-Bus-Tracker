@@ -2644,11 +2644,6 @@
     }
 
     function renderSupportNote() {
-      if (window.OCSupport?.status.suppressPrompts) {
-        return `<section class="section-card"><div class="field-label">Thank you for your support</div>
-          <div class="subtle-text">Your contribution helps keep OC OPERATORS TOOLS running.</div>
-          <div class="section-actions"><a class="link-btn" href="/support">Manage your support</a></div></section>`;
-      }
       return `
         <section class="section-card support-note-card">
           <div class="field-label">Support</div>
@@ -4690,7 +4685,6 @@
     }
 
     async function handleSession(session) {
-      if (window.OCSupport) window.OCSupport.refresh(session?.access_token || null);
       const wasSignedIn = Boolean(currentUser);
       if (await enforceRequiredPasswordReset(session)) {
         currentUser = null;
