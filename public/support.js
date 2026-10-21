@@ -4,6 +4,7 @@
   const manage = document.getElementById('manageSupportButton');
   const restore = document.getElementById('restoreSupportButton');
   const sync = document.getElementById('syncSupportButton');
+  const showBanner = document.getElementById('showSupporterBannerButton');
   let client;
   let accessToken;
 
@@ -11,6 +12,7 @@
     const receipt = document.getElementById('supporterReceipt');
     if (status.portalUrl) manage.href = status.portalUrl;
     sync.hidden = !status.canSync;
+    showBanner.hidden = !status.suppressPrompts || !window.OCSupport?.bannerDismissed;
     receipt.hidden = !status.suppressPrompts;
     if (status.suppressPrompts) {
       const monthly = status.kind === 'monthly';
@@ -30,6 +32,7 @@
   }
 
   window.addEventListener('oc:support-status', (event) => update(event.detail));
+  showBanner.addEventListener('click', () => window.OCSupport?.showBanner());
 
   document.getElementById('restoreSupportForm').addEventListener('submit', async (event) => {
     event.preventDefault();

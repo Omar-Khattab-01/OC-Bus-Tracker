@@ -13,6 +13,7 @@ app.get('/preview/:kind', (req, res) => {
 app.get('/api/support/status', (req, res) => {
   const kind = String(req.headers.cookie || '').match(/(?:^|;\s*)oc_support_preview=(monthly|one-time|none)(?:;|$)/)?.[1] || 'none';
   res.set('Cache-Control', 'no-store').json({ enabled: true, kind, suppressPrompts: kind !== 'none',
+    supportingSince: kind === 'monthly' ? '2026-10-01T16:00:00Z' : null,
     expiresAt: kind !== 'none' ? new Date(Date.now() + 30 * 86400000).toISOString() : null,
     portalUrl: 'https://billing.stripe.com/p/login/6oU28r6xFavE7Fp3wg0VO00' });
 });

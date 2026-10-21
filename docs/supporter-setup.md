@@ -31,6 +31,17 @@ Apply `supabase/migration_supporters.sql` to the existing OC database. The five
 tables have RLS enabled and no browser-client access. Only the service role can
 read and write billing records.
 
+Also apply `supabase/migration_supporter_since.sql` before releasing the banner
+updates. This stores the first subscription invoice's actual paid timestamp;
+renewals preserve it. Re-run the import to backfill existing subscriptions.
+The monthly banner omits the date when it has not been verified.
+
+The thank-you banner can be dismissed independently of supporter status. That
+preference lasts 30 days in the same browser for the current supporter type,
+across pages and tabs. The banner returns only if recognition is still active.
+A monthly upgrade shows its new banner. Supporters can restore
+a dismissed banner from **Already a supporter?** on the support page.
+
 ## Stripe Webhook
 
 Register `https://YOUR_OC_SITE/api/support/webhook` in Stripe Workbench and enable:

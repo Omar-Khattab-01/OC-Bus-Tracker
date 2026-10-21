@@ -20,6 +20,16 @@ test('monthly recognition takes precedence and ends at the paid period boundary'
   }
 });
 
+test('supporting-since uses the earliest verified subscription payment, not a renewal or one-time gift', () => {
+  const first = '2026-08-10T12:00:00Z';
+  const subs = [
+    { status: 'active', current_period_end: future, first_paid_at: '2026-10-01T12:00:00Z' },
+    { status: 'canceled', first_paid_at: first },
+  ];
+  assert.equal(supporterStatus(subs, [], now).supportingSince, new Date(first).toISOString());
+  assert.equal(supporterStatus([{ status: 'active', current_period_end: future }], [], now).supportingSince, null);
+});
+
 test('one-time recognition lasts exactly 30 days, excludes refunds, and extends on another contribution', () => {
   const payment = { amount: 1000, paid_at: new Date(now).toISOString(), refunded: false };
   assert.equal(supporterStatus([], [payment], now).kind, 'one-time');
@@ -80,6 +90,7 @@ function fixture() {
     paymentLinks: { retrieve: async (id) => ({ url: id === 'plink_support' ? 'https://buy.stripe.com/7sYbJ109h33c1h15Eo0VO01' : 'https://buy.stripe.com/unrelated' }) },
     customers: { retrieve: async () => ({ id: 'cus_1', email: 'supporter@example.com' }) },
     subscriptions: { retrieve: async () => sub },
+    invoices: { retrieve: async () => ({ status_transitions: { paid_at: Math.floor(now / 1000) } }) },
     paymentIntents: { retrieve: async () => ({ latest_charge: { refunded: false } }) },
     charges: { retrieve: async () => ({ payment_intent: 'pi_1', refunded: true }) },
   };
@@ -105,10 +116,11 @@ test('verified checkout is idempotent, excludes unrelated payments, and refunds 
 
 test('subscription notifications read current state and recognize a paid anonymous browser', async () => {
   const { db, stripe, session, sub } = fixture();
-  session.mode = 'subscription'; session.customer = 'cus_1'; session.subscription = 'sub_1';
+  session.mode = 'subscription'; session.customer = 'cus_1'; session.subscription = 'sub_1'; session.invoice = 'in_1';
   const service = createSupportService({ db, stripe });
   await service.syncCheckout(session.id);
   assert.equal((await service.status('a'.repeat(64))).kind, 'monthly');
+  assert.equal((await service.status('a'.repeat(64))).supportingSince, new Date(now).toISOString());
   sub.status = 'canceled';
   await service.syncEvent({ type: 'customer.subscription.updated', data: { object: { id: 'sub_1', status: 'active' } } });
   assert.equal((await service.status('a'.repeat(64))).kind, 'none');

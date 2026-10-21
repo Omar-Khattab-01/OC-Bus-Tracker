@@ -69,6 +69,12 @@
         max-width: 100%;
         overflow-wrap: anywhere;
       }
+      .oc-supporter-banner[data-kind="monthly"] {
+        border-left-color: #e9bd5b;
+        background: #302b1e;
+        color: #fff1c9;
+      }
+      .oc-supporter-banner[data-kind="monthly"] strong { color: #f5cf7c; }
       .oc-supporter-banner[data-kind="one-time"] {
         border-left-color: #54c8ae;
         background: #173c35;
@@ -77,6 +83,23 @@
       .oc-supporter-banner strong { font-weight: 600; }
       .oc-supporter-banner span { flex: 1 1 180px; }
       .oc-supporter-banner a { color: inherit; text-underline-offset: 3px; }
+      .oc-supporter-since { display: block; font-size: 11px; font-weight: 400; color: inherit; }
+      .oc-supporter-dismiss {
+        flex: 0 0 28px;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        margin-left: auto;
+        border: 1px solid currentColor;
+        border-radius: 4px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .oc-supporter-dismiss:hover { background: rgba(255, 255, 255, .1); }
 
       .brand-link:hover .badge,
       .brand-link:focus-visible .badge {
