@@ -5,6 +5,24 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const app = require('../server');
+const retiredHoliday = require('../api/retired-holiday-paddles');
+
+test('Vercel retirement rewrites and handler return HTTP 410 for old pages and APIs', () => {
+  const config = require('../vercel.json');
+  for (const source of ['/canada-day-paddles', '/civic-holiday-paddles',
+    '/api/canada-day-paddles', '/api/civic-holiday-paddles']) {
+    const route = config.rewrites.find((rule) => rule.source === source);
+    assert.ok(route, source);
+    const headers = {};
+    let body;
+    const res = { setHeader: (key, value) => { headers[key] = value; }, end: (value) => { body = value; } };
+    retiredHoliday({ url: route.destination }, res);
+    assert.equal(res.statusCode, 410);
+    assert.equal(headers['Cache-Control'], 'no-store');
+    if (source.startsWith('/api/')) assert.equal(JSON.parse(body).ok, false);
+    else assert.match(body, /Back to Lookup/);
+  }
+});
 
 test('holiday tabs and their handlers are removed while current navigation remains', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');

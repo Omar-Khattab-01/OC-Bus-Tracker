@@ -1,4 +1,22 @@
 {
+  "rewrites": [
+    {
+      "source": "/canada-day-paddles",
+      "destination": "/api/retired-holiday-paddles?view=page"
+    },
+    {
+      "source": "/civic-holiday-paddles",
+      "destination": "/api/retired-holiday-paddles?view=page"
+    },
+    {
+      "source": "/api/canada-day-paddles",
+      "destination": "/api/retired-holiday-paddles"
+    },
+    {
+      "source": "/api/civic-holiday-paddles",
+      "destination": "/api/retired-holiday-paddles"
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/live-bus-paddles",
