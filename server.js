@@ -323,16 +323,6 @@ function isEasterMondayOptionVisible(referenceDate = new Date()) {
   return ottawaIso === '2026-04-05' || ottawaIso === '2026-04-06';
 }
 
-function isCanadaDayOptionVisible(referenceDate = new Date()) {
-  const ottawaIso = getOttawaDateString(referenceDate);
-  return ottawaIso === '2026-06-30' || ottawaIso === '2026-07-01';
-}
-
-function isCivicHolidayOptionVisible(referenceDate = new Date()) {
-  const ottawaIso = getOttawaDateString(referenceDate);
-  return ottawaIso === '2026-08-02' || ottawaIso === '2026-08-03';
-}
-
 function timeToSeconds(value) {
   const t = String(value || '').trim();
   const m = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
@@ -1533,18 +1523,6 @@ function getPaddleOptionsForBlock(block) {
       referenceDate,
       variantId: 'current',
     }), 'current');
-  }
-  if (isCanadaDayOptionVisible(referenceDate)) {
-    addOption('canada_day', getPaddleRunForDay('canada_day', paddleId, {
-      referenceDate,
-      variantId: SUMMER_PADDLE_VARIANT_ID,
-    }), SUMMER_PADDLE_VARIANT_ID);
-  }
-  if (isCivicHolidayOptionVisible(referenceDate)) {
-    addOption('civic_holiday', getPaddleRunForDay('civic_holiday', paddleId, {
-      referenceDate,
-      variantId: SUMMER_PADDLE_VARIANT_ID,
-    }), SUMMER_PADDLE_VARIANT_ID);
   }
 
   const currentServiceDay = getOttawaServiceDayKey();
@@ -4584,10 +4562,12 @@ app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/fall-booking', handleFallBooking);
 app.post('/api/fall-booking', handleFallBooking);
-app.get('/api/canada-day-paddles', handleCanadaDayPaddles);
-app.post('/api/canada-day-paddles', handleCanadaDayPaddles);
-app.get('/api/civic-holiday-paddles', handleCivicHolidayPaddles);
-app.post('/api/civic-holiday-paddles', handleCivicHolidayPaddles);
+app.all(['/api/canada-day-paddles', '/api/civic-holiday-paddles'], (_req, res) => {
+  res.set('Cache-Control', 'no-store').status(410).json({
+    ok: false,
+    error: 'These seasonal holiday paddles have been retired. Please use the current paddle lookup.',
+  });
+});
 app.get('/api/shuttle', handleShuttle);
 app.get('/api/shuttles', handleShuttlesCatalog);
 app.get('/api/gtfs-lookup', handleGtfsLookup);
@@ -4640,11 +4620,10 @@ app.get('/summer-booking', (_req, res) => {
 app.get('/summer-paddles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
-app.get('/canada-day-paddles', (_req, res) => {
-  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
-});
-app.get('/civic-holiday-paddles', (_req, res) => {
-  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+app.get(['/canada-day-paddles', '/civic-holiday-paddles'], (_req, res) => {
+  res.set('Cache-Control', 'no-store').status(410).type('html').send(
+    '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Holiday paddles retired</title><h1>These holiday paddles are no longer available</h1><p>Please use the current paddle lookup.</p><a href="/">Back to Lookup</a></html>'
+  );
 });
 app.get('/fall-paddles', (_req, res) => {
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
