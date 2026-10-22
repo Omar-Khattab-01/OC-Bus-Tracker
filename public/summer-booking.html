@@ -547,7 +547,7 @@
 
     .trip-top {
       display: grid;
-      grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+      grid-template-columns: minmax(0, 1fr);
       align-items: center;
       gap: 12px;
       margin-bottom: 8px;
@@ -568,8 +568,8 @@
     }
 
     .trip-title-main {
-      justify-self: center;
-      text-align: center;
+      justify-self: start;
+      text-align: left;
       width: 100%;
       min-width: 0;
       overflow-wrap: anywhere;
@@ -1029,7 +1029,7 @@
           : trip.start_directions;
         const startDirections = renderDirectionBlock('Garage to trip start', startDirectionText, garage, trip.start_stop);
         const nextDirections = renderDirectionBlock(
-          nextTrip ? `Trip ${trip.trip_number} to Trip ${nextTrip.trip_number}` : `Trip ${trip.trip_number} to garage`,
+          nextTrip ? `Paddle trip #${trip.trip_number} to paddle trip #${nextTrip.trip_number}` : `Paddle trip #${trip.trip_number} to garage`,
           trip.next_directions,
           trip.end_stop,
           nextTrip ? nextTrip.start_stop : garage
@@ -1045,11 +1045,9 @@
           <div class="trip-stack">
             <article class="trip-item ${isActive ? 'active' : ''}">
               <div class="trip-top">
-                <div class="trip-title trip-title-prefix">Trip ${escapeHtml(trip.trip_number)}:</div>
-                <div class="trip-title trip-title-main">${escapeHtml(trip.route || 'N/A')} ${escapeHtml(trip.headsign || 'No headsign')}</div>
-                <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
+                <div class="trip-title trip-title-main">Route ${escapeHtml(trip.route || 'N/A')} · ${escapeHtml(trip.headsign || 'No headsign')}</div>
               </div>
-              <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
+              <div class="trip-row">Paddle trip #${escapeHtml(trip.trip_number)} · ${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
               <div class="trip-row">${startRow}</div>
               ${reliefRow}
               <div class="trip-row">${endRow}</div>

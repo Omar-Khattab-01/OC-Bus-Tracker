@@ -404,6 +404,9 @@
       gap: 14px;
     }
 
+    #shuttleBody { padding-top: 0; --shuttle-content-top: 16px; }
+    #shuttleTopAnchor { padding-top: var(--shuttle-content-top); }
+
     .summary-card {
       border: 1px solid rgba(255, 179, 72, 0.24);
       background: rgba(42, 30, 12, 0.45);
@@ -515,8 +518,9 @@
 
     .schedule-table {
       width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: visible;
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: rgba(255, 255, 255, 0.03);
@@ -532,12 +536,19 @@
     }
 
     .schedule-table th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       color: var(--oc-mist);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      background: rgba(255, 255, 255, 0.04);
+      background: #252c35;
+      box-shadow: 0 1px 0 var(--border);
     }
+
+    .schedule-table th:first-child { border-top-left-radius: 14px; }
+    .schedule-table th:last-child { border-top-right-radius: 14px; }
 
     .schedule-table tr:last-child td {
       border-bottom: none;
@@ -593,6 +604,7 @@
     }
 
     @media (max-width: 640px) {
+      #shuttleBody { --shuttle-content-top: 12px; }
       body { padding: 12px; }
       .header, .main { padding: 16px; }
       .page-head, .shuttle-top, .modal-head { flex-direction: column; }

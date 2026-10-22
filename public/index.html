@@ -1014,6 +1014,9 @@
       gap: 14px;
     }
 
+    #shuttleBody { padding-top: 0; --shuttle-content-top: 16px; }
+    #shuttleTopAnchor { padding-top: var(--shuttle-content-top); }
+
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1147,7 +1150,7 @@
 
     .trip-top {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: minmax(0, 1fr);
       align-items: center;
       gap: 12px;
       margin-bottom: 8px;
@@ -1166,9 +1169,11 @@
     }
 
     .trip-title-main {
-      justify-self: center;
-      text-align: center;
+      justify-self: start;
+      text-align: left;
       width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .trip-route {
@@ -1368,10 +1373,11 @@
 
     .schedule-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       border: 1px solid var(--border);
       border-radius: 14px;
-      overflow: hidden;
+      overflow: visible;
       background: rgba(12, 16, 21, 0.74);
       table-layout: fixed;
       font-variant-numeric: tabular-nums;
@@ -1386,12 +1392,19 @@
     }
 
     .schedule-table th {
-      background: rgba(28, 34, 42, 0.92);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #252c35;
+      box-shadow: 0 1px 0 var(--border);
       color: var(--oc-mist);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
+
+    .schedule-table th:first-child { border-top-left-radius: 14px; }
+    .schedule-table th:last-child { border-top-right-radius: 14px; }
 
     .schedule-table tr:last-child td {
       border-bottom: 0;
@@ -1413,6 +1426,7 @@
     }
 
     @media (max-width: 700px) {
+      #shuttleBody { --shuttle-content-top: 12px; }
       body {
         padding: 8px;
         overflow: auto;
@@ -4774,8 +4788,10 @@
           Number.isFinite(Number(bus.latitude)) && Number.isFinite(Number(bus.longitude));
         const statusLabel = bus.assignmentStatus === 'break' || data.scheduledBreak ? 'break' : 'live';
         const tripLabel = currentTrip && currentTrip.label
-          ? `Current trip: ${escapeHtml(currentTrip.label)}${currentTrip.tripNumber ? ` (Trip ${escapeHtml(currentTrip.tripNumber)})` : ''}`
+          ? `Currently operating: ${currentTrip.route ? `Route ${escapeHtml(currentTrip.route)}${currentTrip.headsign ? ` · ${escapeHtml(currentTrip.headsign)}` : ''}` : escapeHtml(currentTrip.label)}`
           : '';
+        const paddleTripLabel = currentTrip?.tripNumber
+          ? `${data.block ? `Paddle ${escapeHtml(data.block)} · ` : ''}Paddle trip #${escapeHtml(currentTrip.tripNumber)}` : '';
         return `
           <article class="card">
           <div class="row">
@@ -4789,6 +4805,7 @@
             </div>
           </div>
           ${tripLabel ? `<div class="loc">${tripLabel}</div>` : ''}
+          ${paddleTripLabel ? `<div class="loc">${paddleTripLabel}</div>` : ''}
           <div class="loc">${bus.locationText}</div>
           ${debugSummary}
           <div class="card-actions">
@@ -5020,8 +5037,9 @@
               <div class="summary-title">Active Trip</div>
               ${jumpButton}
             </div>
-            <div class="summary-main">Trip ${escapeHtml(data.activeTrip.tripNumber)}: ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
-            <div class="summary-sub">Route ${escapeHtml(data.activeTrip.route || 'N/A')} | ${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
+            <div class="summary-main">Route ${escapeHtml(data.activeTrip.route || 'N/A')} · ${escapeHtml(data.activeTrip.headsign || 'No headsign')}</div>
+            <div class="summary-sub">${escapeHtml(data.activeTrip.startTime || '--:--')} to ${escapeHtml(data.activeTrip.endTime || '--:--')}</div>
+            <div class="summary-sub">Paddle trip #${escapeHtml(data.activeTrip.tripNumber || '?')}</div>
           </section>
         `;
       }
@@ -5033,7 +5051,8 @@
               ${jumpButton}
             </div>
             <div class="summary-main">${escapeHtml(data.activeBreak.remainingMinutes || 0)} min remaining</div>
-            <div class="summary-sub">Until Trip ${escapeHtml(data.activeBreak.nextTripNumber || '?')}${data.activeBreak.nextTripRoute ? ` · Route ${escapeHtml(data.activeBreak.nextTripRoute)}` : ''}${data.activeBreak.nextTripHeadsign ? ` · ${escapeHtml(data.activeBreak.nextTripHeadsign)}` : ''}</div>
+            <div class="summary-sub">Next: ${data.activeBreak.nextTripRoute ? `Route ${escapeHtml(data.activeBreak.nextTripRoute)} · ` : ''}${escapeHtml(data.activeBreak.nextTripHeadsign || 'No headsign')}</div>
+            <div class="summary-sub">Paddle trip #${escapeHtml(data.activeBreak.nextTripNumber || '?')}</div>
             <div class="summary-sub">Back at ${escapeHtml(data.activeBreak.nextTripStartTime || '--:--')}${data.activeBreak.nextTripStartStop ? ` from ${escapeHtml(data.activeBreak.nextTripStartStop)}` : ''}</div>
           </section>
         `;
@@ -5268,7 +5287,7 @@
           trip.start_stop
         );
         const nextDirections = renderDirectionBlock(
-          nextTrip ? `Trip ${trip.trip_number} to Trip ${nextTrip.trip_number}` : `Trip ${trip.trip_number} to garage`,
+          nextTrip ? `Paddle trip #${trip.trip_number} to paddle trip #${nextTrip.trip_number}` : `Paddle trip #${trip.trip_number} to garage`,
           trip.next_directions,
           trip.end_stop,
           nextTrip ? nextTrip.start_stop : garage
@@ -5287,12 +5306,10 @@
           <div class="trip-stack">
             <article class="trip-item ${isActive ? 'active' : ''}" ${isActive ? 'id="currentPaddleTarget"' : ''}>
               <div class="trip-top">
-                <div class="trip-title trip-title-prefix">Trip ${escapeHtml(trip.trip_number)}:</div>
-                <div class="trip-title trip-title-main">${escapeHtml(trip.route || 'N/A')} ${escapeHtml(trip.headsign || 'No headsign')}</div>
-                <div class="trip-route">Route ${escapeHtml(trip.route || 'n/a')}</div>
+                <div class="trip-title trip-title-main">Route ${escapeHtml(trip.route || 'N/A')} · ${escapeHtml(trip.headsign || 'No headsign')}</div>
               </div>
               ${isActive ? `<div class="trip-live-actions"><span></span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">&#8593;</button></div>` : ''}
-              <div class="trip-row">${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
+              <div class="trip-row">Paddle trip #${escapeHtml(trip.trip_number)} · ${escapeHtml(trip.start_time || '--:--')} to ${escapeHtml(trip.end_time || '--:--')}</div>
               <div class="trip-row">${startRow}</div>
               ${reliefRow}
               <div class="trip-row">${endRow}</div>

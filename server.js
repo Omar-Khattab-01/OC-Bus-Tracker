@@ -819,7 +819,7 @@ async function buildTodayBoardPayload() {
         : String(activeTrip?.headsign || '').trim()
           || 'Live location unavailable');
     const statusLabel = activeTrip
-      ? `Trip ${activeTrip.tripNumber || '?'}${route ? ` on route ${route}` : ''}`
+      ? `${route ? `Route ${route} · ` : ''}Paddle trip #${activeTrip.tripNumber || '?'}`
       : `${activeBreak.splitBreak ? 'Split break' : 'Break'} until ${activeBreak.endsAt || '--:--'}`;
 
     return {
@@ -2757,8 +2757,10 @@ function formatChatReply(payload) {
     lines.push(`Bus ${bus.busNumber}: ${bus.locationText}`);
   }
   if (payload?.currentTrip?.label) {
-    const tripSuffix = payload.currentTrip.tripNumber ? ` (Trip ${payload.currentTrip.tripNumber})` : '';
-    lines.push(`Current trip: ${payload.currentTrip.label}${tripSuffix}`);
+    const trip = payload.currentTrip;
+    const routeLabel = trip.route ? `Route ${trip.route}${trip.headsign ? ` · ${trip.headsign}` : ''}` : trip.label;
+    lines.push(`Currently operating: ${routeLabel}`);
+    if (trip.tripNumber) lines.push(`Paddle trip #${trip.tripNumber}`);
   }
   return lines.join('\n');
 }
