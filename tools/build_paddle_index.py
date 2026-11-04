@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import re
@@ -16,9 +17,44 @@ SERVICE_DAYS = (
     "easter_monday",
     "canada_day",
     "civic_holiday",
+    "reduced_week",
 )
 
 PADDLE_VARIANTS = {
+    "winter": {
+        "label": "Winter paddles",
+        "activation_date": "2026-12-20",
+        "sources": {
+            "assets/paddles/winter-2026/weekday/Daily JANPDA27 (5-01 to 53-10).pdf": {
+                "source_id": "winter_weekday_low", "label": "Weekdays 5-01 to 53-10",
+                "service_day": "weekday", "category": "regular",
+            },
+            "assets/paddles/winter-2026/weekday/Daily JANPDA27 (56-01 to 899-01).pdf": {
+                "source_id": "winter_weekday_high", "label": "Weekdays 56-01 to 899-01",
+                "service_day": "weekday", "category": "regular",
+            },
+            "assets/paddles/winter-2026/weekday/JANPDA27 (AM & PM).pdf": {
+                "source_id": "winter_weekday_am_pm", "label": "Weekday AM/PM and 900 blocks",
+                "service_day": "weekday", "category": "express_900",
+            },
+            "assets/paddles/winter-2026/saturday/JANPSA27.pdf": {
+                "source_id": "winter_saturday", "label": "Saturday paddles",
+                "service_day": "saturday", "category": "regular",
+            },
+            "assets/paddles/winter-2026/sunday/JANPSU27.pdf": {
+                "source_id": "winter_sunday", "label": "Sunday paddles",
+                "service_day": "sunday", "category": "regular",
+            },
+            "assets/paddles/winter-2026/Reduced/Reduce week JANPRW27 (5-01 to 56-10).pdf": {
+                "source_id": "winter_reduced_low", "label": "Reduced weekdays 5-01 to 56-10",
+                "service_day": "reduced_week", "category": "reduced_week", "service_header": "Reduced Week",
+            },
+            "assets/paddles/winter-2026/Reduced/Reduce weekJANPRW27 (57-01 to 899).pdf": {
+                "source_id": "winter_reduced_high", "label": "Reduced weekdays 57-01 to 899",
+                "service_day": "reduced_week", "category": "reduced_week", "service_header": "Reduced Week",
+            },
+        },
+    },
     "current": {
         "label": "Current spring paddles",
         "sources": {
@@ -194,6 +230,9 @@ PADDLE_VARIANTS = {
 }
 
 INSTRUCTION_PREFIXES = (
+    "INTO ",
+    "AROUND ",
+    "PROCEED ",
     "NOTE:",
     "CONTINUE",
     "ROADWAY",
@@ -227,9 +266,9 @@ def paddle_id_to_block_label(paddle_id: str) -> str:
     return f"{route}-{run}"
 
 
-def parse_trip_header(line: str, routes):
+def parse_trip_header(line: str, routes, expected_trip_number=None):
     text = line.strip()
-    if re.match(r"^\d{1,2}:\d{2}\b", text):
+    if re.search(r"\d{1,2}:\d{2}", text):
         return None
     upper_text = text.upper()
     if any(marker in upper_text for marker in ("EFFECTIVE:", "ROUTES:", "TYPE:", "(TG ", "(SIGN-ON)")):
@@ -239,7 +278,10 @@ def parse_trip_header(line: str, routes):
             continue
         rest = text[:-len(route)].strip()
         max_trip_len = min(3, len(rest) - 1)
-        for trip_len in range(1, max_trip_len + 1):
+        lengths = list(range(1, max_trip_len + 1))
+        if expected_trip_number is not None:
+            lengths.sort(key=lambda size: int(rest[:size]) != expected_trip_number if rest[:size].isdigit() else True)
+        for trip_len in lengths:
             trip_digits = rest[:trip_len]
             if not trip_digits.isdigit():
                 continue
@@ -251,7 +293,7 @@ def parse_trip_header(line: str, routes):
                 continue
             if not re.search(r"[A-Za-z]", headsign):
                 continue
-            if re.match(r"^\d+[A-Za-z]", headsign):
+            if re.match(r"^\d+[^\W\d_]", headsign):
                 continue
             return {
                 "trip_number": trip_number,
@@ -261,7 +303,7 @@ def parse_trip_header(line: str, routes):
     return None
 
 
-def parse_trip_header_at(lines, index, routes):
+def parse_trip_header_at(lines, index, routes, expected_trip_number=None):
     if index >= len(lines):
         return None, 0
 
@@ -272,7 +314,7 @@ def parse_trip_header_at(lines, index, routes):
             if parse_trip_header(next_line, routes):
                 break
         candidate = clean_line(" ".join(lines[index:index + parts]))
-        header = parse_trip_header(candidate, routes)
+        header = parse_trip_header(candidate, routes, expected_trip_number)
         if header:
             return header, parts
 
@@ -331,11 +373,6 @@ def parse_stop_times(section_lines):
             i += 1
             continue
 
-        if looks_like_instruction(line):
-            flush_pending()
-            i += 1
-            continue
-
         short_next = clean_line(section_lines[i + 1]) if i + 1 < len(section_lines) else ""
         time_next = re.match(r"^(\d{1,2}:\d{2})(?:\s+(Relief))?$", short_next)
         if time_next:
@@ -346,6 +383,11 @@ def parse_stop_times(section_lines):
             })
             flush_pending()
             i += 2
+            continue
+
+        if looks_like_instruction(line):
+            flush_pending()
+            i += 1
             continue
 
         if len(line) <= 40:
@@ -402,7 +444,8 @@ def split_trip_section(section_lines):
     skipping_note = False
     school_trip_prefix = "THIS IS A SCHOOL TRIP"
 
-    for raw_line in section_lines:
+    section_lines = [clean_line(line) for line in section_lines if clean_line(line)]
+    for index, raw_line in enumerate(section_lines):
         line = clean_line(raw_line)
         if not line:
             continue
@@ -427,7 +470,9 @@ def split_trip_section(section_lines):
                 note_lines.append(line)
                 continue
 
-        if not in_directions and looks_like_instruction(line):
+        next_line = section_lines[index + 1] if index + 1 < len(section_lines) else ""
+        is_timed_stop = has_time or bool(re.fullmatch(r"\d{1,2}:\d{2}(?:\s+Relief)?", next_line))
+        if not in_directions and not is_timed_stop and looks_like_instruction(line):
             in_directions = True
 
         if in_directions:
@@ -525,7 +570,8 @@ def parse_page(text: str, source_meta, page_number: int):
     i = 0
     while i < len(lines):
         line = lines[i]
-        header, consumed = parse_trip_header_at(lines, i, routes)
+        expected_trip = (active_trip or (trips[-1] if trips else {})).get("trip_number", 0) + 1
+        header, consumed = parse_trip_header_at(lines, i, routes, expected_trip)
         if header:
             if not trips and not active_trip:
                 start_directions = format_direction_text(preamble_lines)
@@ -547,6 +593,13 @@ def parse_page(text: str, source_meta, page_number: int):
     if not trips:
         return None
 
+    parse_warnings = []
+    if source_meta.get("variant_id") == "winter":
+        numbers = [trip["trip_number"] for trip in trips]
+        if numbers != list(range(1, len(numbers) + 1)):
+            previous, current = next((previous, current) for previous, current in zip([0] + numbers, numbers) if current != previous + 1)
+            parse_warnings.append(f"Trip numbering needs manual review: the sequence jumps from #{previous} to #{current}. All source pages have been included.")
+
     return {
         "paddle_id": paddle_id,
         "block_label": paddle_id_to_block_label(paddle_id),
@@ -563,6 +616,7 @@ def parse_page(text: str, source_meta, page_number: int):
         "bus_type": bus_type,
         "page_number": page_number,
         "trips": trips,
+        **({"parse_warnings": parse_warnings} if parse_warnings else {}),
     }
 
 
@@ -570,7 +624,7 @@ def has_paddle_header(text: str) -> bool:
     return bool(re.search(r"\n([0-9A-Z]{6})\nEffective:", text or ""))
 
 
-def normalize_continuation_page_text(text: str) -> str:
+def normalize_continuation_page_text(text: str, page_number: int) -> str:
     lines = text.splitlines()
     cleaned = []
     first_non_empty_seen = False
@@ -578,15 +632,31 @@ def normalize_continuation_page_text(text: str) -> str:
     for line in lines:
         current = line
         if not first_non_empty_seen and clean_line(line):
-            stripped_page_number = re.sub(r"^\s*\d+\s+(?=\d{1,3}[A-Za-z])", "", current)
-            if stripped_page_number != current:
-                current = stripped_page_number
-            else:
-                current = re.sub(r"^\d+(?=[A-Za-z])", "", current)
             first_non_empty_seen = True
+            prefix = str(page_number)
+            if current.lstrip().startswith(prefix):
+                current = current.lstrip()[len(prefix):].lstrip()
+                if not current:
+                    continue
         cleaned.append(current)
 
     return "\n".join(cleaned)
+
+
+def iter_paddle_documents(reader):
+    first_page = None
+    parts = []
+    for page_number, page in enumerate(reader.pages, 1):
+        text = page.extract_text() or ""
+        if has_paddle_header(text):
+            if parts:
+                yield first_page, page_number - 1, "\n".join(parts)
+            first_page = page_number
+            parts = [text]
+        elif parts and clean_line(text) and not re.fullmatch(r"\d+", clean_line(text)):
+            parts.append(normalize_continuation_page_text(text, page_number - first_page + 1))
+    if parts:
+        yield first_page, len(reader.pages), "\n".join(parts)
 
 
 def resolve_paddle_source_path(filename: str) -> Path:
@@ -596,16 +666,18 @@ def resolve_paddle_source_path(filename: str) -> Path:
     return ROOT / filename
 
 
-def build_index():
+def build_index(selected_variants=None, output_path=OUTPUT_PATH):
     existing_index = {}
-    if OUTPUT_PATH.exists():
-        with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
+    if output_path.exists():
+        with open(output_path, "r", encoding="utf-8") as fh:
             existing_index = json.load(fh)
 
     runs_by_variant = json.loads(json.dumps(existing_index.get("variants", {})))
     source_summaries = json.loads(json.dumps(existing_index.get("sources", {})))
 
     for variant_id, variant_meta in PADDLE_VARIANTS.items():
+        if selected_variants and variant_id not in selected_variants:
+            continue
         available_sources = [
             filename
             for filename in variant_meta["sources"]
@@ -642,32 +714,19 @@ def build_index():
             reader = PdfReader(str(pdf_path))
             parsed_count = 0
 
-            idx = 0
-            while idx < len(reader.pages):
-                page_text = reader.pages[idx].extract_text() or ""
-                if not has_paddle_header(page_text):
-                    idx += 1
-                    continue
-
-                combined_text = page_text
-                next_idx = idx + 1
-                while next_idx < len(reader.pages):
-                    next_text = reader.pages[next_idx].extract_text() or ""
-                    if has_paddle_header(next_text):
-                        break
-                    if clean_line(next_text) and not re.fullmatch(r"\d+", clean_line(next_text)):
-                        combined_text += "\n" + normalize_continuation_page_text(next_text)
-                    next_idx += 1
-
-                parsed = parse_page(combined_text, source_meta, idx + 1)
+            for first_page, last_page, combined_text in iter_paddle_documents(reader):
+                parsed = parse_page(combined_text, source_meta, first_page)
                 if not parsed:
-                    idx = next_idx
                     continue
+
+                parsed["source_page_end"] = last_page
+                parsed["source_page_count"] = last_page - first_page + 1
 
                 service_day = source_meta["service_day"]
+                if variant_id == "winter" and parsed["paddle_id"] in runs_by_variant[variant_id]["service_days"][service_day]:
+                    raise ValueError(f"Duplicate winter paddle {parsed['paddle_id']} for {service_day}: {filename}")
                 runs_by_variant[variant_id]["service_days"][service_day][parsed["paddle_id"]] = parsed
                 parsed_count += 1
-                idx = next_idx
 
             source_summaries[source_meta["source_id"]] = {
                 **source_meta,
@@ -675,6 +734,9 @@ def build_index():
                 "pages": len(reader.pages),
                 "parsed_runs": parsed_count,
             }
+            print(f"{source_meta['source_id']}: {parsed_count} paddles / {len(reader.pages)} pages", flush=True)
+            if variant_id == "winter" and parsed_count == 0:
+                raise ValueError(f"No paddles parsed from {filename}")
 
     latest_default_variant_by_service_day = {
         "weekday": "june29",
@@ -707,9 +769,13 @@ def build_index():
 
 
 def main():
-    data = build_index()
-    os.makedirs(OUTPUT_PATH.parent, exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", choices=PADDLE_VARIANTS, action="append")
+    parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
+    args = parser.parse_args()
+    data = build_index(args.variant, args.output)
+    os.makedirs(args.output.parent, exist_ok=True)
+    with open(args.output, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=2)
     weekday_runs = len(data["service_days"]["weekday"])
     saturday_runs = len(data["service_days"]["saturday"])
@@ -717,7 +783,7 @@ def main():
     easter_monday_runs = len(data["service_days"]["easter_monday"])
     canada_day_runs = len(data["service_days"]["canada_day"])
     civic_holiday_runs = len(data["service_days"]["civic_holiday"])
-    print(f"Wrote {OUTPUT_PATH}")
+    print(f"Wrote {args.output}")
     print(f"weekday runs: {weekday_runs}")
     print(f"saturday runs: {saturday_runs}")
     print(f"sunday runs: {sunday_runs}")

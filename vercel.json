@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/winter-paddles",
+      "destination": "/api/winter-paddles"
+    },
+    {
       "source": "/canada-day-paddles",
       "destination": "/api/retired-holiday-paddles?view=page"
     },

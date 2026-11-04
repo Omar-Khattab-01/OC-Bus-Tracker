@@ -186,6 +186,7 @@
     .header-actions > #clearChatBtn,
     .header-actions > #accountBtn,
     .header-actions > #fallPaddlesBtn,
+    .header-actions > #winterPaddlesBtn,
     .header-actions > #shuttlesPageBtn,
     .header-actions > #supportBtn {
       display: none;
@@ -1210,6 +1211,30 @@
       letter-spacing: 0.08em;
     }
 
+    .direction-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+
+    .direction-duration { color: var(--oc-white); font-weight: 600; }
+
+    .garage-arrival {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-left: 3px solid #ffb348;
+      background: rgba(255, 179, 72, 0.07);
+    }
+    .garage-arrival-place { min-width: 0; overflow-wrap: anywhere; }
+    .garage-arrival-place span { display: block; font-size: 12px; color: var(--oc-mist); }
+    .garage-arrival-place strong { display: block; font-size: 14px; }
+    .garage-arrival-time { flex: 0 0 auto; font-size: 28px; font-weight: 700; color: #ffcf7a; font-variant-numeric: tabular-nums; }
+
     .direction-text {
       color: var(--oc-white);
       font-size: 13px;
@@ -1707,6 +1732,7 @@
         <button id="busDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
         <button id="homeBtn" class="header-btn" type="button" hidden>Bus Lookup</button>
         <button id="fallPaddlesBtn" class="header-btn" type="button" onclick="window.location.href='/fall-paddles'">Fall Paddles</button>
+        <button id="winterPaddlesBtn" class="header-btn" type="button" data-winter-preview onclick="window.location.href='/winter-paddles'">Winter Paddles</button>
         <button id="shuttlesPageBtn" class="header-btn" type="button" onclick="window.location.href='/shuttles'">Shuttles</button>
         <button id="supportBtn" class="header-btn" type="button">Support</button>
         <button id="accountBtn" class="header-btn" type="button">Account</button>
@@ -1715,6 +1741,7 @@
         <div id="mobileHeaderMenu" class="mobile-menu" hidden>
           <div class="menu-section-label">Navigation</div>
           <button id="mobileFallPaddlesBtn" class="header-btn" type="button">Fall Paddles</button>
+          <button class="header-btn" type="button" data-winter-preview onclick="window.location.href='/winter-paddles'">Winter Paddles</button>
           <button id="mobileShuttlesPageBtn" class="header-btn" type="button">Shuttles</button>
           <button id="mobileBusDefectsBtn" class="header-btn" type="button" hidden>Bus Defects</button>
           <button id="mobileFeedbackAdminBtn" class="header-btn" type="button" hidden>Feedback Incidents</button>
@@ -1913,6 +1940,7 @@
     </section>
   </div>
 
+  <script src="/paddle-season.js"></script>
   <script src="/oc-header.js"></script>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -4986,13 +5014,21 @@
       return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originQuery)}&destination=${encodeURIComponent(destinationQuery)}&travelmode=driving`;
     }
 
-    function renderDirectionBlock(label, text, origin, destination) {
-      if (!text) return '';
-      const mapUrl = buildGoogleMapsUrl(origin, destination);
+    function renderDirectionBlock(label, text, origin, destination, options = {}) {
+      const arrival = options.garageArrival;
+      if (!text && !arrival) return '';
+      const mapUrl = arrival?.isDeadhead === false ? '' : buildGoogleMapsUrl(origin, destination);
+      const duration = options.durationMinutes;
       return `
-        <section class="direction-block">
-          <div class="direction-label">${escapeHtml(label)}</div>
-          <div class="direction-text">${escapeHtml(text)}</div>
+        <section class="direction-block" ${options.jumpTarget ? 'id="currentPaddleTarget"' : ''}>
+          <div class="direction-heading">
+            <div class="direction-label">${escapeHtml(label)}</div>
+            ${duration !== null && duration !== undefined && Number.isFinite(Number(duration)) ? `<span class="direction-duration">${escapeHtml(duration)} min${options.garageArrival ? '' : ' between trips'}</span>` : ''}
+            ${options.jumpTarget ? '<button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">&#8593;</button>' : ''}
+          </div>
+          ${arrival ? `<div class="garage-arrival"><div class="garage-arrival-place"><span>Garage Arrival</span><strong>${escapeHtml(arrival.garage)}</strong></div><time class="garage-arrival-time" datetime="${escapeHtml(arrival.arrivalTime)}">${escapeHtml(arrival.arrivalTime)}</time></div>` : ''}
+          ${text ? `<div class="direction-text">${escapeHtml(text)}</div>` : ''}
+          ${arrival?.postTripChecks ? `<div class="direction-text">${escapeHtml(arrival.postTripChecks)}</div>` : ''}
           <div class="direction-actions">
             ${mapUrl ? `<a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>` : ''}
           </div>
@@ -5026,6 +5062,7 @@
     }
 
     function buildPaddleSummaryCard(data, options = {}) {
+      if (data.sourceWarning) return `<section class="summary-card" role="alert"><div class="summary-title">Paddle Needs Review</div><div class="summary-sub">${escapeHtml(data.sourceWarning)}</div></section>`;
       const jumpTargetId = String(options.jumpTargetId || '').trim();
       const jumpButton = jumpTargetId
         ? `<button class="jump-btn" type="button" aria-label="Jump to current trip" data-scroll-to="${escapeAttribute(jumpTargetId)}">&#8595;</button>`
@@ -5281,19 +5318,21 @@
           ? splitPostTripCheckText(trip.start_directions).directions
           : trip.start_directions;
         const startDirections = renderDirectionBlock(
-          'Garage to trip start',
+          'Garage to First Trip',
           startDirectionText,
           garage,
           trip.start_stop
         );
+        const garageArrival = nextTrip ? null : trip.garageReturn;
         const nextDirections = renderDirectionBlock(
-          nextTrip ? `Paddle trip #${trip.trip_number} to paddle trip #${nextTrip.trip_number}` : `Paddle trip #${trip.trip_number} to garage`,
-          trip.next_directions,
+          nextTrip ? 'Deadhead' : garageArrival?.isDeadhead === false ? 'Garage Arrival' : 'Deadhead to Garage',
+          garageArrival ? garageArrival.directions : trip.next_directions,
           trip.end_stop,
-          nextTrip ? nextTrip.start_stop : garage
+          nextTrip ? nextTrip.start_stop : garageArrival?.garage || garage,
+          { durationMinutes: nextTrip ? trip.breakAfterMinutes : garageArrival?.durationMinutes, jumpTarget: isLiveBreak, garageArrival }
         );
         const breakMinutes = Number(trip.breakAfterMinutes);
-        const breakStrip = Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
+        const breakStrip = !nextDirections && Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
           <div class="trip-break ${trip.splitBreak ? 'split' : ''}" ${isLiveBreak ? 'id="currentPaddleTarget"' : ''}>
             ${isLiveBreak
               ? `<div class="break-strip-head"><span class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</span><button class="jump-btn" type="button" aria-label="Back to top of paddle" data-scroll-to="paddleTopAnchor">&#8593;</button></div>`
@@ -5304,6 +5343,7 @@
         ` : '';
         return `
           <div class="trip-stack">
+            ${startDirections}
             <article class="trip-item ${isActive ? 'active' : ''}" ${isActive ? 'id="currentPaddleTarget"' : ''}>
               <div class="trip-top">
                 <div class="trip-title trip-title-main">Route ${escapeHtml(trip.route || 'N/A')} · ${escapeHtml(trip.headsign || 'No headsign')}</div>
@@ -5314,9 +5354,8 @@
               ${reliefRow}
               <div class="trip-row">${endRow}</div>
               ${notes}
-              ${startDirections}
-              ${nextDirections}
             </article>
+            ${nextDirections}
             ${breakStrip}
           </div>
         `;

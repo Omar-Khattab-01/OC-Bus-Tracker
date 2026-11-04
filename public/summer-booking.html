@@ -616,6 +616,30 @@
       letter-spacing: 0.08em;
     }
 
+    .direction-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+
+    .direction-duration { color: var(--oc-white); font-weight: 600; }
+
+    .garage-arrival {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-left: 3px solid #ffb348;
+      background: rgba(255, 179, 72, 0.07);
+    }
+    .garage-arrival-place { min-width: 0; overflow-wrap: anywhere; }
+    .garage-arrival-place span { display: block; font-size: 12px; color: var(--oc-mist); }
+    .garage-arrival-place strong { display: block; font-size: 14px; }
+    .garage-arrival-time { flex: 0 0 auto; font-size: 28px; font-weight: 700; color: #ffcf7a; font-variant-numeric: tabular-nums; }
+
     .direction-text {
       color: var(--oc-white);
       font-size: 13px;
@@ -763,7 +787,24 @@
     const isCanadaDayPage = window.location.pathname.includes('canada-day');
     const isCivicHolidayPage = window.location.pathname.includes('civic-holiday');
     const isFallPaddlesPage = window.location.pathname.includes('fall-paddles');
-    const pageConfig = isFallPaddlesPage
+    const isWinterPaddlesPage = window.location.pathname.includes('winter-paddles');
+    const pageConfig = isWinterPaddlesPage
+      ? {
+          title: 'Winter Paddles',
+          subtitle: 'Starts December 20, 2026',
+          intro: 'Preview a winter paddle. Enter a block like <strong>5-01</strong>, then choose Weekday, Saturday, Sunday, or Reduced Week where available.',
+          hint: 'Preview only. Each service day shows its PDF effective date.',
+          apiPath: '/api/winter-booking',
+          summaryMain: null,
+          summarySub: 'Showing the winter schedule for block',
+          fallbackSourceLabel: 'Winter paddles',
+          fallbackButtonLabel: 'Winter Paddle',
+          loadingStatus: 'Loading winter paddle...',
+          readyStatus: 'Winter paddle ready',
+          notFoundLabel: 'Winter paddle',
+          paddleName: 'Winter Paddle',
+        }
+      : isFallPaddlesPage
       ? {
           title: 'Fall Paddles',
           subtitle: 'Fall booking paddles only',
@@ -942,13 +983,20 @@
       return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originQuery)}&destination=${encodeURIComponent(destinationQuery)}&travelmode=driving`;
     }
 
-    function renderDirectionBlock(label, text, origin, destination) {
-      if (!text) return '';
-      const mapUrl = buildGoogleMapsUrl(origin, destination);
+    function renderDirectionBlock(label, text, origin, destination, options = {}) {
+      const arrival = options.garageArrival;
+      if (!text && !arrival) return '';
+      const mapUrl = arrival?.isDeadhead === false ? '' : buildGoogleMapsUrl(origin, destination);
+      const duration = options.durationMinutes;
       return `
         <section class="direction-block">
-          <div class="direction-label">${escapeHtml(label)}</div>
-          <div class="direction-text">${escapeHtml(text)}</div>
+          <div class="direction-heading">
+            <div class="direction-label">${escapeHtml(label)}</div>
+            ${duration !== null && duration !== undefined && Number.isFinite(Number(duration)) ? `<span class="direction-duration">${escapeHtml(duration)} min${options.garageArrival ? '' : ' between trips'}</span>` : ''}
+          </div>
+          ${arrival ? `<div class="garage-arrival"><div class="garage-arrival-place"><span>Garage Arrival</span><strong>${escapeHtml(arrival.garage)}</strong></div><time class="garage-arrival-time" datetime="${escapeHtml(arrival.arrivalTime)}">${escapeHtml(arrival.arrivalTime)}</time></div>` : ''}
+          ${text ? `<div class="direction-text">${escapeHtml(text)}</div>` : ''}
+          ${arrival?.postTripChecks ? `<div class="direction-text">${escapeHtml(arrival.postTripChecks)}</div>` : ''}
           <div class="direction-actions">
             ${mapUrl ? `<a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>` : ''}
           </div>
@@ -987,6 +1035,7 @@
           <div class="summary-title">Schedule View</div>
           <div class="summary-main">${escapeHtml(pageConfig.summaryMain || `${formatServiceDayLabel(data.serviceDay)} ${pageConfig.paddleName || 'Paddle'}`)}</div>
           <div class="summary-sub">${escapeHtml(pageConfig.summarySub)} ${escapeHtml(data.block)}.</div>
+          ${data.sourceWarning ? `<div class="summary-sub" role="alert">${escapeHtml(data.sourceWarning)}</div>` : ''}
         </section>
       `;
     }
@@ -1027,15 +1076,17 @@
         const startDirectionText = index === 0
           ? splitPostTripCheckText(trip.start_directions).directions
           : trip.start_directions;
-        const startDirections = renderDirectionBlock('Garage to trip start', startDirectionText, garage, trip.start_stop);
+        const startDirections = renderDirectionBlock('Garage to First Trip', startDirectionText, garage, trip.start_stop);
+        const garageArrival = nextTrip ? null : trip.garageReturn;
         const nextDirections = renderDirectionBlock(
-          nextTrip ? `Paddle trip #${trip.trip_number} to paddle trip #${nextTrip.trip_number}` : `Paddle trip #${trip.trip_number} to garage`,
-          trip.next_directions,
+          nextTrip ? 'Deadhead' : garageArrival?.isDeadhead === false ? 'Garage Arrival' : 'Deadhead to Garage',
+          garageArrival ? garageArrival.directions : trip.next_directions,
           trip.end_stop,
-          nextTrip ? nextTrip.start_stop : garage
+          nextTrip ? nextTrip.start_stop : garageArrival?.garage || garage,
+          { durationMinutes: nextTrip ? trip.breakAfterMinutes : garageArrival?.durationMinutes, garageArrival }
         );
         const breakMinutes = Number(trip.breakAfterMinutes);
-        const breakStrip = Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
+        const breakStrip = !nextDirections && Number.isFinite(breakMinutes) && breakMinutes > 0 ? `
           <div class="trip-break ${trip.splitBreak ? 'split' : ''}" ${isLiveBreak ? 'style="border-color: rgba(255, 179, 72, 0.55);"' : ''}>
             <div class="trip-break-label">${trip.splitBreak ? 'Split break' : 'Break'}</div>
             <div class="trip-break-duration">${escapeHtml(breakMinutes)} min</div>
@@ -1043,6 +1094,7 @@
         ` : '';
         return `
           <div class="trip-stack">
+            ${startDirections}
             <article class="trip-item ${isActive ? 'active' : ''}">
               <div class="trip-top">
                 <div class="trip-title trip-title-main">Route ${escapeHtml(trip.route || 'N/A')} · ${escapeHtml(trip.headsign || 'No headsign')}</div>
@@ -1052,9 +1104,8 @@
               ${reliefRow}
               <div class="trip-row">${endRow}</div>
               ${notes}
-              ${startDirections}
-              ${nextDirections}
             </article>
+            ${nextDirections}
             ${breakStrip}
           </div>
         `;
@@ -1081,7 +1132,7 @@
     function openPaddleModal(data) {
       paddleTitle.textContent = `Paddle ${data.block}`;
       const paddleSourceLabel = data.displayVariantLabel || data.variantLabel || data.sourceLabel || pageConfig.fallbackSourceLabel;
-      paddleMeta.textContent = `${data.serviceDay} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
+      paddleMeta.textContent = `${formatServiceDayLabel(data.serviceDay)} service | ${paddleSourceLabel}${data.effective ? ` | effective ${data.effective}` : ''}`;
       paddleBody.innerHTML = buildPaddleDetailHtml(data);
       paddleOverlay.hidden = false;
       document.body.style.overflow = 'hidden';

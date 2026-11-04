@@ -9,6 +9,7 @@ const zlib = require('zlib');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { createClient } = require('@supabase/supabase-js');
+const { getGarageReturn } = require('./lib/paddle_garage');
 
 if (typeof process.loadEnvFile === 'function' && fs.existsSync(path.join(__dirname, '.env.local'))) {
   process.loadEnvFile(path.join(__dirname, '.env.local'));
@@ -86,9 +87,11 @@ const SUMMER_SATURDAY_PADDLE_SWITCH_DATE = '2026-07-04';
 const SUMMER_SUNDAY_PADDLE_SWITCH_DATE = '2026-06-28';
 const SUMMER_PADDLE_VARIANT_ID = 'june29';
 const FALL_PADDLE_VARIANT_ID = 'fall';
+const WINTER_PADDLE_VARIANT_ID = 'winter';
+const { isWinterActive, winterServiceDay } = require('./public/paddle-season');
 const FALL_PADDLE_SWITCH_AT = String(process.env.FALL_PADDLE_SWITCH_AT || '2026-08-30T00:00:00-04:00').trim();
 const REGULAR_PADDLE_SERVICE_DAYS = ['weekday', 'saturday', 'sunday'];
-const SPECIAL_PADDLE_SERVICE_DAYS = ['easter_monday', 'canada_day', 'civic_holiday'];
+const SPECIAL_PADDLE_SERVICE_DAYS = ['easter_monday', 'canada_day', 'civic_holiday', 'reduced_week', 'special_service'];
 
 const pendingByBlock = new Map();
 const queue = [];
@@ -214,6 +217,8 @@ function normalizeServiceDay(input) {
   if (value === 'weekdays' || value === 'weekday') return 'weekday';
   if (value === 'saturday' || value === 'sat') return 'saturday';
   if (value === 'sunday' || value === 'sun') return 'sunday';
+  if (['reduced_week', 'reduced week', 'reduced', 'reduced weekday'].includes(value)) return 'reduced_week';
+  if (value === 'special_service') return 'special_service';
   if (value === 'easter monday' || value === 'easter_monday') return 'easter_monday';
   if (value === 'canada day' || value === 'canada_day') return 'canada_day';
   if (value === 'civic holiday' || value === 'civic_holiday') return 'civic_holiday';
@@ -301,11 +306,19 @@ function getOttawaServiceDayKey() {
   return getServiceDayKeyForDate(new Date());
 }
 
+function getPaddleServiceDayForDate(date = new Date()) {
+  return winterServiceDay(getServiceDayKeyForDate(date), date);
+}
+
 function addDays(date, days) {
   return new Date(date.getTime() + days * 24 * 3600 * 1000);
 }
 
 function getReferenceDateForServiceDay(serviceDay, referenceDate = new Date()) {
+  if (serviceDay === 'reduced_week') {
+    return getPaddleServiceDayForDate(referenceDate) === 'reduced_week'
+      ? referenceDate : new Date('2026-12-21T12:00:00-05:00');
+  }
   if (serviceDay === 'canada_day') return new Date('2026-07-01T12:00:00-04:00');
   if (serviceDay === 'civic_holiday') return new Date('2026-08-03T12:00:00-04:00');
   if (serviceDay === 'easter_monday') return new Date('2026-04-06T12:00:00-04:00');
@@ -559,7 +572,10 @@ function buildBreakAwareRunTrips(run) {
   for (let index = 0; index < enriched.length; index += 1) {
     const current = enriched[index];
     const next = enriched[index + 1] || null;
-    if (!next) continue;
+    if (!next) {
+      current.garageReturn = getGarageReturn(current, run.garage);
+      continue;
+    }
     const breakAfterMinutes = Math.max(0, Math.round((next.timelineStartSeconds - current.timelineEndSeconds) / 60));
     current.breakAfterMinutes = breakAfterMinutes;
     current.nextTripNumber = next.trip_number ?? null;
@@ -607,18 +623,18 @@ function findActiveTripInRun(run, compareSeconds) {
 }
 
 function getActivePaddlesForNow() {
-  const index = loadPaddleIndex();
   const now = new Date();
   const currentSeconds = getOttawaNowSeconds();
-  const currentDayKey = getServiceDayKeyForDate(now);
+  const currentDayKey = getPaddleServiceDayForDate(now);
   const previousDate = new Date(now.getTime() - 24 * 3600 * 1000);
-  const previousDayKey = getServiceDayKeyForDate(previousDate);
+  const previousDayKey = getPaddleServiceDayForDate(previousDate);
 
   const results = [];
   const seen = new Set();
 
   function collectRuns(serviceDay, compareSeconds, requireOvernightCarry = false) {
-    const runs = index?.service_days?.[serviceDay] || {};
+    const referenceDate = requireOvernightCarry ? previousDate : now;
+    const runs = getPaddleVariantMeta(getDefaultPaddleVariantIdForDate(referenceDate, serviceDay))?.service_days?.[serviceDay] || {};
     for (const [paddleId, run] of Object.entries(runs)) {
       const activeTrip = findActiveTripInRun(run, compareSeconds);
       if (!activeTrip) continue;
@@ -649,15 +665,14 @@ function getActivePaddlesForNow() {
 }
 
 function getTodayBoardPaddlesForNow() {
-  const index = loadPaddleIndex();
   const now = new Date();
   const currentSeconds = getOttawaNowSeconds();
-  const currentDayKey = getServiceDayKeyForDate(now);
+  const currentDayKey = getPaddleServiceDayForDate(now);
   const previousDate = new Date(now.getTime() - 24 * 3600 * 1000);
-  const previousDayKey = getServiceDayKeyForDate(previousDate);
+  const previousDayKey = getPaddleServiceDayForDate(previousDate);
   const paddleIds = new Set([
-    ...Object.keys(index?.service_days?.[currentDayKey] || {}),
-    ...Object.keys(index?.service_days?.[previousDayKey] || {}),
+    ...Object.keys(getPaddleVariantMeta(getDefaultPaddleVariantIdForDate(now, currentDayKey))?.service_days?.[currentDayKey] || {}),
+    ...Object.keys(getPaddleVariantMeta(getDefaultPaddleVariantIdForDate(previousDate, previousDayKey))?.service_days?.[previousDayKey] || {}),
   ]);
   const results = [];
 
@@ -1215,7 +1230,11 @@ function buildShuttleResponse(id, requestedDay) {
 function loadPaddleIndex() {
   if (!paddleIndexCache) {
     const filePath = path.join(__dirname, 'data', 'paddles.index.json');
-    paddleIndexCache = sanitizePaddleIndex(JSON.parse(fs.readFileSync(filePath, 'utf8')));
+    const index = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const winter = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'winter_paddles.index.json'), 'utf8'));
+    index.variants = { ...index.variants, ...winter.variants };
+    index.sources = { ...index.sources, ...winter.sources };
+    paddleIndexCache = sanitizePaddleIndex(index);
   }
   return paddleIndexCache;
 }
@@ -1237,7 +1256,7 @@ function isUsablePaddleTrip(trip) {
 
 function sanitizeRunTrips(run) {
   if (!run || typeof run !== 'object') return run;
-  const trips = Array.isArray(run.trips) ? run.trips.filter(isUsablePaddleTrip) : [];
+  const trips = run.parse_warnings?.length ? [] : Array.isArray(run.trips) ? run.trips.filter(isUsablePaddleTrip) : [];
   return {
     ...run,
     trips,
@@ -1362,15 +1381,17 @@ function isFallPaddleVariantActive(referenceDate = new Date()) {
 }
 
 function getDefaultPaddleVariantIdForDate(referenceDate = new Date(), serviceDay = '') {
+  if ((REGULAR_PADDLE_SERVICE_DAYS.includes(serviceDay) || ['reduced_week', 'special_service'].includes(serviceDay)) && isWinterActive(referenceDate)) return WINTER_PADDLE_VARIANT_ID;
   if (serviceDay === 'easter_monday') return 'current';
   if (serviceDay === 'canada_day' || serviceDay === 'civic_holiday') return SUMMER_PADDLE_VARIANT_ID;
-  if (REGULAR_PADDLE_SERVICE_DAYS.includes(serviceDay) && isFallPaddleVariantActive()) return FALL_PADDLE_VARIANT_ID;
+  if (REGULAR_PADDLE_SERVICE_DAYS.includes(serviceDay) && isFallPaddleVariantActive(referenceDate)) return FALL_PADDLE_VARIANT_ID;
   if (isSummerPaddleVariantActiveForServiceDay(referenceDate, serviceDay)) return SUMMER_PADDLE_VARIANT_ID;
   if (isApril19PaddleVariantActive(referenceDate)) return 'april19';
   return 'current';
 }
 
 function getPaddleDisplayVariantLabel(referenceDate = new Date(), variantId = '', serviceDay = '') {
+  if (variantId === WINTER_PADDLE_VARIANT_ID) return `Winter ${formatServiceDayLabel(serviceDay)}`;
   if (serviceDay === 'easter_monday') return null;
   if (variantId === FALL_PADDLE_VARIANT_ID && !isFallPaddleVariantActive()) {
     return `Fall ${formatServiceDayLabel(serviceDay)}`;
@@ -1441,9 +1462,11 @@ async function fetchPaddleTripsForBlock(block) {
 
 function getPaddleRunForDay(serviceDay, paddleId, options = {}) {
   const referenceDate = options.referenceDate || new Date();
+  serviceDay = winterServiceDay(serviceDay, referenceDate);
   const preferredVariantId = options.variantId || getDefaultPaddleVariantIdForDate(referenceDate, serviceDay);
   const preferredRun = getPaddleRunForVariant(preferredVariantId, serviceDay, paddleId);
   if (preferredRun) return preferredRun;
+  if (preferredVariantId === WINTER_PADDLE_VARIANT_ID || preferredVariantId === FALL_PADDLE_VARIANT_ID) return null;
   if (preferredVariantId === SUMMER_PADDLE_VARIANT_ID) return null;
 
   if (preferredVariantId !== 'current') {
@@ -1509,13 +1532,17 @@ function getPaddleOptionsForBlock(block) {
         referenceDate: serviceReferenceDate,
         variantId: getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay),
       });
-      addOption(serviceDay, preferredRun, preferredRun?.variant_id || getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay));
+      addOption(preferredRun?.service_day || serviceDay, preferredRun, preferredRun?.variant_id || getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay));
     }
     const fallRun = getPaddleRunForVariant(FALL_PADDLE_VARIANT_ID, serviceDay, paddleId);
     const defaultVariantId = getDefaultPaddleVariantIdForDate(serviceReferenceDate, serviceDay);
-    if (fallRun && defaultVariantId !== FALL_PADDLE_VARIANT_ID) {
+    if (fallRun && defaultVariantId !== FALL_PADDLE_VARIANT_ID && !isWinterActive(referenceDate)) {
       addOption(serviceDay, fallRun, FALL_PADDLE_VARIANT_ID);
     }
+  }
+
+  if (isWinterActive(referenceDate)) {
+    addOption('reduced_week', getPaddleRunForVariant(WINTER_PADDLE_VARIANT_ID, 'reduced_week', paddleId), WINTER_PADDLE_VARIANT_ID);
   }
 
   if (isEasterMondayOptionVisible(referenceDate)) {
@@ -1570,8 +1597,8 @@ function resolvePaddleRunForCurrentContext(paddleId) {
 
   const now = new Date();
   const previousDate = getPreviousOttawaDate(now);
-  const currentServiceDay = getServiceDayKeyForDate(now);
-  const previousServiceDay = getServiceDayKeyForDate(previousDate);
+  const currentServiceDay = getPaddleServiceDayForDate(now);
+  const previousServiceDay = getPaddleServiceDayForDate(previousDate);
   const nowSeconds = getOttawaNowSeconds();
   const currentVariantId = getDefaultPaddleVariantIdForDate(now, currentServiceDay);
   const previousVariantId = getDefaultPaddleVariantIdForDate(previousDate, previousServiceDay);
@@ -1604,7 +1631,7 @@ function resolvePaddleRunForCurrentContext(paddleId) {
     };
   }
 
-  if (previousRun) {
+  if (previousRun && !isWinterActive(now)) {
     return {
       serviceDay: previousServiceDay,
       variantId: previousRun?.variant_id || previousVariantId,
@@ -1623,9 +1650,12 @@ function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
   if (!paddleId) return null;
 
   const now = new Date();
-  const explicitDay = normalizeServiceDay(requestedDay);
-  const explicitVariantId = String(requestedVariant || '').trim().toLowerCase();
-  const explicitReferenceDate = explicitDay ? getReferenceDateForServiceDay(explicitDay, now) : now;
+  const requestedServiceDay = normalizeServiceDay(requestedDay);
+  const explicitReferenceDate = requestedServiceDay ? getReferenceDateForServiceDay(requestedServiceDay, now) : now;
+  const explicitDay = winterServiceDay(requestedServiceDay, explicitReferenceDate);
+  // Saved Today's Work entries must not pin the retired booking after the switch.
+  const explicitVariantId = isWinterActive(now)
+    ? WINTER_PADDLE_VARIANT_ID : String(requestedVariant || '').trim().toLowerCase();
   const currentResolved = resolvePaddleRunForCurrentContext(paddleId);
   const resolvedExplicitVariantId = explicitDay
     ? (explicitVariantId || getDefaultPaddleVariantIdForDate(explicitReferenceDate, explicitDay))
@@ -1672,6 +1702,7 @@ function buildPaddleResponse(block, requestedDay = '', requestedVariant = '') {
     signOn: run.sign_on || null,
     routes: Array.isArray(run.routes) ? run.routes : [],
     busType: run.bus_type || null,
+    sourceWarning: run.parse_warnings?.join(' ') || null,
     activeTrip: resolved.activeTrip || null,
     activeBreak,
     currentServiceDay: currentResolved?.serviceDay || null,
@@ -1694,7 +1725,10 @@ function buildPinnedVariantPaddleResponse(block, variantId, requestedDay = '') {
   const run = getPinnedPaddleRunForDay(serviceDay, paddleId, variantId);
   if (!run) return null;
 
-  const compareSeconds = serviceDay === getOttawaServiceDayKey() ? getOttawaNowSeconds() : null;
+  const now = new Date();
+  const isCurrentSchedule = serviceDay === getPaddleServiceDayForDate(now)
+    && variantId === getDefaultPaddleVariantIdForDate(now, serviceDay);
+  const compareSeconds = isCurrentSchedule ? getOttawaNowSeconds() : null;
   const activeTrip = compareSeconds === null ? null : findActiveTripInRun(run, compareSeconds);
   const activeBreak = compareSeconds === null || activeTrip ? null : findActiveBreakInRun(run, compareSeconds);
 
@@ -1713,10 +1747,11 @@ function buildPinnedVariantPaddleResponse(block, variantId, requestedDay = '') {
     signOn: run.sign_on || null,
     routes: Array.isArray(run.routes) ? run.routes : [],
     busType: run.bus_type || null,
+    sourceWarning: run.parse_warnings?.join(' ') || null,
     activeTrip,
     activeBreak,
     currentServiceDay: getOttawaServiceDayKey(),
-    isLiveDay: Boolean(serviceDay === getOttawaServiceDayKey() && (activeTrip || activeBreak)),
+    isLiveDay: Boolean(isCurrentSchedule && (activeTrip || activeBreak)),
     trips: buildBreakAwareRunTrips(run),
   };
 }
@@ -2321,7 +2356,8 @@ async function fetchAvailableBlocks() {
 function getLocalPaddleBlocks() {
   const index = loadPaddleIndex();
   const blocks = new Set();
-  for (const runs of Object.values(index?.service_days || {})) {
+  const currentVariant = getPaddleVariantMeta(getDefaultPaddleVariantIdForDate(new Date(), getPaddleServiceDayForDate()));
+  for (const runs of Object.values(currentVariant?.service_days || index?.service_days || {})) {
     for (const paddleId of Object.keys(runs || {})) {
       const block = paddleIdToBlockLabel(paddleId);
       if (block) blocks.add(block);
@@ -3064,7 +3100,9 @@ async function handlePaddle(req, res) {
     if (!paddle) {
       res.status(404).json({
         ok: false,
-        error: `Paddle not found for ${block}`,
+        error: getPaddleServiceDayForDate() === 'special_service'
+          ? 'December 28 uses special service. The special-service paddles have not been provided yet.'
+          : `Paddle not found for ${block}`,
       });
       return;
     }
@@ -3081,6 +3119,28 @@ async function handlePaddle(req, res) {
       error: String(err.message || 'Unexpected error').slice(0, 500),
     });
   }
+}
+
+async function handleWinterBooking(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const rawBlock = parseBlockFromReq(req);
+  if (!validateBlockOrSend(rawBlock, res)) return;
+  const rawDay = String(req.query.day || '').trim();
+  const requestedDay = normalizeServiceDay(rawDay);
+  if (rawDay && !['weekday', 'saturday', 'sunday', 'reduced_week'].includes(requestedDay)) {
+    return res.status(400).json({ ok: false, error: 'Choose Weekday, Saturday, Sunday, or Reduced Week.' });
+  }
+  const block = rawBlock;
+  const paddleOptions = getPinnedVariantPaddleOptionsForBlock(block, WINTER_PADDLE_VARIANT_ID);
+  const paddle = buildPinnedVariantPaddleResponse(block, WINTER_PADDLE_VARIANT_ID, requestedDay || paddleOptions[0]?.serviceDay || '');
+  if (!paddle) {
+    return res.status(404).json({ ok: false, error: `Winter paddle not found for ${block}${requestedDay ? ` (${formatServiceDayLabel(requestedDay)})` : ''}.` });
+  }
+  return res.json({
+    ok: true, mode: 'winter-booking', block, paddleOptions, paddle,
+    reply: `Winter paddles for ${block}. Choose a service day to view the details.`,
+    generatedAt: new Date().toISOString(),
+  });
 }
 
 async function handleSummerBooking(req, res) {
@@ -4564,6 +4624,8 @@ app.get('/api/summer-booking', handleSummerBooking);
 app.post('/api/summer-booking', handleSummerBooking);
 app.get('/api/fall-booking', handleFallBooking);
 app.post('/api/fall-booking', handleFallBooking);
+app.get('/api/winter-booking', handleWinterBooking);
+app.post('/api/winter-booking', handleWinterBooking);
 app.all(['/api/canada-day-paddles', '/api/civic-holiday-paddles'], (_req, res) => {
   res.set('Cache-Control', 'no-store').status(410).json({
     ok: false,
@@ -4628,6 +4690,11 @@ app.get(['/canada-day-paddles', '/civic-holiday-paddles'], (_req, res) => {
   );
 });
 app.get('/fall-paddles', (_req, res) => {
+  sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
+});
+app.get('/winter-paddles', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (isWinterActive()) return res.redirect(302, '/');
   sendHtmlNoCache(res, path.join(__dirname, 'public', 'summer-booking.html'));
 });
 app.get('/booking-boards', (_req, res) => {
