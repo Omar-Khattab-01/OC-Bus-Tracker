@@ -10,11 +10,11 @@
       "time": "02:20"
     }
   ],
-  "lastCheckedAt": "2026-11-13T07:20:38.497Z",
+  "lastCheckedAt": "2026-11-13T07:22:28.365Z",
   "lastScheduledCheckKey": "2026-11-13T02:20",
   "lastChangeDetectedAt": "2026-11-13T07:20:38.497Z",
   "lastRebuildRequestedAt": "2026-11-13T07:20:38.497Z",
-  "lastRebuildRequestStatus": "workflow-dispatched",
+  "lastRebuildRequestStatus": "index-current",
   "remote": {
     "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
     "lastModified": "Fri, 13 Nov 2026 01:10:56 GMT",
@@ -22,11 +22,11 @@
     "contentLength": 30243147
   },
   "index": {
-    "generatedAt": "2026-11-06T07:22:21.216Z",
-    "feedVersion": "S1000526",
-    "feedStartDate": "20261106",
-    "feedEndDate": "20261206",
-    "tripCount": 75204,
-    "stopCount": 5839
+    "generatedAt": "2026-11-13T07:22:27.889Z",
+    "feedVersion": "S1000527",
+    "feedStartDate": "20261113",
+    "feedEndDate": "20261213",
+    "tripCount": 79559,
+    "stopCount": 5842
   }
 }
