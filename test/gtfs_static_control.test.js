@@ -54,10 +54,10 @@ test('green requires the verified official ZIP to match the actual deployed vers
   assert.equal((await h.service.status()).control.status.state, 'unverified');
 });
 
-test('official ZIP contents are reverified daily even when HEAD metadata is unchanged', async () => {
+test('official ZIP contents are reverified each Ottawa day, even less than 24 hours after a manual check', async () => {
   const h = harness();
   await h.service.check();
-  h.setTime('2026-11-23T18:00:01Z');
+  h.setTime('2026-11-23T07:00:00Z');
   await h.service.check();
   assert.equal(h.inspectCount, 2);
 });
