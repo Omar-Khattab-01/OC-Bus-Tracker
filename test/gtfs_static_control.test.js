@@ -99,6 +99,19 @@ test('compare-and-swap retries preserve concurrent builds and schedule changes',
   assert.deepEqual(h.control.schedule, DEFAULT_SCHEDULE);
 });
 
+test('a slow version check records completion time so an overlapping older build cannot erase it', async () => {
+  let h;
+  h = harness({ options: { download: async () => {
+    h.setTime('2026-11-22T18:03:00Z');
+    return { remote: h.remote, feed: h.feed };
+  } } });
+  await h.service.check();
+  assert.equal(h.control.lastCheckedAt, '2026-11-22T18:03:00.000Z');
+  assert.equal(h.control.official.verifiedAt, '2026-11-22T18:03:00.000Z');
+  const olderBuild = { ...h.deployed, sourceRemote: { ...h.oldRemote, downloadedAt: '2026-11-22T18:01:00Z' } };
+  assert.equal(builtControl(h.control, olderBuild).official.feedVersion, 'S1000528');
+});
+
 test('schedule saves do not clear verification, errors, or outstanding updates', async () => {
   const h = harness();
   await h.service.check();
