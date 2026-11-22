@@ -13,8 +13,8 @@
   "lastCheckedAt": "2026-11-22T18:28:18.218Z",
   "lastScheduledCheckKey": "2026-11-20T02:20",
   "lastChangeDetectedAt": "2026-11-22T18:20:01.323Z",
-  "lastRebuildRequestedAt": "2026-11-20T07:20:38.618Z",
-  "lastRebuildRequestStatus": "index-current",
+  "lastRebuildRequestedAt": "2026-11-22T18:31:43.063Z",
+  "lastRebuildRequestStatus": "workflow-dispatched",
   "remote": {
     "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
     "lastModified": "Thu, 19 Nov 2026 22:40:58 GMT",
