@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const crypto = require('node:crypto');
 const path = require('path');
 const readline = require('readline');
 const zlib = require('zlib');
@@ -97,12 +98,19 @@ async function streamStopTimes(zip, tripIds) {
 async function main() {
   const sourceZip = process.argv[2];
   const outputFile = process.argv[3] || path.join(process.cwd(), 'data', 'gtfs_static_index.json.gz');
+  const sourceMetadata = process.argv[4] ? JSON.parse(fs.readFileSync(process.argv[4], 'utf8')) : null;
   if (!sourceZip) {
     throw new Error('Usage: node tools/build_gtfs_static_index.js /path/to/GTFSExport.zip [output.json.gz]');
   }
 
   const zip = await unzipper.Open.file(sourceZip);
   const feedInfoRows = await readEntryRows(zip, 'feed_info.txt').catch(() => []);
+  if (sourceMetadata) {
+    const sha256 = crypto.createHash('sha256').update(fs.readFileSync(sourceZip)).digest('hex');
+    if (sourceMetadata.remote?.sha256 !== sha256 || sourceMetadata.feed?.feedVersion !== feedInfoRows[0]?.feed_version) {
+      throw new Error('Downloaded ZIP does not match its recorded source fingerprint/version.');
+    }
+  }
   const routeRows = await readEntryRows(zip, 'routes.txt');
   const tripRows = await readEntryRows(zip, 'trips.txt');
   const stopRows = await readEntryRows(zip, 'stops.txt');
@@ -165,11 +173,14 @@ async function main() {
     stop.longitude,
   ]);
 
+  if (!trips.length || !stops.length) throw new Error('Refusing to publish an empty GTFS trip or stop index.');
+
   const payload = {
     meta: {
       generatedAt: new Date().toISOString(),
       sourceZip: path.basename(sourceZip),
       feedInfo: feedInfoRows[0] || null,
+      sourceRemote: sourceMetadata?.remote || null,
       tripCount: trips.length,
       stopCount: stops.length,
     },

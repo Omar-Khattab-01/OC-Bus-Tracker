@@ -3,11 +3,17 @@
   "timezone": "America/Toronto",
   "schedule": [
     {
-      "id": "adbbcba6-78e1-4764-9d1a-7e74737bf517",
+      "id": "daily-0200",
       "days": [
-        "friday"
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday"
       ],
-      "time": "02:20"
+      "time": "02:00"
     }
   ],
   "lastCheckedAt": "2026-11-22T18:33:15.769Z",

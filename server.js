@@ -10,6 +10,8 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { createClient } = require('@supabase/supabase-js');
 const { getGarageReturn } = require('./lib/paddle_garage');
+const { indexMeta } = require('./lib/gtfs_static_control');
+const { createGtfsStaticAdmin } = require('./lib/gtfs_static_admin');
 
 if (typeof process.loadEnvFile === 'function' && fs.existsSync(path.join(__dirname, '.env.local'))) {
   process.loadEnvFile(path.join(__dirname, '.env.local'));
@@ -22,6 +24,8 @@ const {
   getStaticCacheStatus,
   getGtfsWarmupStatus,
   isConfigured: isGtfsRtConfigured,
+  loadStaticIndex,
+  loadRealtimeSnapshot,
   lookupBlockWithGtfsRt,
   lookupBusPositionWithGtfsRt,
   lookupBusWithGtfsRt,
@@ -42,9 +46,8 @@ const {
 const execFileAsync = promisify(execFile);
 const BOOKING_BOARDS_DATA_FILE = path.join(__dirname, 'data', 'booking_boards.json');
 const FALL_PDF_SEARCH_INDEX_FILE = path.join(__dirname, 'data', 'fall_pdf_search_index.json');
-const GTFS_STATIC_INDEX_FILE = path.join(__dirname, 'data', 'gtfs_static_index.json.gz');
+const GTFS_STATIC_INDEX_FILE = process.env.OCTRANSPO_GTFS_STATIC_INDEX_FILE || path.join(__dirname, 'data', 'gtfs_static_index.json.gz');
 const GTFS_STATIC_CONTROL_FILE = path.join(__dirname, 'data', 'gtfs_static_control.json');
-const GTFS_STATIC_EXPORT_URL = 'https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip';
 const FALL_BOOKING_BOARDS_SOURCE_DIR = path.join(__dirname, 'Fall Booking', 'Booking Boards');
 const BOOKING_BOARDS_SOURCE_DIR = fs.existsSync(FALL_BOOKING_BOARDS_SOURCE_DIR)
   ? FALL_BOOKING_BOARDS_SOURCE_DIR
@@ -3494,333 +3497,66 @@ function readJsonFile(filePath, fallback = {}) {
 
 function readGtfsStaticIndexMeta() {
   try {
-    const raw = fs.readFileSync(GTFS_STATIC_INDEX_FILE);
-    const text = zlib.gunzipSync(raw).toString('utf8');
-    const payload = JSON.parse(text);
-    const feedInfo = payload?.meta?.feedInfo || {};
-    return {
-      generatedAt: String(payload?.meta?.generatedAt || ''),
-      feedVersion: String(feedInfo.feed_version || ''),
-      feedStartDate: String(feedInfo.feed_start_date || ''),
-      feedEndDate: String(feedInfo.feed_end_date || ''),
-      tripCount: Number(payload?.meta?.tripCount || payload?.trips?.length || 0),
-      stopCount: Number(payload?.meta?.stopCount || payload?.stops?.length || 0),
-    };
-  } catch (_) {
-    return {
-      generatedAt: '',
-      feedVersion: '',
-      feedStartDate: '',
-      feedEndDate: '',
-      tripCount: 0,
-      stopCount: 0,
-    };
+    return indexMeta(JSON.parse(zlib.gunzipSync(fs.readFileSync(GTFS_STATIC_INDEX_FILE)).toString('utf8')));
+  } catch {
+    return indexMeta();
   }
 }
 
-function sanitizeGtfsSchedule(entries) {
-  const validDays = new Set(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']);
-  const result = [];
-  for (const raw of Array.isArray(entries) ? entries : []) {
-    const time = String(raw?.time || '').trim();
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
-      throw new Error('Schedule times must use HH:MM in 24-hour time.');
+const gtfsStaticAdmin = createGtfsStaticAdmin({
+  readLocalControl: () => readJsonFile(GTFS_STATIC_CONTROL_FILE, {}),
+  readDeployedIndex: readGtfsStaticIndexMeta,
+  token: GTFS_STATIC_GITHUB_TOKEN,
+  repo: GTFS_STATIC_GITHUB_REPO,
+  branch: GTFS_STATIC_GITHUB_BRANCH,
+  async verifyRealtime() {
+    const [index, realtime] = await Promise.all([loadStaticIndex(), loadRealtimeSnapshot()]);
+    let withTrip = 0;
+    let matched = 0;
+    for (const position of realtime.positionsByVehicleId.values()) {
+      const id = String(position.trip?.trip_id || position.trip?.tripId || '');
+      if (!id) continue;
+      withTrip += 1;
+      const trip = index.tripsById.get(id);
+      const route = String(position.trip?.route_id || position.trip?.routeId || '');
+      if (trip && (!route || [trip.routeId, trip.routeShortName, trip.routeId.split('-')[0]].includes(route))) matched += 1;
     }
-    const days = Array.from(new Set((Array.isArray(raw?.days) ? raw.days : [])
-      .map((day) => String(day || '').trim().toLowerCase())
-      .filter((day) => validDays.has(day))));
-    if (!days.length) {
-      throw new Error('Each schedule row needs at least one day selected.');
-    }
-    result.push({
-      id: String(raw?.id || crypto.randomUUID()).trim().slice(0, 80),
-      days,
-      time,
-    });
-  }
-  return result;
-}
-
-function readGtfsStaticControl() {
-  const control = readJsonFile(GTFS_STATIC_CONTROL_FILE, {});
-  return {
-    enabled: Boolean(control.enabled),
-    timezone: 'America/Toronto',
-    schedule: Array.isArray(control.schedule) ? control.schedule : [],
-    lastCheckedAt: String(control.lastCheckedAt || ''),
-    lastScheduledCheckKey: String(control.lastScheduledCheckKey || ''),
-    lastChangeDetectedAt: String(control.lastChangeDetectedAt || ''),
-    lastRebuildRequestedAt: String(control.lastRebuildRequestedAt || ''),
-    lastRebuildRequestStatus: String(control.lastRebuildRequestStatus || ''),
-    remote: {
-      url: String(control?.remote?.url || GTFS_STATIC_EXPORT_URL),
-      lastModified: String(control?.remote?.lastModified || ''),
-      etag: String(control?.remote?.etag || ''),
-      contentLength: Number(control?.remote?.contentLength || 0),
-    },
-    index: readGtfsStaticIndexMeta(),
-  };
-}
-
-function gtfsRemoteChanged(control, remote) {
-  const previous = control?.remote || {};
-  return Boolean(
-    String(remote.etag || '') && String(previous.etag || '') && String(remote.etag) !== String(previous.etag)
-  ) || Boolean(
-    String(remote.lastModified || '') &&
-    String(previous.lastModified || '') &&
-    String(remote.lastModified) !== String(previous.lastModified)
-  ) || Boolean(
-    Number(remote.contentLength || 0) &&
-    Number(previous.contentLength || 0) &&
-    Number(remote.contentLength) !== Number(previous.contentLength)
-  );
-}
-
-async function headOfficialGtfsStatic() {
-  const response = await fetch(GTFS_STATIC_EXPORT_URL, { method: 'HEAD' });
-  if (!response.ok) {
-    throw new Error(`Official GTFS HEAD failed with HTTP ${response.status}.`);
-  }
-  return {
-    url: GTFS_STATIC_EXPORT_URL,
-    lastModified: response.headers.get('last-modified') || '',
-    etag: response.headers.get('etag') || '',
-    contentLength: Number(response.headers.get('content-length') || 0),
-    checkedAt: new Date().toISOString(),
-  };
-}
-
-async function githubRequestJson(method, url, body = null) {
-  if (!GTFS_STATIC_GITHUB_TOKEN) {
-    throw new Error('Set GTFS_STATIC_GITHUB_TOKEN or BOOKING_BOARD_GITHUB_TOKEN before saving GTFS controls.');
-  }
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${GTFS_STATIC_GITHUB_TOKEN}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'oc-bus-tracker-gtfs-admin',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const responseText = await response.text();
-  let data = {};
-  if (responseText) {
-    try {
-      data = JSON.parse(responseText);
-    } catch (_) {
-      data = { message: responseText };
-    }
-  }
-  if (!response.ok) {
-    throw new Error(`GitHub ${response.status}: ${String(data?.message || responseText || 'Request failed').slice(0, 500)}`);
-  }
-  return data;
-}
-
-async function commitGtfsControl(control, message) {
-  const repo = GTFS_STATIC_GITHUB_REPO;
-  const branch = GTFS_STATIC_GITHUB_BRANCH;
-  const filePath = 'data/gtfs_static_control.json';
-  const encodedPath = encodeURIComponent(filePath);
-  const getUrl = `https://api.github.com/repos/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`;
-  const existing = await githubRequestJson('GET', getUrl);
-  const putUrl = `https://api.github.com/repos/${repo}/contents/${encodedPath}`;
-  const body = `${JSON.stringify(control, null, 2)}\n`;
-  await githubRequestJson('PUT', putUrl, {
-    message,
-    branch,
-    content: Buffer.from(body).toString('base64'),
-    sha: existing.sha,
-  });
-  return { repo, branch, path: filePath };
-}
-
-async function dispatchGtfsStaticIndexWorkflow(reason = 'manual') {
-  const repo = GTFS_STATIC_GITHUB_REPO;
-  const branch = GTFS_STATIC_GITHUB_BRANCH;
-  await githubRequestJson(
-    'POST',
-    `https://api.github.com/repos/${repo}/actions/workflows/gtfs-static-index.yml/dispatches`,
-    {
-      ref: branch,
-      inputs: {
-        reason: String(reason || 'manual').slice(0, 80),
-      },
-    }
-  );
-  return { repo, branch, workflow: 'gtfs-static-index.yml' };
-}
-
-function getOttawaScheduleParts(date = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Toronto',
-    weekday: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    weekday: String(map.weekday || '').toLowerCase(),
-    time: `${map.hour}:${map.minute}`,
-    key: `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`,
-  };
-}
-
-function getDueGtfsSchedule(control, date = new Date()) {
-  if (!control.enabled) return null;
-  const current = getOttawaScheduleParts(date);
-  if (control.lastScheduledCheckKey === current.key) return null;
-  const due = (control.schedule || []).find((item) => (
-    Array.isArray(item.days) &&
-    item.days.includes(current.weekday) &&
-    item.time === current.time
-  ));
-  return due ? { schedule: due, current } : null;
-}
-
-async function checkGtfsStaticControl({ persist = false, scheduledKey = '', requestRebuildOnChange = false } = {}) {
-  const control = readGtfsStaticControl();
-  const remote = await headOfficialGtfsStatic();
-  const changed = gtfsRemoteChanged(control, remote);
-  const nextControl = {
-    ...control,
-    lastCheckedAt: remote.checkedAt,
-    lastScheduledCheckKey: scheduledKey || control.lastScheduledCheckKey || '',
-    lastChangeDetectedAt: changed ? remote.checkedAt : control.lastChangeDetectedAt,
-    remote: {
-      url: remote.url,
-      lastModified: remote.lastModified,
-      etag: remote.etag,
-      contentLength: remote.contentLength,
-    },
-    index: readGtfsStaticIndexMeta(),
-  };
-  let workflow = null;
-  if (changed && requestRebuildOnChange) {
-    workflow = await dispatchGtfsStaticIndexWorkflow('scheduled-change-detected');
-    nextControl.lastRebuildRequestedAt = remote.checkedAt;
-    nextControl.lastRebuildRequestStatus = 'workflow-dispatched';
-  }
-  let committed = null;
-  if (persist) {
-    committed = await commitGtfsControl(nextControl, changed
-      ? 'Record GTFS static feed change'
-      : 'Record GTFS static feed check');
-  }
-  return { ok: true, changed, control: nextControl, remote, workflow, committed };
-}
+    return { checkedAt: new Date().toISOString(), withTrip, matched, matchRate: withTrip ? matched / withTrip : null };
+  },
+});
 
 function getGtfsStaticAdminConfig() {
-  return {
-    githubConfigured: Boolean(GTFS_STATIC_GITHUB_TOKEN),
-    githubRepo: GTFS_STATIC_GITHUB_REPO,
-    githubBranch: GTFS_STATIC_GITHUB_BRANCH,
-    workflow: 'gtfs-static-index.yml',
-    timezone: 'America/Toronto',
-  };
+  return { githubConfigured: Boolean(GTFS_STATIC_GITHUB_TOKEN), githubRepo: GTFS_STATIC_GITHUB_REPO,
+    githubBranch: GTFS_STATIC_GITHUB_BRANCH, workflow: 'gtfs-static-index.yml', timezone: 'America/Toronto' };
 }
 
 async function handleGtfsStaticAdmin(req, res) {
+  res.set('Cache-Control', 'no-store');
   if (sendAdminUnauthorizedOrDisabled(req, res)) return;
-
   try {
+    let result;
     if (req.method === 'GET') {
-      const shouldCheck = ['1', 'true', 'yes'].includes(String(req.query?.check || '').trim().toLowerCase());
-      const result = shouldCheck
-        ? await checkGtfsStaticControl()
-        : { ok: true, changed: null, control: readGtfsStaticControl(), remote: null };
-      res.json({ ...result, config: getGtfsStaticAdminConfig() });
-      return;
+      result = await gtfsStaticAdmin.status();
+    } else {
+      const action = String(req.body?.action || '').toLowerCase();
+      if (action === 'check') result = await gtfsStaticAdmin.check();
+      else if (action === 'rebuild') result = await gtfsStaticAdmin.rebuild();
+      else if (action === 'save') result = await gtfsStaticAdmin.save(req.body);
+      else return res.status(400).json({ ok: false, error: 'Use action "check", "save", or "rebuild".' });
     }
-
-    const action = String(req.body?.action || '').trim().toLowerCase();
-    if (action === 'check') {
-      const result = await checkGtfsStaticControl({ persist: Boolean(GTFS_STATIC_GITHUB_TOKEN) });
-      res.json({ ...result, config: getGtfsStaticAdminConfig() });
-      return;
-    }
-
-    if (action === 'save') {
-      const schedule = sanitizeGtfsSchedule(req.body?.schedule);
-      const enabled = Boolean(req.body?.enabled);
-      if (enabled && !schedule.length) {
-        res.status(400).json({ ok: false, error: 'Add at least one schedule row before enabling scheduled checks.' });
-        return;
-      }
-      if (schedule.length > 50) {
-        res.status(400).json({ ok: false, error: 'Use no more than 50 schedule rows.' });
-        return;
-      }
-      const control = {
-        ...readGtfsStaticControl(),
-        enabled,
-        timezone: 'America/Toronto',
-        schedule,
-      };
-      const committed = await commitGtfsControl(control, 'Update GTFS static check schedule');
-      res.json({ ok: true, control, committed, config: getGtfsStaticAdminConfig() });
-      return;
-    }
-
-    if (action === 'rebuild') {
-      const requestedAt = new Date().toISOString();
-      const workflow = await dispatchGtfsStaticIndexWorkflow('manual-admin-request');
-      const control = {
-        ...readGtfsStaticControl(),
-        lastRebuildRequestedAt: requestedAt,
-        lastRebuildRequestStatus: 'workflow-dispatched',
-      };
-      const committed = await commitGtfsControl(control, 'Record manual GTFS static rebuild request');
-      res.json({ ok: true, control, workflow, committed, config: getGtfsStaticAdminConfig() });
-      return;
-    }
-
-    res.status(400).json({ ok: false, error: 'Use action "check", "save", or "rebuild".' });
-  } catch (err) {
-    res.status(500).json({
-      ok: false,
-      error: String(err?.message || 'Unexpected GTFS static admin error').slice(0, 500),
-    });
+    res.json({ ...result, config: getGtfsStaticAdminConfig() });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error.message || 'GTFS admin request failed').slice(0, 500) });
   }
 }
 
 async function handleGtfsStaticCron(req, res) {
-  if (!isAuthorizedCronRequest(req)) {
-    res.status(401).json({ ok: false, error: 'Invalid cron authorization.' });
-    return;
-  }
-
+  res.set('Cache-Control', 'no-store');
+  if (!isAuthorizedCronRequest(req)) return res.status(401).json({ ok: false, error: 'Invalid cron authorization.' });
   try {
-    const control = readGtfsStaticControl();
-    const due = getDueGtfsSchedule(control);
-    if (!due) {
-      res.json({
-        ok: true,
-        skipped: true,
-        reason: control.enabled ? 'No GTFS static check is due this minute.' : 'Scheduled GTFS static checks are disabled.',
-        current: getOttawaScheduleParts(),
-      });
-      return;
-    }
-    const result = await checkGtfsStaticControl({
-      persist: true,
-      scheduledKey: due.current.key,
-      requestRebuildOnChange: true,
-    });
-    res.json({ ...result, skipped: false, due });
-  } catch (err) {
-    res.status(500).json({
-      ok: false,
-      error: String(err?.message || 'Unexpected GTFS static cron error').slice(0, 500),
-    });
+    res.json(await gtfsStaticAdmin.cron());
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error.message || 'GTFS scheduled check failed').slice(0, 500) });
   }
 }
 

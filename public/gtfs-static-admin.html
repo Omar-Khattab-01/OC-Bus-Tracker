@@ -27,14 +27,14 @@
     main { width: min(1040px, calc(100% - 32px)); margin: 28px auto 48px; }
     header { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 18px; }
     h1, h2 { margin: 0; }
-    h1 { font-size: clamp(25px, 4vw, 34px); }
+    h1 { font-size: 30px; }
     h2 { font-size: 18px; }
     p { margin: 7px 0 0; color: var(--muted); line-height: 1.5; }
     a { color: var(--accent-dark); font-weight: 700; text-decoration: none; }
     .panel {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 20px;
       margin-bottom: 16px;
@@ -67,7 +67,7 @@
     button.danger { background: #fff0ee; color: var(--accent-dark); }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
-    .metric { border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+    .metric { padding: 10px 0; min-width: 0; }
     .metric span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; margin-bottom: 6px; text-transform: uppercase; }
     .metric strong { display: block; overflow-wrap: anywhere; }
     .schedule-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
@@ -100,12 +100,26 @@
     .status.ok { border-color: rgba(8,116,67,.3); background: rgba(8,116,67,.06); color: var(--ok); }
     .status.warn { border-color: rgba(196,59,47,.3); background: rgba(196,59,47,.06); color: var(--accent-dark); }
     .note { border-left: 4px solid var(--warn); background: #fff8e6; border-radius: 0 8px 8px 0; color: #704c00; margin-top: 14px; padding: 10px 12px; }
+    .versions { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+    .versions > div { min-width: 0; }
+    .versions > div + div { border-left: 1px solid var(--line); padding-left: 24px; }
+    .versions h3 { margin: 0 0 8px; font-size: 16px; }
+    .version { font-size: 24px; overflow-wrap: anywhere; }
+    .feed-state { font-weight: 800; }
+    .state-detail { margin-top: 8px; overflow-wrap: anywhere; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+    summary { cursor: pointer; font-weight: 700; }
+    #workflowLink { display: inline-block; margin-top: 10px; }
+    #liveVerification { font-size: 14px; }
     @media (max-width: 760px) {
       .summary { grid-template-columns: 1fr; }
       .schedule-row { grid-template-columns: 1fr; }
       .auth { grid-template-columns: 1fr; }
       header { display: block; }
       header a { display: inline-block; margin-top: 10px; }
+      .versions { grid-template-columns: 1fr; }
+      .versions > div + div { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; }
+      .details-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -114,7 +128,6 @@
     <header>
       <div>
         <h1>GTFS Static Control</h1>
-        <p>Check the official OC Transpo feed metadata and schedule index rebuild checks.</p>
       </div>
       <a href="/">Back to OC Operator Tools</a>
     </header>
@@ -127,25 +140,45 @@
         </label>
         <button id="loadBtn" type="button">Load status</button>
       </div>
-      <div id="status" class="status">Enter the admin token, then load the current status.</div>
+      <div id="status" class="status" role="status" aria-live="polite">Not connected</div>
     </section>
 
     <section class="panel">
-      <h2>Feed status</h2>
-      <p>A check sends a HEAD request only; it does not download the GTFS zip.</p>
-      <div class="summary">
-        <div class="metric"><span>Official modified</span><strong id="remoteModified">—</strong></div>
-        <div class="metric"><span>Official size</span><strong id="remoteSize">—</strong></div>
-        <div class="metric"><span>Last checked</span><strong id="lastChecked">—</strong></div>
-        <div class="metric"><span>Built feed version</span><strong id="feedVersion">—</strong></div>
-        <div class="metric"><span>Built coverage</span><strong id="feedCoverage">—</strong></div>
-        <div class="metric"><span>Index generated</span><strong id="indexGenerated">—</strong></div>
+      <h2>Version comparison</h2>
+      <div id="feedState" class="status feed-state" role="status" aria-live="polite">Not verified</div>
+      <p id="feedDetail" class="state-detail"></p>
+      <a id="workflowLink" target="_blank" rel="noopener noreferrer" hidden>View rebuild workflow</a>
+      <div class="versions">
+        <div>
+          <h3>Official OC Transpo feed</h3>
+          <strong id="officialVersion" class="version">Not verified</strong>
+          <div class="metric"><span>Coverage</span><strong id="officialCoverage">—</strong></div>
+          <div class="metric"><span>ZIP version verified</span><strong id="officialVerified">—</strong></div>
+        </div>
+        <div>
+          <h3>Live website index</h3>
+          <strong id="feedVersion" class="version">—</strong>
+          <div class="metric"><span>Coverage</span><strong id="feedCoverage">—</strong></div>
+          <div class="metric"><span>Index built</span><strong id="indexGenerated">—</strong></div>
+          <div class="metric"><span>Trips</span><strong id="tripCount">—</strong></div>
+        </div>
       </div>
+      <p id="liveVerification"></p>
       <div class="actions">
-        <button id="checkBtn" type="button">Check official metadata</button>
+        <button id="checkBtn" type="button">Check for updates</button>
         <button id="rebuildBtn" class="secondary" type="button">Trigger index rebuild</button>
       </div>
-      <div class="note">Rebuild dispatches the repository’s <code>gtfs-static-index.yml</code> workflow. GitHub and the deployment may take a few minutes to update.</div>
+      <details style="margin-top:20px">
+        <summary>Download and deployment details</summary>
+        <div class="details-grid">
+          <div class="metric"><span>Official modified</span><strong id="remoteModified">—</strong></div>
+          <div class="metric"><span>Official size</span><strong id="remoteSize">—</strong></div>
+          <div class="metric"><span>Last successful check</span><strong id="lastChecked">—</strong></div>
+          <div class="metric"><span>Live deployment commit</span><strong id="deploymentCommit">—</strong></div>
+          <div class="metric"><span>Last rebuild requested</span><strong id="rebuildRequested">—</strong></div>
+          <div class="metric"><span>Live source fingerprint</span><strong id="sourceFingerprint">Not recorded</strong></div>
+        </div>
+      </details>
     </section>
 
     <section class="panel">
@@ -175,10 +208,14 @@
     const enabled = document.getElementById('enabled');
     const buttons = [...document.querySelectorAll('button')];
     let schedule = [];
+    let busy = false;
+    let scheduleDirty = false;
+    let polling = false;
 
     adminToken.value = sessionStorage.getItem('gtfsStaticAdminToken') || '';
 
     function setBusy(value) {
+      busy = value;
       buttons.forEach((button) => { button.disabled = value; });
     }
 
@@ -190,7 +227,7 @@
     function formatDate(value) {
       if (!value) return '—';
       const date = new Date(value);
-      return Number.isNaN(date.valueOf()) ? value : date.toLocaleString();
+      return Number.isNaN(date.valueOf()) ? value : date.toLocaleString('en-CA', { timeZone: 'America/Toronto' }) + ' Ottawa';
     }
 
     function formatBytes(value) {
@@ -199,17 +236,43 @@
       return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
     }
 
-    function renderControl(control = {}) {
+    function coverage(feed = {}) {
+      const date = (value) => /^\d{8}$/.test(value || '') ? `${value.slice(0,4)}-${value.slice(4,6)}-${value.slice(6,8)}` : '—';
+      return `${date(feed.feedStartDate)} to ${date(feed.feedEndDate)}`;
+    }
+
+    function renderControl(control = {}, preserveSchedule = false) {
       const remote = control.remote || {};
       const index = control.index || {};
+      const official = control.official || {};
+      const state = control.status || { state: 'unverified', label: 'Not verified' };
+      const stateBox = document.getElementById('feedState');
+      stateBox.textContent = state.label;
+      stateBox.className = `status feed-state ${state.state === 'up_to_date' ? 'ok' : 'warn'}`;
+      document.getElementById('feedDetail').textContent = state.message || '';
+      const link = document.getElementById('workflowLink');
+      const workflowUrl = state.url && new URL(state.url);
+      link.hidden = !(workflowUrl?.protocol === 'https:' && workflowUrl.hostname === 'github.com');
+      if (!link.hidden) link.href = workflowUrl.href;
+      document.getElementById('officialVersion').textContent = official.feedVersion || 'Not verified';
+      document.getElementById('officialCoverage').textContent = coverage(official);
+      document.getElementById('officialVerified').textContent = formatDate(official.verifiedAt);
       document.getElementById('remoteModified').textContent = remote.lastModified || '—';
       document.getElementById('remoteSize').textContent = formatBytes(remote.contentLength);
       document.getElementById('lastChecked').textContent = formatDate(control.lastCheckedAt);
       document.getElementById('feedVersion').textContent = index.feedVersion || '—';
-      document.getElementById('feedCoverage').textContent = index.feedStartDate && index.feedEndDate
-        ? `${index.feedStartDate} – ${index.feedEndDate}`
-        : '—';
+      document.getElementById('feedCoverage').textContent = coverage(index);
       document.getElementById('indexGenerated').textContent = formatDate(index.generatedAt);
+      document.getElementById('tripCount').textContent = Number(index.tripCount || 0).toLocaleString();
+      document.getElementById('deploymentCommit').textContent = control.deploymentCommit?.slice(0, 12) || 'Local preview';
+      document.getElementById('rebuildRequested').textContent = formatDate(control.lastRebuildRequestedAt);
+      document.getElementById('sourceFingerprint').textContent = index.sourceRemote?.sha256 || 'Not recorded';
+      const live = control.realtime;
+      document.getElementById('liveVerification').textContent = live?.error ? `Live-feed verification unavailable: ${live.error}`
+        : live?.withTrip ? `Live-feed matches: ${live.matched} of ${live.withTrip} vehicle trips (${Math.round(live.matchRate * 100)}%). Checked ${formatDate(live.checkedAt)}.`
+        : 'Live-feed match not yet verified for this index.';
+      polling = Boolean(control.pipeline && control.pipeline.state !== 'failed');
+      if (preserveSchedule && scheduleDirty) return;
       enabled.checked = Boolean(control.enabled);
       schedule = Array.isArray(control.schedule)
         ? control.schedule.map((row) => ({ id: row.id || crypto.randomUUID(), days: [...(row.days || [])], time: row.time || '09:00' }))
@@ -267,10 +330,13 @@
       setStatus(message);
       try {
         const data = await operation();
-        if (data.control) renderControl(data.control);
+        if (data.control) renderControl(data.control, true);
         return data;
       } catch (error) {
         setStatus(error.message || 'Request failed.', 'warn');
+        document.getElementById('feedState').textContent = 'Unable to verify';
+        document.getElementById('feedState').className = 'status feed-state warn';
+        document.getElementById('feedDetail').textContent = error.message || 'Status could not be verified.';
         return null;
       } finally {
         setBusy(false);
@@ -280,27 +346,26 @@
     document.getElementById('loadBtn').addEventListener('click', async () => {
       const data = await run('Loading GTFS status…', () => api('GET'));
       if (data) {
-        const configured = data.config?.githubConfigured ? 'GitHub rebuild access is configured.' : 'GitHub token is not configured.';
-        setStatus(`Status loaded. ${configured}`, data.config?.githubConfigured ? 'ok' : 'warn');
+        setStatus(data.config?.githubConfigured ? 'Connected' : 'GitHub rebuild access unavailable', data.config?.githubConfigured ? 'ok' : 'warn');
       }
     });
 
     document.getElementById('checkBtn').addEventListener('click', async () => {
-      const data = await run('Checking official OC Transpo metadata…', () => api('POST', { action: 'check' }));
+      const data = await run('Checking official version and live-feed matches...', () => api('POST', { action: 'check' }));
       if (data) {
-        const saved = data.committed ? ' Saved the latest metadata.' : ' GitHub write access is not configured here, so it was not saved.';
-        setStatus(`${data.changed ? 'Official metadata differs from the saved baseline.' : 'Official metadata matches the saved baseline.'}${saved}`, data.changed ? 'warn' : 'ok');
+        setStatus('Check complete', 'ok');
       }
     });
 
     document.getElementById('rebuildBtn').addEventListener('click', async () => {
       if (!window.confirm('Trigger a GTFS static index rebuild in GitHub Actions?')) return;
       const data = await run('Dispatching the GTFS index rebuild…', () => api('POST', { action: 'rebuild' }));
-      if (data) setStatus('GTFS index rebuild dispatched successfully.', 'ok');
+      if (data) setStatus(data.alreadyRunning ? 'A rebuild is already queued or running.' : 'Rebuild requested', 'ok');
     });
 
     document.getElementById('addRowBtn').addEventListener('click', () => {
       schedule = collectSchedule(false);
+      scheduleDirty = true;
       schedule.push({ id: crypto.randomUUID(), days: ['monday'], time: '09:00' });
       renderSchedule();
     });
@@ -308,6 +373,7 @@
     scheduleRows.addEventListener('click', (event) => {
       const button = event.target.closest('[data-remove]');
       if (!button) return;
+      scheduleDirty = true;
       button.closest('.schedule-row').remove();
       schedule = collectSchedule(false);
       renderSchedule();
@@ -326,8 +392,19 @@
         enabled: enabled.checked,
         schedule: nextSchedule,
       }));
-      if (data) setStatus('Schedule committed. The deployment will pick it up after the GitHub update.', 'ok');
+      if (data) {
+        scheduleDirty = false;
+        renderControl(data.control);
+        setStatus('Schedule saved', 'ok');
+      }
     });
+    scheduleRows.addEventListener('change', () => { scheduleDirty = true; });
+    enabled.addEventListener('change', () => { scheduleDirty = true; });
+    setInterval(async () => {
+      if (!polling || busy || document.hidden || !adminToken.value.trim()) return;
+      const data = await run('Checking rebuild and deployment...', () => api('GET'));
+      if (data) setStatus('Status refreshed');
+    }, 10000);
   </script>
 </body>
 </html>

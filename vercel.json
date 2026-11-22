@@ -40,10 +40,10 @@
       "maxDuration": 60
     },
     "api/admin/gtfs-static.js": {
-      "maxDuration": 60
+      "maxDuration": 120
     },
     "api/cron/gtfs-static-check.js": {
-      "maxDuration": 60
+      "maxDuration": 120
     },
     "api/cron/live-bus-paddles.js": {
       "maxDuration": 300

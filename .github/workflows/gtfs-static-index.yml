@@ -33,10 +33,10 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download official OC Transpo GTFS
-        run: curl --fail --location --retry 3 --output "${RUNNER_TEMP}/GTFSExport.zip" "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip"
+        run: node tools/download_gtfs_static.js "${RUNNER_TEMP}/GTFSExport.zip" "${RUNNER_TEMP}/GTFSExport.meta.json"
 
       - name: Build static index
-        run: node tools/build_gtfs_static_index.js "${RUNNER_TEMP}/GTFSExport.zip" data/gtfs_static_index.json.gz
+        run: node tools/build_gtfs_static_index.js "${RUNNER_TEMP}/GTFSExport.zip" data/gtfs_static_index.json.gz "${RUNNER_TEMP}/GTFSExport.meta.json"
 
       - name: Refresh GTFS control status
         run: node tools/update_gtfs_static_control.js
