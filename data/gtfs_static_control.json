@@ -19,8 +19,8 @@
   "lastCheckedAt": "2026-11-22T20:16:38.602Z",
   "lastScheduledCheckKey": "2026-11-22T02:00",
   "lastChangeDetectedAt": "2026-11-22T20:16:38.602Z",
-  "lastRebuildRequestedAt": "2026-11-22T18:31:43.063Z",
-  "lastRebuildRequestStatus": "index-current",
+  "lastRebuildRequestedAt": "2026-11-22T20:16:42.852Z",
+  "lastRebuildRequestStatus": "workflow-dispatched",
   "remote": {
     "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
     "etag": "0x8DF468E2E2FF004",
@@ -57,5 +57,6 @@
     "matched": 247,
     "matchRate": 0.988,
     "indexGeneratedAt": "2026-11-22T18:33:15.240Z"
-  }
+  },
+  "lastRebuildError": ""
 }
