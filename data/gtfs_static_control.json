@@ -16,8 +16,8 @@
       "time": "02:00"
     }
   ],
-  "lastCheckedAt": "2026-11-27T07:00:59.265Z",
-  "lastScheduledCheckKey": "2026-11-27T02:00",
+  "lastCheckedAt": "2026-11-28T07:00:41.003Z",
+  "lastScheduledCheckKey": "2026-11-28T02:00",
   "lastChangeDetectedAt": "2026-11-27T07:00:40.555Z",
   "lastRebuildRequestedAt": "2026-11-27T07:00:42.781Z",
   "lastRebuildRequestStatus": "index-built",
@@ -26,8 +26,7 @@
     "etag": "0x8DF4C1BA9A6DB7B",
     "lastModified": "Fri, 27 Nov 2026 00:16:20 GMT",
     "contentLength": 42077282,
-    "sha256": "d22f8c7e4eb34a3b2667ba68f6fb1923a40c68c702444dae7e4b31a267711190",
-    "downloadedAt": "2026-11-27T07:00:59.265Z"
+    "sha256": "d22f8c7e4eb34a3b2667ba68f6fb1923a40c68c702444dae7e4b31a267711190"
   },
   "index": {
     "generatedAt": "2026-11-27T07:02:02.381Z",
@@ -49,24 +48,23 @@
     "feedVersion": "S1000530",
     "feedStartDate": "20261127",
     "feedEndDate": "20261220",
-    "verifiedAt": "2026-11-27T07:00:59.265Z",
     "remote": {
       "url": "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip",
       "etag": "0x8DF4C1BA9A6DB7B",
       "lastModified": "Fri, 27 Nov 2026 00:16:20 GMT",
       "contentLength": 42077282,
-      "sha256": "d22f8c7e4eb34a3b2667ba68f6fb1923a40c68c702444dae7e4b31a267711190",
-      "downloadedAt": "2026-11-27T07:00:59.265Z"
-    }
+      "sha256": "d22f8c7e4eb34a3b2667ba68f6fb1923a40c68c702444dae7e4b31a267711190"
+    },
+    "verifiedAt": "2026-11-28T07:00:41.003Z"
   },
-  "lastAttemptAt": "2026-11-27T07:00:38.650Z",
+  "lastAttemptAt": "2026-11-28T07:00:38.598Z",
   "lastCheckError": "",
   "realtime": {
-    "checkedAt": "2026-11-27T07:00:39.447Z",
-    "withTrip": 26,
+    "checkedAt": "2026-11-28T07:00:39.772Z",
+    "withTrip": 30,
     "matched": 26,
-    "matchRate": 1,
-    "indexGeneratedAt": "2026-11-22T20:18:06.919Z"
+    "matchRate": 0.8666666666666667,
+    "indexGeneratedAt": "2026-11-27T07:02:02.381Z"
   },
   "lastRebuildError": "",
   "lastBuiltAt": "2026-11-27T07:02:03.018Z"
